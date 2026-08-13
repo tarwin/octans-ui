@@ -15,3 +15,10 @@ src/styleguide/orders.json
 src/components/Icon/iconBundle.ts
 .storybook/storyIconBundle.ts
 src/components/TimezonePicker/zoneCountries.ts
+
+# Prettier parses this as markdown, not MDX: it escapes the `{/* */}` comments
+# to `{/\* \*/}` and strips the indentation off the JSX inside the
+# `export const CodeTabs` block, which then fails to parse with acorn and
+# breaks the Storybook build. The other .mdx files here are plain prose and
+# format fine — this is the only one carrying JSX/ESM.
+src/stories/QuickStart.mdx
