@@ -1,0 +1,36 @@
+@import '../../styles/variables';
+
+.subdued {
+  color: $textSubduedColor;
+}
+.strong {
+  font-weight: 600;
+}
+.positive {
+  color: $textPositiveColor;
+}
+.negative {
+  color: $textNegativeColor;
+}
+.code {
+  position: relative;
+  padding: 0 4px;
+  border-radius: var(--octans-radius-field);
+  background-color: var(--octans-surface-app);
+  display: inline-block;
+  color: var(--octans-text);
+  font-family: monospace;
+  font-size: 1.15em;
+  line-height: 20px;
+  box-shadow: inset 0 0 0 1px var(--octans-border);
+}
+.link {
+  color: $linkColor;
+  text-decoration: none;
+
+  &:hover {
+    color: $linkHoverColor;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}

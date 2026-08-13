@@ -1,0 +1,91 @@
+// Sass variables used throughout the components.
+//
+// Colour variables are ALIASES for the semantic CSS custom properties defined
+// in `tokens.scss`. That is what makes the existing components themeable
+// without rewriting them: Sass substitutes `var(--octans-…)` at build time and
+// the browser resolves it per theme at runtime.
+//
+// IMPORTANT: because these are `var()` references, not colours, Sass colour
+// functions (`darken()`, `lighten()`, `rgba($x, .5)`) CANNOT operate on them —
+// Sass has no value to compute from. Use CSS `color-mix()` instead:
+//
+//   background: color-mix(in srgb, var(--octans-primary) 12%, transparent);
+//
+// Non-colour variables below are plain values and behave normally.
+
+$spacing: 4px;
+
+$s1: $spacing * 1;
+$s2: $spacing * 2;
+$s3: $spacing * 3;
+$s4: $spacing * 4;
+$s5: $spacing * 5;
+
+$appFrameSpacing: 24px;
+$appNavWidth: 240px;
+
+$breakpointSm: 568px;
+$breakpointMd: 768px;
+$breakpointLg: 1040px;
+
+$layoutGutter: 20px;
+$layoutPrimaryMinWidth: 480px;
+$layoutSecondaryMinWidth: 240px;
+$layoutAnnotationContentMinWidth: (
+  $breakpointMd - $appNavWidth + $appFrameSpacing - 1
+);
+
+$pageMaxWidth: 1100px;
+
+// --- colours (aliases — see note above) ------------------------------------
+$focusColor: var(--octans-focus-ring);
+$errorColor: var(--octans-error);
+$errorBgColor: var(--octans-error-surface);
+$linkColor: var(--octans-text-link);
+$linkHoverColor: var(--octans-text-link-hover);
+
+$textColor: var(--octans-text);
+$textSubduedColor: var(--octans-text-subdued);
+$textPositiveColor: var(--octans-text-success);
+$textNegativeColor: var(--octans-text-error);
+
+$surfaceColor: var(--octans-surface);
+$surfaceSunkenColor: var(--octans-surface-sunken);
+$borderColor: var(--octans-border);
+
+$skeletonColor: var(--octans-skeleton);
+
+$buttonDisabledTextColor: var(--octans-text-disabled);
+
+// --- inputs ----------------------------------------------------------------
+$inputMinHeight: 34px;
+$inputPaddingX: 12px;
+$inputPaddingY: 5px;
+$inputBorderColor: var(--octans-border-input);
+$inputBorderRadius: var(--octans-radius-field);
+$inputShadowInner: none;
+$inputFontSize: 14px;
+$inputBgColor: var(--octans-surface);
+$inputTextColor: var(--octans-text);
+$inputErrorBorderColor: var(--octans-border-error);
+$inputErrorBgColor: var(--octans-error-surface);
+$inputDisabledBgColor: var(--octans-surface-disabled);
+$inputDisabledCursor: not-allowed;
+$inputReadonlyBgColor: var(--octans-surface-sunken);
+$inputReadonlyCursor: not-allowed;
+
+// --- typography ------------------------------------------------------------
+// System stack by default — the library no longer pulls a web font from a third
+// party. Override `--ui-font` / `--ui-monospace-font` to use your own.
+//
+// `system-ui` leads: every modern browser resolves it to the platform's own
+// UI font (Segoe on Windows, Roboto on Android, SF on Apple, the desktop's
+// choice on Linux). The named fallbacks only serve engines too old to know
+// it, and the emoji fonts stop glyphs falling back to black-and-white.
+$defaultFontFamily:
+  system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans',
+  Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+$monospaceFontFamily:
+  ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+  monospace;

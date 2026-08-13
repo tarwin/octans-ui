@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "declaration": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "dist-types"
+  },
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "src/i18n/*.json"],
+  "exclude": [
+    // Covers *.stories.ts and deferred variants like *.stories.deferred.ts
+    "src/**/*.stories.*",
+    // Tests are not part of the published API. Without this they emit empty
+    // `*.test.d.ts` files into dist/ AND get type-checked against the DOM-only
+    // lib, so the Node imports in them print errors on every build.
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/__tests__/**",
+    // Storybook-only fixtures — not part of the published API, so they should
+    // not emit declarations.
+    "src/styleguide/**"
+  ]
+}

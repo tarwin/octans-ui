@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sidebar brand for Storybook: the octans-logo mark plus the name.
+
+  The mark is nested with its own viewBox so the source paths stay untouched —
+  scaling happens through the viewport, not by rewriting coordinates.
+
+  This is the DARK-chrome version (light text); octans-logo-wordmark.svg
+  is its pair. Two files rather than one adaptive file because an
+  <img>-referenced SVG cannot see the host page — no `currentColor`, no access
+  to its classes — and `prefers-color-scheme` is the wrong signal now that the
+  toolbar's Theme control can disagree with the OS. Each manager theme names
+  its own image instead.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 186 40"
+  width="186"
+  height="40"
+  role="img"
+  aria-label="Octans UI"
+>
+  <style>
+    .name {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      fill: #e6e9f0;
+    }
+    .suffix {
+      font-weight: 400;
+      fill: #c2c7ff;
+    }
+  </style>
+
+  <svg x="0" y="2" width="36" height="36" viewBox="0 0 365.98 365.98">
+    <path fill="#2765bc" d="M48.68,177.3l35.31-85.25-34.42-34.42C19.99,89.1,1.41,131.04,0,177.3h48.68Z"/>
+    <path fill="#5662d2" d="M92.05,83.99l85.25-35.31V0c-46.26,1.41-88.2,19.99-119.67,49.57l34.42,34.42Z"/>
+    <path fill="#1e58a1" d="M78.17,259.86c-35.31-85.25,5.83,14.07-29.48-71.18H0c1.41,46.26,15.96,83.77,45.54,115.24l32.62-44.07Z"/>
+    <path fill="#5662d2" d="M317.3,188.69l-35.31,85.25,34.42,34.42c29.58-31.47,48.16-73.41,49.57-119.67h-48.68Z"/>
+    <path fill="#1e58a1" d="M177.3,317.3c-72.76-30.14,10.2,4.23-75.05-31.08l-42.56,32.48c31.47,29.58,71.34,45.87,117.61,47.29v-48.68Z"/>
+    <path fill="#2765bc" d="M273.94,281.99l-85.25,35.31v48.68c46.26-1.41,88.2-19.99,119.67-49.57l-34.42-34.42Z"/>
+    <path fill="#9858e4" d="M299.67,134.74c.21.51,2.03,4.91,17.63,42.56h48.68c-.86-28-8.01-54.4-20.07-77.87l-46.24,35.32Z"/>
+    <path fill="#8b5ce6" d="M259.37,16.57C237.75,6.63,213.86.77,188.69,0v48.68c19.47,8.07,30.05,12.44,35.79,14.82l34.89-46.94Z"/>
+    <polygon fill="#2765bc" points="365.98 69.78 315.81 45.28 62.35 302.45 365.98 69.78"/>
+    <polygon fill="#5395eb" points="315.81 45.28 268.23 21.86 62.35 302.45 315.81 45.28"/>
+    <polygon fill="#c2c7ff" points="212.45 73.67 182.65 61.78 96.36 97.27 61.22 182.7 87.06 245.05 212.45 73.67"/>
+    <polygon fill="#c2c7ff" points="115.31 276.4 183.17 303.93 268.6 268.82 304.43 182.36 288.24 143.26 115.31 276.4"/>
+  </svg>
+
+  <text
+    class="name"
+    x="46"
+    y="27"
+  >Octans<tspan class="suffix" dx="6">UI</tspan></text>
+</svg>

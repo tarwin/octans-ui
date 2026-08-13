@@ -1,0 +1,35 @@
+<script type="importmap">
+{
+  "imports": {
+    "vue": "https://unpkg.com/vue@3.4.26/dist/vue.esm-browser.js",
+    "@octans/ui": "/dist/ui.js"
+  }
+}
+</script>
+<div id="app">
+  name: {{name}}
+  <fp-heading>This is a heading</fp-heading>
+  <fp-badge>Badge</fp-badge>
+  <fp-button>Click me</fp-button>
+  <fp-action-list :items="[{label: 'Action 1'}]">
+    <fp-button>Action</fp-button>
+  </fp-action-list>
+  <fp-card title="Hello!">
+    <fp-card-section>This is the content</fp-card-section>
+  </fp-card>
+</div>
+<link rel="stylesheet" href="/dist/style.css">
+<script type="module">
+  import UI from '@octans/ui'
+  import { createApp } from 'vue'
+  console.log('UI', UI, createApp)
+  const app = createApp({
+    data() {
+      return {
+        name: 'This is my name!'
+      }
+    }
+  })
+  app.use(UI, { prefix: 'fp' })
+  app.mount('#app')
+</script>

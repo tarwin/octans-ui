@@ -1,0 +1,384 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks'
+import * as GlobalUIStories from './GlobalUI.stories'
+
+<Meta of={GlobalUIStories} />
+
+# Global UI (`$ui`)
+
+Installing the library as a Vue plugin exposes a global helper object on every
+component instance as `$ui`, and as the default export `UI` for use outside of
+templates.
+
+```ts
+import { createApp } from 'vue'
+import UI from '@octans/ui'
+import '@octans/ui/style.css'
+
+const app = createApp(App)
+app.use(UI)
+```
+
+```vue
+<!-- inside any template -->
+<Button @click="$ui.toast({ title: 'Saved!' })">Save</Button>
+```
+
+```ts
+// outside templates (composables, stores, plain modules)
+import UI from '@octans/ui'
+
+UI.toast({ title: 'Saved!' })
+```
+
+## Setup & requirements
+
+Two separate things are at play — don't confuse them:
+
+- **`$ui` itself** only needs the **plugin install** (`app.use(UI)`). It does
+  **not** require `UiProvider`. The toast and modal helpers self-mount their
+  container to `document.body` on first call, so `toast`, `alert`, `confirm`,
+  `prompt`, `modal`, `format`, `setLocale` and `components` all work with no
+  wrapper.
+- **`UiProvider`** only provides the radix tooltip context. You only need it
+  for **tooltips** (the `Tooltip` component, and any `tooltip` prop on `Button`,
+  `Badge`, `Page` actions, etc.). Wrap your app once near the root — or just use
+  **`AppFrame`**, which already wraps its content in `UiProvider` for you.
+- **`progress`, `loader` and `saveBar` render through outlet components** —
+  `LoadingBar`, `LoaderOverlay` and `SaveBar`. `GlobalNav` includes the first,
+  `AppFrame` the second, so a framed app has all three wired. With no outlet
+  mounted anywhere, `progress` and `loader` mount their own on first use (a
+  bar fixed to the top of the viewport, a full-screen overlay) — the save bar
+  is the one you place yourself, because only you know where it should sit.
+
+> The live examples below import the helper functions directly so they run
+> inside Storybook even though the plugin isn't installed here. In your app you
+> would call them as `$ui.toast(…)`, `$ui.confirm(…)`, etc.
+
+---
+
+## `$ui.toast(options)` → `ToastManagerItemType`
+
+Shows a toast notification. The toast container mounts itself automatically on
+first use, so no setup is required.
+
+<Canvas of={GlobalUIStories.Toast} />
+
+```ts
+const t = $ui.toast({
+  title: 'Exhibition published',
+  content: 'Your changes are now live.',
+  icon: 'check',
+  duration: 4000, // ms; omit for default
+  actions: [{ label: 'Undo', onAction: () => revert() }]
+})
+
+t.remove() // dismiss programmatically
+```
+
+Use a `progress` (0–100) and/or `loading` flag for long-running operations:
+
+```ts
+const t = $ui.toast({ title: 'Uploading…', loading: true, progress: 0 })
+// later
+t.progress = 60
+```
+
+> See the **ToastManager** stories for the full list of options (`title`,
+> `content`, `icon`, `loading`, `progress`, `actions`, `duration`).
+
+### `$ui.toast.clearAll()`
+
+Dismisses every visible toast.
+
+```ts
+$ui.toast.clearAll()
+```
+
+---
+
+## Modals
+
+All modal helpers return a `Promise` that resolves when the modal closes. The
+host element mounts itself on demand.
+
+### `$ui.alert(options)` → `Promise`
+
+A single-button acknowledgement dialog.
+
+<Canvas of={GlobalUIStories.Alert} />
+
+```ts
+await $ui.alert({
+  title: 'Heads up',
+  content: 'This action cannot be undone.',
+  primaryActionLabel: 'Got it'
+})
+```
+
+### `$ui.confirm(options)` → `Promise`
+
+A two-button confirm/cancel dialog.
+
+<Canvas of={GlobalUIStories.Confirm} />
+
+```ts
+await $ui.confirm({
+  title: 'Delete work?',
+  content: 'This will permanently remove the catalogue record.',
+  primaryActionLabel: 'Delete',
+  primaryActionType: 'destructive',
+  secondaryActionLabel: 'Cancel',
+  onConfirm: () => doDelete(),
+  onCancel: () => {}
+})
+```
+
+### `$ui.prompt(options)` → `Promise<string>`
+
+A dialog with a text input. Supports validation, multiline, help text and a
+placeholder.
+
+<Canvas of={GlobalUIStories.Prompt} />
+
+```ts
+const name = await $ui.prompt({
+  title: 'Rename segment',
+  inputValue: current.name,
+  inputPlaceholder: 'Segment name',
+  inputValidator: (v) => v.trim().length > 0 || 'Name is required'
+})
+```
+
+### `$ui.modal(options)` → `Promise`
+
+A generic modal with arbitrary content and custom primary/secondary actions.
+`content` accepts a string or a `VNode` for rich bodies.
+
+<Canvas of={GlobalUIStories.Modal} />
+
+```ts
+$ui.modal({
+  title: 'Details',
+  content: h(MyComponent, { id }),
+  primaryAction: { label: 'Close' }
+})
+```
+
+> See the **Modal** stories for the full option list (`primaryAction`,
+> `secondaryActions`, `tertiaryActions`, `dialogStyle`, `loading`, etc.).
+
+---
+
+## `$ui.progress`
+
+A start/done pair to bracket async navigation or data loading, rendered as a
+trickle bar by any mounted **`LoadingBar`** — `GlobalNav` includes one, and
+with none mounted, a bar fixed to the top of the viewport appears on first
+use. Between `start()` and `done()` the bar creeps toward 99% on its own.
+
+```ts
+$ui.progress.start()
+try {
+  await loadData()
+} finally {
+  $ui.progress.done()
+}
+```
+
+In `<script setup>`, prefer the **`useProgress()`** composable — the same
+shared state, with `value` as a ref.
+
+<Canvas of={GlobalUIStories.Progress} />
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>start()</code>
+      </td>
+      <td>Begins the trickle.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>done()</code>
+      </td>
+      <td>Runs the bar to 100% and clears it a moment later.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>value</code>
+      </td>
+      <td>The current position, 0–100. Reactive; read-only.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## `$ui.loader`
+
+A blocking loader overlay with an optional message, for when interaction must
+stop during a critical operation. Rendered by any mounted **`LoaderOverlay`**
+— `AppFrame` includes one over its content area, and with none mounted, a
+full-viewport overlay appears on first use.
+
+```ts
+$ui.loader.show('Saving…')
+try {
+  await save()
+} finally {
+  $ui.loader.hide()
+}
+```
+
+In `<script setup>`, prefer the **`useLoader()`** composable — the same shared
+state, with `visible` as a ref.
+
+<Canvas of={GlobalUIStories.Loader} />
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>show(message?)</code>
+      </td>
+      <td>Shows the overlay.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>hide()</code>
+      </td>
+      <td>Hides the overlay.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>visible</code>
+      </td>
+      <td>Whether it is showing. Reactive; read-only.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## `$ui.saveBar`
+
+Controls the contextual save bar (the "you have unsaved changes" bar),
+rendered by any mounted **`SaveBar`** — `GlobalNav` includes one. The app owns
+the state: set it as the form becomes dirty or clean; the bar's Save and
+Discard buttons only *announce* their clicks to subscribers.
+
+In `<script setup>`, prefer the **`useSaveBar()`** composable — it takes the
+handlers directly and unsubscribes them on unmount:
+
+```ts
+const { setState } = useSaveBar({
+  onSave: async () => {
+    setState('saving')
+    await save()
+    setState('unchanged')
+  },
+  onDiscard: () => reset()
+})
+watch(dirty, (d) => setState(d ? 'changed' : 'unchanged'))
+```
+
+<Canvas of={GlobalUIStories.SaveBarStory} />
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>setState(state)</code>
+      </td>
+      <td>
+        <code>'unchanged' | 'changed' | 'saving'</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>save()</code> / <code>discard()</code>
+      </td>
+      <td>Announce a save / discard, as the bar's buttons do.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onSave(fn)</code> / <code>onDiscard(fn)</code>
+      </td>
+      <td>Subscribe. Each returns an unsubscribe function.</td>
+    </tr>
+    <tr>
+      <td>
+        <code>state</code>
+      </td>
+      <td>The current state. Reactive; read-only.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## `$ui.format(value, format, context?)` → `string`
+
+Locale- and currency-aware formatting. The same engine powers the `Formatter`
+component. Returns an em-dash (`—`) for empty values.
+
+<Canvas of={GlobalUIStories.Format} />
+
+```ts
+$ui.format(1234.5, 'currency') // "$1,234.50"
+$ui.format(1234.5, 'currency', { currency: 'EUR', locale: 'de-DE' })
+$ui.format(0.873, 'percent') // "87.3%"
+$ui.format(1500000, 'integer') // "1,500,000"
+$ui.format('2026-01-01', 'dateShort') // "Jan 1, 2026"
+$ui.format([startIso, endIso], 'duration')
+$ui.format(10485760, 'filesize') // "10.49 MB"
+```
+
+**Available formats:** `integer`, `decimal`, `currency`, `percent`, `boolean`,
+`filesize`, `duration`, `durationMs`, `dateAgo`, `dateCalendar`, `dateIso`,
+`dateNumeral`, `dateShort`, `dateTimeShort`, `dateLong`, `dateTimeLong`,
+`dateMonthShort`, `dateMonthLong`, `dateMonthYearShort`, `dateMonthYearLong`.
+
+The `context` object accepts `{ locale, currency }`. When omitted, the locale
+falls back to the active translation locale (see `$ui.setTranslationLocale`) or
+`en-US`, and currency to `USD`.
+
+---
+
+## `$ui.setLocale(locale)`
+
+Sets the active locale for date formatting (dayjs) used by `$ui.format` and the
+date components.
+
+```ts
+$ui.setLocale('fr')
+```
+
+---
+
+## `$ui.components`
+
+The full map of every exported component, handy for dynamic component lookups.
+
+```ts
+const Cmp = $ui.components['Badge']
+```

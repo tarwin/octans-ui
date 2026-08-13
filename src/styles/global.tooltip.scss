@@ -1,0 +1,111 @@
+$arrow-size1: 5px;
+$arrow-size2: 5px;
+
+[data-ui-tooltip] {
+  position: relative;
+  // text-decoration: underline dotted;
+  // cursor: help;
+}
+
+// The tooltip is drawn as pseudo-elements INSIDE the trigger, so if the
+// trigger has its own stacking context (buttons do — the hover-lift
+// transform) the tooltip's z-index can't escape it and later siblings paint
+// on top. Raising the whole trigger while hovered lets the tooltip clear its
+// neighbours.
+[data-ui-tooltip]:hover {
+  z-index: 3;
+}
+
+[data-ui-tooltip]::before,
+[data-ui-tooltip]::after {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+[data-ui-tooltip]:hover::before,
+[data-ui-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-ui-tooltip]::before {
+  content: attr(data-ui-tooltip);
+  z-index: 2;
+  width: max-content;
+  max-width: 200px;
+  color: var(--octans-text-on-tooltip);
+  background: var(--octans-surface-tooltip);
+  border-radius: var(--octans-radius-box);
+  padding: 5px 8px;
+  text-align: left;
+}
+
+[data-ui-tooltip]::after {
+  content: '';
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+
+[data-ui-tooltip-position='top']::before,
+[data-ui-tooltip-position='top']::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%);
+  margin-bottom: $arrow-size2;
+}
+
+[data-ui-tooltip-position='top']::after {
+  margin-bottom: 0;
+  border-left: $arrow-size1 solid transparent;
+  border-right: $arrow-size1 solid transparent;
+  border-top: $arrow-size2 solid var(--octans-surface-tooltip);
+}
+
+[data-ui-tooltip-position='bottom']::before,
+[data-ui-tooltip-position='bottom']::after {
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%);
+  margin-top: $arrow-size2;
+}
+
+[data-ui-tooltip-position='bottom']::after {
+  margin-top: 0;
+  border-left: $arrow-size1 solid transparent;
+  border-right: $arrow-size1 solid transparent;
+  border-bottom: $arrow-size2 solid var(--octans-surface-tooltip);
+}
+
+[data-ui-tooltip-position='right']::before,
+[data-ui-tooltip-position='right']::after {
+  top: 50%;
+  left: 100%;
+  transform: translate(0, -50%);
+  margin-left: $arrow-size2;
+}
+
+[data-ui-tooltip-position='right']::after {
+  margin-left: 0;
+  border-top: $arrow-size1 solid transparent;
+  border-right: $arrow-size2 solid var(--octans-surface-tooltip);
+  border-bottom: $arrow-size1 solid transparent;
+}
+
+[data-ui-tooltip-position='left']::before,
+[data-ui-tooltip-position='left']::after {
+  top: 50%;
+  right: 100%;
+  transform: translate(0, -50%);
+  margin-right: $arrow-size2;
+}
+
+[data-ui-tooltip-position='left']::after {
+  margin-right: 0;
+  border-top: $arrow-size1 solid transparent;
+  border-left: $arrow-size2 solid var(--octans-surface-tooltip);
+  border-bottom: $arrow-size1 solid transparent;
+}

@@ -1,0 +1,130 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import en from '../i18n/en.json'
+
+<Meta title="Documentation/Translations" />
+
+# Translations
+
+Every user-visible string the library renders on its own — button labels in
+modals, empty states, file-input errors, filter chrome — comes from a
+dictionary. Nothing is hardcoded in a component, so a full translation means
+supplying one object.
+
+English ships in the box and is always the fallback, so a partial translation
+degrades to readable English rather than to raw dotted keys.
+
+## Translate everything
+
+Pass a flat object keyed by the ids below. `setTranslations` replaces a
+locale's dictionary; `addTranslations` merges into it.
+
+```ts
+import { setTranslations, setTranslationLocale } from '@octans/ui'
+
+setTranslations('fr', {
+  'ui.lang.cancel': 'Annuler',
+  'ui.modal.confirm': 'OK'
+  // …the rest
+})
+
+setTranslationLocale('fr')
+```
+
+Locale switching is synchronous — the dictionaries are plain objects, not
+fetched — so a language picker can call `setTranslationLocale` directly.
+
+Keys are looked up in the active locale, then English, then returned verbatim.
+That last step is deliberate: a missing string shows up as a visible,
+greppable `ui.something.key` instead of an empty element.
+
+## Placeholders
+
+Strings marked below with `{braces}` interpolate at call time. Keep every
+placeholder present in your translation — an unknown one is left in the text
+rather than rendered as `undefined`, so a typo is visible instead of silent.
+Their order can change freely; they are named, not positional.
+
+## Dates and numbers
+
+These are **not** translated through this dictionary. Dates run through DayJS
+locales (`setLocale` from the date utils, which covers considerably more
+languages than the strings here), and numbers/currency through the browser's
+own `Intl` formatting. Translating a dictionary does not switch either — set
+the date locale alongside it.
+
+## Every string
+
+<TranslationTable dict={en} />
+
+export const TranslationTable = ({ dict }) => {
+  // Grouped by the middle segment of the key (`ui.<group>.<name>`), which is
+  // the component or area the string belongs to. Generated from en.json at
+  // build time rather than hand-listed, so this page cannot fall out of date
+  // when a string is added.
+  const groups = {}
+  for (const [key, value] of Object.entries(dict)) {
+    const group = key.split('.')[1] ?? 'other'
+    ;(groups[group] ??= []).push([key, value])
+  }
+  return (
+    <>
+      <p>
+        <strong>{Object.keys(dict).length} strings</strong> in{' '}
+        {Object.keys(groups).length} groups.
+      </p>
+      {Object.entries(groups).map(([group, entries]) => (
+        <div key={group}>
+          <h3>{group}</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>English</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(([key, value]) => (
+                <tr key={key}>
+                  <td>
+                    <code>{key}</code>
+                  </td>
+                  <td>{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </>
+  )
+}
+
+## Starter file
+
+Copy this as the skeleton for a new locale — every key, with the English text
+as the thing to replace.
+
+<CopyableJson dict={en} />
+
+export const CopyableJson = ({ dict }) => (
+  <pre
+    style={{
+      maxHeight: 320,
+      overflow: 'auto',
+      padding: 12,
+      borderRadius: 6,
+      background: 'rgba(127, 127, 127, 0.12)',
+      fontSize: 12,
+      lineHeight: 1.5
+    }}
+  >
+    <code>{JSON.stringify(dict, null, 2)}</code>
+  </pre>
+)
+
+## A note on completeness
+
+This list covers the library's own strings. It does not cover text **you**
+pass in as props — page titles, column headings, empty-state messages, button
+labels in your app code. Those stay in your application's own translation
+layer; Octans never sees them.

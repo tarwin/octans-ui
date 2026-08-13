@@ -1,0 +1,17 @@
+dist
+storybook-static
+coverage
+pnpm-lock.yaml
+
+# Story fixtures — large generated data, not hand-edited.
+src/data
+src/styleguide/orders.json
+
+# Generated files. Formatting these would make every regeneration produce a
+# spurious diff, because the generator writes its own (valid but different)
+# style. Their scripts own the formatting.
+#   pnpm icons:bundle
+#   node scripts/generate-timezone-countries.mjs
+src/components/Icon/iconBundle.ts
+.storybook/storyIconBundle.ts
+src/components/TimezonePicker/zoneCountries.ts

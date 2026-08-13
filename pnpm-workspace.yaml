@@ -1,0 +1,8 @@
+allowBuilds:
+  '@parcel/watcher': true
+  command-join: true
+  esbuild: true
+  vue-demi: true
+minimumReleaseAgeExclude:
+  - npm-run-all2@9.0.2
+  - sass@1.101.0

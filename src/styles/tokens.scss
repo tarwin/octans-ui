@@ -1,0 +1,521 @@
+// Octans design tokens.
+//
+// Three tiers (see docs/color-system.md for the full design):
+//
+//   1. SEEDS (JS only) — `createTheme({ primary: '#…' })` generates the ramps
+//      below from a handful of colours. Optional; the front door for theming.
+//   2. PRIMITIVES (`--octans-neutral-500`, `--octans-primary-500`, …) — the
+//      raw palette, as ramps. Components must NOT use these directly.
+//   3. SEMANTIC (`--octans-surface`, `--octans-text-error`, …) — what things
+//      mean. This is the public, themeable API. Components use only these.
+//
+// Eight colour roles: primary / secondary / tertiary (brand), info / success /
+// warning / error (status), and the neutral family (surfaces, text, borders).
+// Every non-neutral role exposes the same four tokens:
+//
+//   --octans-<role>            the solid fill
+//   --octans-text-on-<role>    content sitting on that fill
+//   --octans-<role>-surface    soft tinted background (M3 would say container)
+//   --octans-text-<role>       readable text in that hue — on plain surfaces
+//                              and on `<role>-surface`
+//
+// Hover/active states and several neutral tokens are DERIVED with
+// `color-mix()` from the tokens above, so a theme that only redefines ramps
+// (or only fills) stays coherent without touching them. Every derived token
+// can still be overridden individually — derivation is a default, not a rule.
+//
+// Theming:
+//   - `:root` defines the light palette.
+//   - `@media (prefers-color-scheme: dark)` follows the OS, but is guarded by
+//     `:not([data-octans-theme='light'])` so an explicit light choice wins.
+//   - `[data-octans-theme='dark']` forces dark regardless of the OS.
+//
+// A colour must never be defined ONLY inside a media query or attribute block —
+// otherwise it disappears in the other theme.
+
+// Derived tokens, shared verbatim by both themes.
+//
+// These have to be a mixin included in BOTH the light `:root` block and the
+// dark overrides, not declared once — a custom property substitutes its
+// `var()` references where it is DECLARED, then inherits as that literal. A
+// scoped dark subtree (`<div data-octans-theme="dark">`) redeclares
+// `--octans-text` and friends, but a formula declared only on `:root` was
+// already computed against the light values and would inherit stale. Restating
+// the formulas inside the dark block makes them re-substitute in scope.
+@mixin octans-derived-tokens {
+  /** Selected rows and items. Derived: selection is the primary's soft tint. */
+  --octans-surface-selected: var(--octans-primary-surface);
+
+  /** Links are primary-coloured text. Derived; retune via `text-primary`. */
+  --octans-text-link: var(--octans-text-primary);
+  // Hover shifts the link TOWARD the body text colour — darker in light,
+  // lighter in dark — rather than toward `state-mix`, which would sap its
+  // contrast in dark mode.
+  --octans-text-link-hover: color-mix(
+    in oklab,
+    var(--octans-text-link) 82%,
+    var(--octans-text)
+  );
+
+  // Hover/active states: the fill shaded toward `--octans-state-mix`.
+  --octans-primary-hover: color-mix(
+    in oklab,
+    var(--octans-primary) 88%,
+    var(--octans-state-mix)
+  );
+  --octans-primary-active: color-mix(
+    in oklab,
+    var(--octans-primary) 78%,
+    var(--octans-state-mix)
+  );
+  --octans-secondary-hover: color-mix(
+    in oklab,
+    var(--octans-secondary) 88%,
+    var(--octans-state-mix)
+  );
+  --octans-secondary-active: color-mix(
+    in oklab,
+    var(--octans-secondary) 78%,
+    var(--octans-state-mix)
+  );
+  --octans-tertiary-hover: color-mix(
+    in oklab,
+    var(--octans-tertiary) 88%,
+    var(--octans-state-mix)
+  );
+  --octans-tertiary-active: color-mix(
+    in oklab,
+    var(--octans-tertiary) 78%,
+    var(--octans-state-mix)
+  );
+  --octans-error-hover: color-mix(
+    in oklab,
+    var(--octans-error) 88%,
+    var(--octans-state-mix)
+  );
+  --octans-error-active: color-mix(
+    in oklab,
+    var(--octans-error) 78%,
+    var(--octans-state-mix)
+  );
+
+  /** Placeholder shimmer for skeleton loaders. Derived: text over surface. */
+  --octans-skeleton: color-mix(
+    in oklab,
+    var(--octans-text) 7%,
+    var(--octans-surface)
+  );
+  /** Scrollbar thumb hover. Derived: a step toward text. */
+  --octans-scrollbar-thumb-hover: color-mix(
+    in oklab,
+    var(--octans-scrollbar-thumb) 82%,
+    var(--octans-text)
+  );
+}
+
+// Dark overrides. Only the SEMANTIC tier is redefined — the primitive ramps are
+// shared, so both themes draw from the same palette and stay in sync. Fills and
+// every `color-mix()` derivation carry over on their own; what flips here is
+// which ramp step the neutral family and the `text-<role>` tokens point at.
+@mixin octans-dark-tokens {
+  @include octans-derived-tokens;
+
+  --octans-surface: var(--octans-neutral-900);
+  --octans-surface-raised: var(--octans-neutral-800);
+  --octans-surface-sunken: var(--octans-neutral-950);
+  --octans-surface-app: var(--octans-neutral-950);
+  --octans-surface-hover: var(--octans-neutral-800);
+  --octans-surface-disabled: var(--octans-neutral-800);
+  --octans-surface-control: var(--octans-neutral-800);
+  --octans-surface-tooltip: var(--octans-neutral-700);
+  // The bar keeps its dark chrome, but steps off the app background so it
+  // still reads as a distinct band.
+  --octans-surface-nav: var(--octans-neutral-800);
+  --octans-overlay: rgba(0, 0, 0, 0.6);
+  // Veils the thing it covers rather than the page behind it, so unlike
+  // `--octans-overlay` it follows the surface, not the dark.
+  --octans-scrim: rgba(17, 21, 26, 0.7);
+
+  --octans-text: var(--octans-neutral-100);
+  --octans-text-subdued: var(--octans-neutral-400);
+  --octans-text-disabled: var(--octans-neutral-600);
+  --octans-text-on-tooltip: var(--octans-neutral-100);
+  --octans-text-on-nav: var(--octans-neutral-0);
+
+  --octans-border: var(--octans-neutral-700);
+  --octans-border-strong: var(--octans-neutral-500);
+  // A step quieter than `border-strong`, mirroring the light theme's
+  // deliberate softness — see the border block in `:root`.
+  --octans-border-input: var(--octans-neutral-600);
+  --octans-border-focus: var(--octans-primary-400);
+  --octans-focus-ring: var(--octans-primary-400);
+
+  // `text-<role>` steps up to the pale end of each ramp; the fills themselves
+  // deliberately do NOT lighten — they carry white text in both themes.
+  --octans-text-primary: var(--octans-primary-300);
+  --octans-primary-surface: color-mix(
+    in srgb,
+    var(--octans-primary-800) 45%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-secondary: var(--octans-secondary-300);
+  --octans-secondary-surface: color-mix(
+    in srgb,
+    var(--octans-secondary-700) 45%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-tertiary: var(--octans-tertiary-300);
+  --octans-tertiary-surface: color-mix(
+    in srgb,
+    var(--octans-tertiary-700) 40%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-info: var(--octans-info-300);
+  --octans-info-surface: color-mix(
+    in srgb,
+    var(--octans-info-700) 40%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-success: var(--octans-success-300);
+  --octans-success-surface: color-mix(
+    in srgb,
+    var(--octans-success-700) 35%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-warning: var(--octans-warning-300);
+  --octans-warning-surface: color-mix(
+    in srgb,
+    var(--octans-warning-700) 35%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-text-error: var(--octans-error-300);
+  --octans-error-surface: color-mix(
+    in srgb,
+    var(--octans-error-700) 35%,
+    var(--octans-neutral-900)
+  );
+
+  --octans-scrollbar-thumb: var(--octans-neutral-600);
+
+  // Darker and deeper — a light-theme shadow vanishes on a dark surface.
+  --octans-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --octans-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --octans-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --octans-shadow-control: 0 1px 0 0 rgba(0, 0, 0, 0.35);
+  // Inverted, not merely darkened: the pane's own surface is already near
+  // black, so a black fade has nothing left to darken. A light one reads as
+  // the edge catching the light instead.
+  --octans-shadow-overflow: rgba(255, 255, 255, 0.16);
+}
+
+:root {
+  @include octans-derived-tokens;
+
+  // --- primitives: neutral (cool grey) ------------------------------------
+  --octans-neutral-0: #ffffff;
+  --octans-neutral-50: #f8f9fb;
+  --octans-neutral-100: #eff1f5;
+  --octans-neutral-200: #e2e6ec;
+  --octans-neutral-300: #cbd2dc;
+  --octans-neutral-400: #a3adbd;
+  --octans-neutral-500: #7b8798;
+  --octans-neutral-600: #5c6675;
+  --octans-neutral-700: #434c58;
+  --octans-neutral-800: #2c333d;
+  --octans-neutral-900: #1b2027;
+  --octans-neutral-950: #11151a;
+
+  // --- primitives: primary (pine) -------------------------------------------
+  // Generated from seed #386657 (the seed IS 500, as `createTheme` does it).
+  --octans-primary-50: #dfefe8;
+  --octans-primary-100: #ccdfd7;
+  --octans-primary-200: #a6bfb5;
+  --octans-primary-300: #80a094;
+  --octans-primary-400: #5c8375;
+  --octans-primary-500: #386657;
+  --octans-primary-600: #2b5346;
+  --octans-primary-700: #1e4236;
+  --octans-primary-800: #113027;
+  --octans-primary-900: #062018;
+
+  // --- primitives: secondary (burnt orange) ---------------------------------
+  // Generated from seed #ba4f1a (the seed IS 500). The two pale steps carry
+  // more chroma than a generated ramp would give them — they are container
+  // tones (the tonal Button's fill), and at the generic cap they read as
+  // beige, i.e. disabled.
+  --octans-secondary-50: #ffe9df;
+  --octans-secondary-100: #ffdccd;
+  --octans-secondary-300: #d7966e;
+  --octans-secondary-500: #ba4f1a;
+  --octans-secondary-600: #9a3c16;
+  --octans-secondary-700: #7c2a10;
+
+  // --- primitives: tertiary (leaf green) ------------------------------------
+  // Seed #85b87a — a PALE seed, so this ramp bends the usual shape: 500 is
+  // light enough to want a dark label (see `text-on-tertiary`), and 600/700
+  // sit deeper than a linear generator would put them, because they are the
+  // `text-tertiary` steps and owe 4.5:1 on white.
+  --octans-tertiary-50: #eaf8e7;
+  --octans-tertiary-100: #d5edd0;
+  --octans-tertiary-300: #b1d4aa;
+  --octans-tertiary-500: #85b87a;
+  --octans-tertiary-600: #46703d;
+  --octans-tertiary-700: #38612f;
+
+  // --- primitives: status ----------------------------------------------------
+  // Info is a true blue, no longer an alias of the primary — "informational"
+  // and "selected/branded" used to be indistinguishable.
+  --octans-info-50: #e8f2fc;
+  --octans-info-100: #cfe4f9;
+  --octans-info-300: #6fb0e8;
+  --octans-info-500: #2478cc;
+  --octans-info-600: #1c5faa;
+  --octans-info-700: #144889;
+
+  --octans-success-50: #e8f7ef;
+  --octans-success-100: #cdedde;
+  --octans-success-300: #6bcf9a;
+  --octans-success-500: #16a06a;
+  --octans-success-600: #0f8558;
+  --octans-success-700: #0b6a46;
+
+  --octans-warning-50: #fef4e6;
+  --octans-warning-100: #fce7c6;
+  --octans-warning-300: #f6c26b;
+  --octans-warning-500: #e08a0b;
+  --octans-warning-600: #b86e05;
+  --octans-warning-700: #8f5504;
+
+  --octans-error-50: #fdecec;
+  --octans-error-100: #fad4d4;
+  --octans-error-300: #f39a9a;
+  --octans-error-500: #dc3d3d;
+  --octans-error-600: #bb2b2b;
+  --octans-error-700: #971f1f;
+
+  // --- state shading ---------------------------------------------------------
+  /**
+   * What hover/active fills mix toward. Deliberately black in BOTH themes — a
+   * pressed fill that lightens in dark mode pulls away from its own white
+   * label (4.7:1 falls to 3.2:1). One token retunes every derived state.
+   */
+  --octans-state-mix: #000000;
+
+  // --- semantic: surfaces --------------------------------------------------
+  /** The page/card background. */
+  --octans-surface: var(--octans-neutral-0);
+  /** Raised above the surface — menus, popovers, modals. */
+  --octans-surface-raised: var(--octans-surface);
+  /** Recessed — table headers, wells, code blocks. */
+  --octans-surface-sunken: var(--octans-neutral-50);
+  /** The application background behind cards. */
+  --octans-surface-app: var(--octans-neutral-100);
+  /** Hover wash over a surface. Derived: a breath of text over surface. */
+  --octans-surface-hover: color-mix(
+    in oklab,
+    var(--octans-text) 4%,
+    var(--octans-surface)
+  );
+  --octans-surface-disabled: var(--octans-surface-sunken);
+  /**
+   * Fill of neutral controls — default buttons, the Select control. Separate
+   * from `--octans-surface` so a theme can restyle controls without moving
+   * every card with them.
+   */
+  --octans-surface-control: var(--octans-surface);
+  /** Tooltip body. Inverted chrome in light, raised chrome in dark. */
+  --octans-surface-tooltip: rgba(17, 21, 26, 0.88);
+  /**
+   * The app bar (`GlobalNav`). Its own chrome, independent of the app theme —
+   * dark over a light app the way admin bars usually are. A theme that wants
+   * a branded or light bar overrides this pair.
+   */
+  --octans-surface-nav: var(--octans-neutral-800);
+  /** Scrim behind modals and overlays. */
+  --octans-overlay: rgba(17, 21, 26, 0.45);
+  /**
+   * Veil over a region that is loading — a table, a sheet, a page. Unlike
+   * `--octans-overlay` this sits ON the content it obscures, so it follows the
+   * surface: pale in light, dark in dark. A fixed white here is the reason
+   * loading states used to flash white in dark mode.
+   */
+  --octans-scrim: rgba(255, 255, 255, 0.7);
+
+  // --- semantic: text ------------------------------------------------------
+  --octans-text: var(--octans-neutral-800);
+  --octans-text-subdued: var(--octans-neutral-600);
+  --octans-text-disabled: var(--octans-neutral-400);
+  /** Text on `--octans-surface-tooltip`. */
+  --octans-text-on-tooltip: var(--octans-neutral-0);
+  /** Text on `--octans-surface-nav`. */
+  --octans-text-on-nav: var(--octans-neutral-0);
+
+  // --- semantic: borders ---------------------------------------------------
+  // `border-input` outlines every control — inputs, selects, checkboxes,
+  // default buttons — through one token.
+  //
+  // It sits at `neutral-400` (2.26:1 on white), a DELIBERATE step below WCAG
+  // 1.4.11's 3:1 for UI components: the strict reading made every control in
+  // the library read as heavy chrome, and a field is rarely identified by its
+  // outline alone (label, fill and focus ring all mark it, and the focus ring
+  // does hold 3:1). A theme that wants the strict AA reading back sets
+  //
+  //   --octans-border-input: var(--octans-neutral-500);   /* 3.65:1 */
+  //
+  // and nothing else. scripts/check-contrast.mjs holds this to a 2:1 floor so
+  // it cannot quietly fade further, and keeps the hard 3:1 on the focus ring.
+  --octans-border: var(--octans-neutral-200);
+  // Halfway between two ramp steps: `neutral-300` alone dips under the 1.6:1
+  // visibility floor, `neutral-400` reads as a heavy rule. The mix keeps it
+  // ramp-connected — retint the neutrals and this follows — at the weight the
+  // old hand-picked literal had.
+  --octans-border-strong: color-mix(
+    in oklab,
+    var(--octans-neutral-300) 50%,
+    var(--octans-neutral-400)
+  );
+  --octans-border-input: var(--octans-neutral-400);
+  --octans-border-error: var(--octans-error-500);
+  --octans-border-focus: var(--octans-primary-500);
+
+  // --- semantic: colour roles ----------------------------------------------
+  // The same four tokens per role — fill, text-on-fill, soft surface, text —
+  // plus hover/active derived from the fill. Fills are FILL colours: they sit
+  // behind `text-on-<role>`, so they stay dark enough for white text in BOTH
+  // themes. Use the `text-<role>` tokens for coloured text instead.
+
+  /** Primary actions, active states, selection, links. */
+  --octans-primary: var(--octans-primary-500);
+  --octans-text-on-primary: #ffffff;
+  --octans-primary-surface: var(--octans-primary-50);
+  --octans-text-primary: var(--octans-primary-600);
+  --octans-focus-ring: var(--octans-primary-500);
+
+  /**
+   * The second brand colour. The secondary Button variant renders this role's
+   * SOFT form (`secondary-surface` + `text-secondary`), which is what keeps it
+   * quieter than the primary; the solid fill is there for themes and badges.
+   */
+  --octans-secondary: var(--octans-secondary-500);
+  --octans-text-on-secondary: #ffffff;
+  // The 100 step, not 50 like the other roles: this is the secondary Button's
+  // tonal fill, and it has to read as a coloured button, not a tinted panel.
+  --octans-secondary-surface: var(--octans-secondary-100);
+  --octans-text-secondary: var(--octans-secondary-600);
+
+  /** The third brand colour — highlights, illustrations, variety in data. */
+  --octans-tertiary: var(--octans-tertiary-500);
+  // Dark, not white: the leaf-green fill is pale (white sits at 2.3:1 on it).
+  // Exactly the choice `createTheme` would make by measurement.
+  --octans-text-on-tertiary: var(--octans-neutral-950);
+  --octans-tertiary-surface: var(--octans-tertiary-50);
+  --octans-text-tertiary: var(--octans-tertiary-600);
+
+  --octans-info: var(--octans-info-600);
+  --octans-text-on-info: #ffffff;
+  --octans-info-surface: var(--octans-info-50);
+  --octans-text-info: var(--octans-info-600);
+
+  --octans-success: var(--octans-success-600);
+  --octans-text-on-success: #ffffff;
+  --octans-success-surface: var(--octans-success-50);
+  --octans-text-success: var(--octans-success-700);
+
+  // The warning fill sits a step deeper than the other status fills — amber
+  // is the light hue family, and 600 does not clear 4.5:1 under white text.
+  --octans-warning: var(--octans-warning-700);
+  --octans-text-on-warning: #ffffff;
+  --octans-warning-surface: var(--octans-warning-50);
+  --octans-text-warning: var(--octans-warning-700);
+
+  --octans-error: var(--octans-error-600);
+  --octans-text-on-error: #ffffff;
+  --octans-error-surface: var(--octans-error-50);
+  --octans-text-error: var(--octans-error-600);
+
+  // --- semantic: misc ------------------------------------------------------
+  // The toggle knob stays light in BOTH themes — a switch reads as a pale knob
+  // travelling along a coloured track, and flipping it dark inverts that. So
+  // the icon riding on it must stay dark in both themes too: pointing it at a
+  // theme-reactive text token drops it to ~2.3:1 on the white knob in dark.
+  // These are absent from `octans-dark-tokens` on purpose.
+  /** Knob (thumb) of a ToggleSwitch. */
+  --octans-toggle-knob: var(--octans-neutral-0);
+  /** Icon sitting on the knob when unchecked. 5.8:1 against the knob. */
+  --octans-toggle-knob-icon: var(--octans-neutral-600);
+
+  /** Scrollbar thumb inside scroll panes. Its hover is derived — see the
+   *  shared mixin, which also holds the skeleton shimmer. */
+  --octans-scrollbar-thumb: var(--octans-neutral-300);
+
+  /**
+   * Filled stars in a Rating. Its own token rather than `--octans-warning`:
+   * that fill is deliberately the deep 700 step so white LABEL text clears
+   * 4.5:1 on it, which makes a muddy brown star. A star carries no text, so
+   * it wants the bright gold people already read as "rated".
+   *
+   * A literal, and the same value in both themes, for the same reason as the
+   * toggle knob below: this gold is an icon convention rather than a slot in
+   * the palette. Re-seeding `warning` to a brand amber should not turn the
+   * stars brown — override this one token if you want them to follow.
+   */
+  --octans-rating: #f5b50a;
+
+  // --- elevation -----------------------------------------------------------
+  // Dark themes need lighter, tighter shadows — a black shadow on a dark
+  // surface is invisible, so these are redefined per theme rather than reused.
+  --octans-shadow-sm: 0 1px 2px rgba(17, 21, 26, 0.08);
+  --octans-shadow-md: 0 2px 6px rgba(17, 21, 26, 0.12);
+  --octans-shadow-lg: 0 8px 24px rgba(17, 21, 26, 0.16);
+  /**
+   * The hairline under a resting control. Flatter than `shadow-sm` — it exists
+   * to seat a button on the surface, not to lift it off.
+   */
+  --octans-shadow-control: 0 1px 0 0 rgba(22, 29, 37, 0.05);
+  /**
+   * The colour a ScrollPane fades its edges to when there is more content off
+   * screen. A *colour*, not a shadow — it is the opaque end of a gradient that
+   * runs to transparent, so it cannot be a `box-shadow` value.
+   */
+  --octans-shadow-overflow: rgba(22, 29, 37, 0.14);
+
+  // --- radii ---------------------------------------------------------------
+  // Role-named, daisyUI-style: two knobs, not a size scale. `field` rounds
+  // anything hand-sized (buttons, inputs, swatches); `box` rounds containers
+  // (cards, popovers, modals, tooltips). Set both to 0 for a square theme.
+  --octans-radius-field: 4px;
+  --octans-radius-box: 8px;
+  // 9999px, NOT 50%: a percentage radius is measured per-axis, so on a
+  // non-square element 50% draws an ellipse — a pill button gets squashed
+  // oval ends. A huge length clamps to half the shorter side instead: true
+  // stadium ends on pills, and still a perfect circle on square elements.
+  --octans-radius-full: 9999px;
+
+  // --- typography ----------------------------------------------------------
+  --octans-font: var(--ui-font);
+  --octans-font-mono: var(--ui-monospace-font);
+}
+
+// --- dark, following the OS ------------------------------------------------
+// Guarded so an explicit `data-octans-theme="light"` still wins.
+@media (prefers-color-scheme: dark) {
+  :root:not([data-octans-theme='light']) {
+    @include octans-dark-tokens;
+  }
+}
+
+// --- dark, chosen explicitly ------------------------------------------------
+:root[data-octans-theme='dark'] {
+  @include octans-dark-tokens;
+}
+
+// Scoped variant, so a subtree can be themed independently of the document.
+[data-octans-theme='dark'] {
+  @include octans-dark-tokens;
+}

@@ -1,0 +1,45 @@
+name: Bug report
+description: Something renders or behaves wrong
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: '@octans/ui version'
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser / environment
+      placeholder: Chrome 139 on macOS, Vue 3.5
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: >-
+        Smallest set of steps that shows the problem. If a Storybook story on
+        https://octans.dev shows it, link the story and describe what to do
+        from there.
+      placeholder: |
+        1. Render <ChoiceList> with …
+        2. Click …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Screenshots welcome for anything visual.
+    validations:
+      required: true

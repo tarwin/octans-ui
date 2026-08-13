@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch makes an in-flight run obsolete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Kept in sync with "engines" in package.json.
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Keeps formatting from drifting again — the repo was reformatted in one
+      # pass, and this stops it slowly diverging file by file.
+      - name: Format check
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type check
+        run: pnpm run type-check
+
+      - name: Test
+        run: pnpm run test
+
+      # Fails if a token change drops a text/UI pair below WCAG AA.
+      - name: Contrast audit
+        run: pnpm run check:contrast
+
+      # Fails if an Iconify name in src/ has no bundle entry, or a bundled icon
+      # is no longer used. Offline, unlike `icons:bundle` itself.
+      - name: Icon bundle check
+        run: pnpm run check:icons
+
+      - name: Build library
+        run: pnpm run build-lib
+
+      - name: Build Storybook
+        run: pnpm run build-storybook
+
+      # Catches accidentally publishing fixtures, stories, tests or the timezone
+      # data — all of which have leaked into dist before.
+      - name: Check package contents
+        run: |
+          pnpm pack --pack-destination /tmp
+          echo "--- tarball contents ---"
+          tar tzf /tmp/octans-ui-*.tgz | sed 's|^package/||'
+          if tar tzf /tmp/octans-ui-*.tgz | grep -qiE 'tzData|styleguide/|\.DS_Store|stories|\.test\.|\.spec\.|__tests__'; then
+            echo "::error::Unexpected files in the published package"
+            exit 1
+          fi

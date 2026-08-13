@@ -1,0 +1,73 @@
+@use 'sass:meta';
+@use 'variables.scss';
+
+// NOTE: this stylesheet deliberately fetches nothing at runtime.
+//
+// It previously `@import url(...)`-ed three Google Fonts stylesheets and
+// Font Awesome **Pro**. Both were removed:
+//
+//   - Font Awesome Pro is commercially licensed and cannot ship in an open
+//     source package. Every icon the library uses itself is now a bundled
+//     Iconify icon, so nothing here needs Font Awesome. `fa fa-*` names are
+//     still accepted from consumers — if you pass one, load a Font Awesome
+//     stylesheet yourself.
+//   - The web font imports made every consumer pay a render-blocking request to
+//     a third party. `--ui-font` now defaults to a system stack; set it to
+//     whatever you like and load the font yourself.
+
+// Design tokens must come first — everything else resolves against them.
+@include meta.load-css('tokens.scss');
+@include meta.load-css('global.tooltip.scss');
+
+.UIElement {
+  font-family: variables.$defaultFontFamily;
+  color: var(--octans-text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: normal;
+  text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+
+  &,
+  &:before,
+  &:after,
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+:root {
+  --ui-font: #{variables.$defaultFontFamily};
+  --ui-monospace-font: #{variables.$monospaceFontFamily};
+
+  // --- layout ---------------------------------------------------------------
+  // Page width presets. `--octans-page-width` is the default preset; the
+  // others are picked with `<Page size="narrow|wide|fullWidth">`.
+  --octans-page-width: 1100px;
+  --octans-page-width-narrow: 720px;
+  --octans-page-width-wide: 1400px;
+  /**
+   * The width of the CURRENT page, maintained by `Page` (`none` when it is
+   * fullWidth). Fixed-position chrome that wants to align with the page — the
+   * GlobalNav save bar — reads this, since it cannot inherit from the page.
+   */
+  --octans-page-current-width: var(--octans-page-width);
+  --octans-page-padding-x: 20px;
+  --octans-page-padding-y: 20px;
+  /** What `--octans-page-padding-x` becomes inside an AppFrame. */
+  --octans-appframe-page-padding-x: 40px;
+  /** The gap between `Layout` sections. */
+  --octans-layout-gutter: 20px;
+  /** The default `Stack` gap — the `spacing` presets override per-instance. */
+  --octans-stack-gap: 16px;
+
+  --ui-sideNav-maxWidth: 240px;
+  --ui-sideNav-width: 0px;
+  --ui-globalNav-height: 40px;
+}

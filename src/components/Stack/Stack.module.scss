@@ -1,0 +1,83 @@
+// Spacing is flex `gap`, not the old negative-margin trick — same geometry,
+// but the stack's box no longer bleeds past its own edges, and the default
+// becomes themeable through `--octans-stack-gap`.
+.Stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--octans-stack-gap, 16px);
+}
+
+.noWrap {
+  flex-wrap: nowrap;
+}
+
+.spacingNone {
+  gap: 0;
+}
+.spacingExtraTight {
+  gap: 4px;
+}
+.spacingTight {
+  gap: 8px;
+}
+.spacingLoose {
+  gap: 20px;
+}
+.spacingExtraLoose {
+  gap: 32px;
+}
+
+.distributionLeading {
+  justify-content: flex-start;
+}
+.distributionTrailing {
+  justify-content: flex-end;
+}
+.distributionCenter {
+  justify-content: center;
+}
+.distributionEqualSpacing {
+  justify-content: space-between;
+}
+.distributionFill > .Item {
+  flex: 1 1 auto;
+}
+.distributionFillEvenly > .Item {
+  flex: 1 1 auto;
+
+  @supports (min-width: fit-content) {
+    flex: 1 0 0%;
+    min-width: fit-content;
+  }
+}
+
+.alignmentLeading {
+  align-items: flex-start;
+}
+.alignmentTrailing {
+  align-items: flex-end;
+}
+.alignmentCenter {
+  align-items: center;
+}
+.alignmentFill {
+  align-items: stretch;
+}
+.alignmentBaseline {
+  align-items: baseline;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+.Item {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.Item__fill {
+  flex: 1 1 auto;
+}

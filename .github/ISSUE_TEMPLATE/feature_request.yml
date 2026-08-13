@@ -1,0 +1,27 @@
+name: Feature request
+description: A component, prop, or behaviour you wish existed
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: >-
+        The underlying goal, not just the missing API — there may be an
+        existing way, or a better shape for the new one.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: >-
+        What you imagine the API looking like. Sketches, code snippets and
+        links to other libraries that do it well all help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds considered
+      description: What you do today instead, if anything.

@@ -1,0 +1,122 @@
+{
+  "name": "@octans/ui",
+  "version": "1.0.0",
+  "description": "A Vue 3 component library — accessible, themeable UI primitives and application shell components.",
+  "keywords": [
+    "vue",
+    "vue3",
+    "components",
+    "component-library",
+    "design-system",
+    "ui",
+    "octans"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarwin/octans-ui.git"
+  },
+  "homepage": "https://octans.dev",
+  "bugs": {
+    "url": "https://github.com/tarwin/octans-ui/issues"
+  },
+  "type": "module",
+  "main": "./dist/ui.js",
+  "module": "./dist/ui.js",
+  "types": "./dist/lib.d.ts",
+  "bin": {
+    "octans-icons": "./bin/octans-icons.mjs"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/ui.js",
+      "default": "./dist/ui.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "pnpm storybook",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "type-check": "vue-tsc --noEmit -p tsconfig.app.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write src/ .storybook/ scripts/ *.ts *.js",
+    "format:check": "prettier --check src/ .storybook/ scripts/ *.ts *.js",
+    "icons:bundle": "node scripts/build-icon-bundle.mjs",
+    "check:icons": "node scripts/check-icon-bundle.mjs",
+    "build": "pnpm run build-lib",
+    "build-lib": "vp build --config vite.config-lib.ts && vp build --config vite.config-umd.ts",
+    "verify": "pnpm run lint && pnpm run type-check && pnpm run test && pnpm run check:contrast && pnpm run check:icons && pnpm run build-lib",
+    "prepublishOnly": "pnpm run verify",
+    "tag": "package-version-git-tag --push"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
+    "@iconify/vue": "^5.0.1",
+    "dayjs": "^1.11.21",
+    "lodash-es": "^4.18.1",
+    "maska": "^3.2.0",
+    "reka-ui": "^2.10.1"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0",
+    "vue-router": "^4.0.0 || ^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue-router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@storybook/addon-docs": "^10.5.7",
+    "@storybook/addon-links": "^10.5.7",
+    "@storybook/vue3-vite": "^10.5.7",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.13.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10.8.1",
+    "eslint-plugin-storybook": "^10.5.7",
+    "eslint-plugin-vue": "^10.10.0",
+    "jsdom": "^30.0.1",
+    "npm-run-all2": "^9.0.3",
+    "package-version-git-tag": "^3.0.0",
+    "prettier": "^3.9.6",
+    "sass": "^1.102.0",
+    "storybook": "^10.5.7",
+    "storybook-vue3-router": "^7.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vite-plus": "^0.2.8",
+    "vitest": "^4.1.10",
+    "vue": "^3.5.41",
+    "vue-router": "^4.6.4",
+    "vue-tsc": "^3.3.9"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.6.0"
+}

@@ -1,0 +1,87 @@
+@use 'variables.scss';
+
+@mixin input() {
+  @include inputBase;
+
+  &:focus {
+    @include inputBaseFocus;
+  }
+}
+
+@mixin inputBase() {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: variables.$inputMinHeight;
+  padding: variables.$inputPaddingY variables.$inputPaddingX;
+  border: 0;
+  box-shadow: variables.$inputShadowInner;
+  border: 1px solid variables.$inputBorderColor;
+  border-radius: variables.$inputBorderRadius;
+  font-size: variables.$inputFontSize;
+  // Must be explicit: form controls do not inherit colour, so without these
+  // they fall back to the user agent's white-on-black and stay light in dark
+  // mode no matter what the surrounding theme says.
+  background: variables.$inputBgColor;
+  color: variables.$inputTextColor;
+
+  &::placeholder {
+    color: variables.$textSubduedColor;
+  }
+}
+
+@mixin inputBaseDisabled() {
+  background: variables.$inputDisabledBgColor;
+  box-shadow: none;
+  cursor: variables.$inputDisabledCursor;
+}
+@mixin inputBaseReadonly() {
+  background: variables.$inputReadonlyBgColor;
+  box-shadow: none;
+  cursor: variables.$inputReadonlyCursor;
+}
+
+@mixin inputBaseFocus() {
+  z-index: 1;
+  border-color: variables.$focusColor;
+  box-shadow:
+    variables.$inputShadowInner,
+    0 0 0 1px variables.$focusColor;
+  outline: 0;
+}
+
+@mixin inputBaseError() {
+  border-color: variables.$inputErrorBorderColor;
+  background: variables.$inputErrorBgColor;
+}
+
+@mixin inputBaseErrorFocus() {
+  z-index: 1;
+  border-color: variables.$inputErrorBorderColor;
+  box-shadow:
+    variables.$inputShadowInner,
+    0 0 0 1px variables.$inputErrorBorderColor;
+}
+
+@mixin inputLabel {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@mixin inputHelpText {
+  color: var(--octans-text-subdued);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@mixin inStyleguide {
+  :global(#rsg-root) {
+    @content;
+  }
+}
+
+@mixin compatMode {
+  :global(.ui-compat) {
+    @content;
+  }
+}

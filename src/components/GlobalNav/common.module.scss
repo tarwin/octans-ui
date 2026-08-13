@@ -1,0 +1,100 @@
+@import '@/styles/variables';
+
+@mixin navButtonReadonly() {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 8px 12px;
+}
+
+@mixin navButtonBase() {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 8px 12px;
+  border-radius: var(--octans-radius-field);
+
+  &:hover {
+    background: var(--ui-globalNav-hoverBgColor);
+    cursor: pointer;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background: transparent;
+    cursor: default;
+  }
+}
+
+@mixin menuBase() {
+  padding: 16px;
+  background: var(--octans-surface);
+  border-radius: var(--octans-radius-field);
+  color: var(--octans-text);
+  box-shadow:
+    0 2px 16px rgba(33, 43, 54, 0.08),
+    0 0 1px rgb(0, 0, 0, 0.3);
+}
+
+@mixin menuItemBase() {
+  display: flex;
+  align-items: center;
+  // justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--octans-surface);
+  border: 0;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+
+  &:not(:disabled) {
+    &:hover {
+      background: var(--octans-surface-hover);
+      cursor: pointer;
+    }
+    &:active {
+      background: var(--octans-surface-selected);
+    }
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  &:disabled {
+    color: $buttonDisabledTextColor;
+  }
+}
+
+@mixin actionButtonBase() {
+  appearance: none;
+  margin: -4px -8px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--octans-radius-field);
+  color: $focusColor;
+  font-weight: 500;
+  font-size: 14px;
+
+  &:hover:not(:disabled) {
+    cursor: pointer;
+    background: var(--octans-surface-hover);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    color: var(--octans-text-subdued);
+    cursor: not-allowed;
+  }
+
+  & + & {
+    margin-left: 12px;
+  }
+}

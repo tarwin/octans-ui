@@ -1,0 +1,291 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Documentation/Design Tokens" />
+
+# Design tokens
+
+Every colour, radius and shadow in Octans resolves through a CSS custom
+property, so themes swap at runtime with no rebuild.
+
+Use the **Theme** control in the toolbar above to switch between light, dark and
+system.
+
+## Three tiers
+
+**Seeds** are the front door: hand `createTheme()` a few colours and every
+token below is generated from them. See "Custom themes".
+
+**Primitives** are the raw palette, as ramps — `--octans-neutral-500`,
+`--octans-primary-300`, `--octans-error-700`. They exist so the two themes
+draw from one set of colours and stay in sync.
+
+**Semantic tokens** describe what something _means_ — `--octans-surface`,
+`--octans-text-subdued`, `--octans-border-focus`. Many are **derived** from
+each other with `color-mix()` (hover and active states, the skeleton shimmer,
+`--octans-surface-selected`), so most themes never need to set them — but each
+one can still be overridden individually.
+
+## Colour roles
+
+Eight roles: `primary`, `secondary`, `tertiary` (brand), `info`, `success`,
+`warning`, `error` (status), plus the neutral family of surfaces, text and
+borders. Every non-neutral role exposes the same four tokens:
+
+| Token                     | Meaning                                  |
+| ------------------------- | ---------------------------------------- |
+| `--octans-<role>`         | The solid fill                           |
+| `--octans-text-on-<role>` | Content sitting on that fill             |
+| `--octans-<role>-surface` | Soft tinted background — banners, badges |
+| `--octans-text-<role>`    | Readable text in that hue                |
+
+`primary`, `secondary`, `tertiary` and `error` additionally expose derived
+`-hover` / `-active` states, computed from the fill and `--octans-state-mix`.
+
+> Components use **only** semantic tokens. Reach for a primitive and you have
+> almost certainly skipped a semantic token that should exist — add one instead.
+
+Semantic tokens are the public API. Override them and everything follows.
+
+## Theming
+
+The theme is driven by a `data-octans-theme` attribute on `<html>`:
+
+```ts
+import { setTheme, toggleTheme, persistTheme } from '@octans/ui'
+
+setTheme('dark') // force dark
+setTheme('light') // force light
+setTheme('system') // follow prefers-color-scheme
+toggleTheme() // flip between light and dark
+
+persistTheme() // optional: remember the choice in localStorage
+```
+
+All three states work without JavaScript — the stylesheet defines light on
+`:root`, follows `prefers-color-scheme` when no attribute is set, and honours an
+explicit attribute above both. Setting the attribute server-side in your HTML
+avoids a flash of the wrong theme on first paint.
+
+You can also theme a subtree rather than the whole document:
+
+```html
+<div data-octans-theme="dark">
+  <!-- dark regardless of the rest of the page -->
+</div>
+```
+
+## Custom themes
+
+The **Theme Builder** page lets you edit every token live, preview the result
+against a kitchen sink of components, and save the theme to your browser.
+
+The fastest route is a seed: give `createTheme` between one and eight colours
+and it generates every ramp — dark mode included, since dark only re-points
+semantic tokens at different steps of the same ramps:
+
+```ts
+import { createTheme, applyCustomTheme } from '@octans/ui'
+
+applyCustomTheme(createTheme({ name: 'Ocean', primary: '#0f9d8f' }))
+
+// or more opinionated:
+createTheme({
+  name: 'Ocean',
+  primary: '#0f9d8f',
+  secondary: '#5b6b8c',
+  tertiary: '#c25e9c',
+  neutral: '#7b8798', // tints every grey
+  radius: 'large' // field 8px / box 16px
+})
+```
+
+The lower-level API works on hand-written token maps:
+
+```ts
+import {
+  applyCustomTheme,
+  saveCustomTheme,
+  listCustomThemes,
+  restoreCustomTheme,
+  importCustomTheme,
+  exportCustomTheme
+} from '@octans/ui'
+
+const theme = {
+  id: 'ocean',
+  name: 'Ocean',
+  base: 'dark',
+  tokens: { 'primary-500': '#0f9d8f' }
+}
+
+saveCustomTheme(theme)
+applyCustomTheme(theme)
+
+restoreCustomTheme() // re-apply the last active theme on startup
+```
+
+Themes are stored as **sparse overrides** — only the tokens you changed. That
+matters: a full snapshot would freeze every token at the moment it was
+captured, so later library updates would silently not reach it.
+
+`importCustomTheme()` rejects unknown token names rather than dropping them, so
+a typo surfaces immediately instead of looking like it applied.
+
+## Contrast
+
+`pnpm run check:contrast` audits the token pairs that carry text or convey UI
+state, in both themes, against WCAG AA. It runs in CI, so a palette change that
+drops a pair below the minimum fails the build.
+
+Note the distinction it enforces. `--octans-border` and `--octans-border-strong`
+are decorative dividers with no WCAG requirement, so they get a visibility floor
+only. `--octans-border-input` outlines every control through one token, and is
+**deliberately soft** — 2.26:1 rather than the 3:1 WCAG 1.4.11 asks of UI
+components. A field is rarely identified by its outline alone (label, fill and
+focus ring all mark it, and the focus ring does hold a hard 3:1), and the
+strict reading made every control render as heavy chrome. The checker holds it
+to a 2:1 floor so it cannot quietly fade further.
+
+For strict AA, one override restores it everywhere — every input, checkbox,
+radio, select, segmented button, toggle track and slider track resolves through
+this token:
+
+```css
+:root {
+  --octans-border-input: var(--octans-neutral-500); /* 3.65:1 */
+}
+```
+
+One consequence is worth knowing when overriding: **the role fill tokens
+deliberately do not lighten in dark mode**, because white text sits on them.
+Use the `--octans-text-<role>` variants when you want a role colour for text —
+those do lighten.
+
+## Overriding tokens
+
+Redefine any semantic token in your own stylesheet:
+
+```css
+:root {
+  --octans-primary: #0f9d8f;
+  --octans-primary-hover: #0b7d72;
+  --octans-radius-box: 2px;
+  --octans-font: 'Inter', sans-serif;
+}
+```
+
+To rebrand wholesale, redefine the primary ramp instead and let the semantic
+layer pick it up (or let `createTheme` generate the ramp from one seed):
+
+```css
+:root {
+  --octans-primary-300: #7fd6cd;
+  --octans-primary-400: #34b8a9;
+  --octans-primary-500: #0f9d8f;
+  --octans-primary-600: #0b7d72;
+  --octans-primary-700: #086259;
+}
+```
+
+## The tokens
+
+### Surfaces
+
+| Token                       | Use                                         |
+| --------------------------- | ------------------------------------------- |
+| `--octans-surface`          | Cards, panels, the default background       |
+| `--octans-surface-raised`   | Menus, popovers, modals — above the surface |
+| `--octans-surface-sunken`   | Table headers, wells, code blocks           |
+| `--octans-surface-app`      | The application background behind cards     |
+| `--octans-surface-hover`    | Hover wash over a surface                   |
+| `--octans-surface-selected` | Selected rows and items                     |
+| `--octans-surface-disabled` | Disabled controls                           |
+| `--octans-overlay`          | Scrim behind modals                         |
+
+### Text
+
+| Token                                              | Use                                 |
+| -------------------------------------------------- | ----------------------------------- |
+| `--octans-text`                                    | Body text                           |
+| `--octans-text-subdued`                            | Secondary text, help text, captions |
+| `--octans-text-disabled`                           | Disabled labels                     |
+| `--octans-text-on-primary`                         | Text on a primary-filled surface    |
+| `--octans-text-link` / `--octans-text-link-hover`  | Links                               |
+| `--octans-text-success` / `-warning` / `-error`    | Status text                         |
+
+### Borders
+
+`--octans-border`, `--octans-border-strong`, `--octans-border-input`,
+`--octans-border-error`, `--octans-border-focus`
+
+### Roles
+
+`--octans-primary`, `--octans-secondary`, `--octans-tertiary`,
+`--octans-info`, `--octans-success`, `--octans-warning`, `--octans-error` —
+each with `text-on-`, `-surface` and `text-` forms as above, plus
+`--octans-focus-ring`.
+
+### Elevation, radii, type
+
+`--octans-shadow-sm` / `-md` / `-lg` — redefined per theme, because a black
+shadow is invisible on a dark surface.
+
+`--octans-radius-field` (buttons, inputs, anything hand-sized — 4px),
+`--octans-radius-box` (cards, popovers, modals — 8px), `--octans-radius-full`
+(pills). Two knobs make a theme: 0/0 is square, 8px/16px is soft.
+
+One oddity worth knowing: `--octans-rating`, the gold of a filled star, is a
+literal and identical in both themes. It is an icon convention rather than a
+slot in the palette, so it does not follow the `warning` role — whose fill is
+deliberately dark enough to carry white text, and makes a muddy star.
+
+`--octans-font`, `--octans-font-mono` — a system stack by default. The library
+fetches no web fonts.
+
+### Layout
+
+Layout dimensions are custom properties too (defined in the global stylesheet
+rather than the theme, since they are geometry, not colour):
+
+| Token                                       | Default | Use                                  |
+| ------------------------------------------- | ------- | ------------------------------------ |
+| `--octans-page-width`                       | 1100px  | `<Page>` default width               |
+| `--octans-page-width-narrow` / `-wide`      | 720px / 1400px | The other `size` presets      |
+| `--octans-page-padding-x` / `-y`            | 20px    | Page padding                         |
+| `--octans-layout-gutter`                    | 20px    | Gap between `Layout` sections        |
+| `--octans-layout-basis-half` / `-third` / `-primary` / `-secondary` | 450/240/680/300px | Where `LayoutSection` sizes start wrapping |
+| `--octans-stack-gap`                        | 16px    | Default `Stack` gap                  |
+
+`Page` is a CSS container (`octans-page`), and collapses its header actions by
+querying its own width rather than the viewport — so pages inside an `AppFrame`
+collapse when they are actually cramped. `Layout` wraps by flex-basis, which
+responds to the space it is in by nature.
+
+## Writing themeable component styles
+
+Inside a component, use the semantic tokens directly:
+
+```scss
+.Card {
+  background: var(--octans-surface);
+  color: var(--octans-text);
+  border: 1px solid var(--octans-border);
+  border-radius: var(--octans-radius-box);
+  box-shadow: var(--octans-shadow-sm);
+}
+```
+
+The Sass variables in `styles/variables.scss` are aliases for these tokens, so
+`$textSubduedColor` and friends are already theme-aware.
+
+**One caveat:** because those variables hold `var()` references rather than
+colours, Sass colour functions cannot operate on them. `darken($focusColor, 10%)`
+will not compile. Use CSS `color-mix()`, which works at runtime:
+
+```scss
+// ❌ Sass has no colour to compute from
+background: lighten($focusColor, 45%);
+
+// ✅ resolved by the browser, per theme
+background: color-mix(in srgb, var(--octans-primary) 10%, transparent);
+```

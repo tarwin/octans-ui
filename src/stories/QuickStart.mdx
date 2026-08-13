@@ -1,0 +1,347 @@
+import { Children, useId, useState } from 'react'
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Documentation/Quick Start" />
+
+{/*
+  Tabs over a set of fenced code blocks. The blocks stay ordinary markdown
+  fences and arrive as `children`, so they keep Storybook's syntax highlighting
+  and Copy button — building the <pre> by hand would lose both.
+
+  Colours are deliberately absent apart from the active underline: everything
+  else is `currentColor` at reduced opacity, so this sits on whatever background
+  the docs theme happens to be without a second set of dark-mode rules.
+*/}
+
+export const CodeTabs = ({ labels, children }) => {
+  const id = useId()
+  const [active, setActive] = useState(0)
+  // MDX hands back the whitespace between fences as text nodes; only the
+  // elements are panels, and they pair with `labels` by position.
+  const panels = Children.toArray(children).filter((c) => typeof c === 'object')
+
+  // Roving tabindex: one stop in the tab order, arrows move between tabs. The
+  // expected behaviour for `role="tablist"`, and cheap enough to just do.
+  const onKeyDown = (e) => {
+    const next =
+      e.key === 'ArrowRight' ? active + 1 : e.key === 'ArrowLeft' ? active - 1 : null
+    if (next === null) return
+    e.preventDefault()
+    const i = (next + labels.length) % labels.length
+    setActive(i)
+    document.getElementById(`${id}-tab-${i}`)?.focus()
+  }
+
+  return (
+    <div style={{ margin: '16px 0' }}>
+      <div
+        role="tablist"
+        onKeyDown={onKeyDown}
+        style={{ display: 'flex', gap: 4, borderBottom: '1px solid rgba(128,128,128,0.25)' }}
+      >
+        {labels.map((label, i) => (
+          <button
+            key={label}
+            id={`${id}-tab-${i}`}
+            role="tab"
+            type="button"
+            aria-selected={i === active}
+            aria-controls={`${id}-panel-${i}`}
+            tabIndex={i === active ? 0 : -1}
+            onClick={() => setActive(i)}
+            style={{
+              appearance: 'none',
+              background: 'none',
+              border: 0,
+              borderBottom: `2px solid ${i === active ? '#5f63e8' : 'transparent'}`,
+              marginBottom: -1,
+              padding: '6px 10px',
+              font: 'inherit',
+              fontSize: 13,
+              fontWeight: i === active ? 700 : 400,
+              color: 'inherit',
+              opacity: i === active ? 1 : 0.6,
+              cursor: 'pointer'
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {panels.map((panel, i) => (
+        <div
+          key={i}
+          id={`${id}-panel-${i}`}
+          role="tabpanel"
+          aria-labelledby={`${id}-tab-${i}`}
+          hidden={i !== active}
+        >
+          {panel}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+{/*
+  The mark rather than the wordmark: the sidebar already shows the wordmark, so
+  repeating the name here would just be the same lockup twice. Served from
+  `.storybook/public` via `staticDirs`, and referenced relatively so a static
+  build deployed under a sub-path still finds it.
+
+  `aria-hidden` because the `# Quick start` heading directly below already names
+  the page — a screen reader gains nothing from "Octans" twice in a row.
+*/}
+
+<img
+  src="./octans-logo.svg"
+  alt=""
+  aria-hidden="true"
+  width="128"
+  height="128"
+  style={{ display: 'block', margin: '0 0 8px' }}
+/>
+
+# Octans UI
+
+## Opinionated Vue 3 UI Framework
+
+Friendly, accessible, themeable UI primitives plus the application shell pieces (nav, frame, sheets, toasts) that usually get rebuilt from scratch in every project.
+
+> *Not everyone is going to love it*. That's ok. It's here to get things built.
+
+**Source: [github.com/tarwin/octans-ui](https://github.com/tarwin/octans-ui)** —
+issues and pull requests welcome.
+
+# Quick start
+
+## Install
+
+<CodeTabs labels={['pnpm', 'npm', 'yarn', 'bun']}>
+
+```sh
+pnpm add @octans/ui
+```
+
+```sh
+npm install @octans/ui
+```
+
+```sh
+yarn add @octans/ui
+```
+
+```sh
+bun add @octans/ui
+```
+
+</CodeTabs>
+
+Vue 3.5+ is a peer dependency and is not bundled. `vue-router` is an **optional**
+peer — install it only if you use `MaybeRouterLink`, `Navigation` or any other
+component you point at a route.
+
+## Set it up
+
+Two things are required: the stylesheet, and a `UiProvider` at the root of your
+app.
+
+```ts
+// main.ts
+import { createApp } from 'vue'
+import UI from '@octans/ui'
+import '@octans/ui/style.css'
+import App from './App.vue'
+
+createApp(App).use(UI).mount('#app')
+```
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { UiProvider } from '@octans/ui'
+</script>
+
+<template>
+  <UiProvider>
+    <!-- your app -->
+  </UiProvider>
+</template>
+```
+
+`UiProvider` supplies the shared context that tooltips, poppers and the global
+overlays rely on. Without it, anything using `Tooltip` throws on mount.
+
+### Do I have to install the plugin?
+
+No. `.use(UI)` registers every component globally, which is convenient but
+imports all of them. To keep your bundle to what you actually use, skip the
+plugin and import components directly:
+
+```vue
+<script setup lang="ts">
+import { Button, Card, CardSection } from '@octans/ui'
+</script>
+
+<template>
+  <Card title="Overview">
+    <CardSection>
+      <Button type="primary">Save</Button>
+    </CardSection>
+  </Card>
+</template>
+```
+
+You still need `@octans/ui/style.css` and `UiProvider` either way.
+
+The plugin also installs the `$ui` global (`$ui.toast`, `$ui.confirm`,
+`$ui.loader`, `$ui.saveBar`). If you want those without registering every
+component, import them by name instead — `toast`, `confirmModal`, `promptModal`
+and friends are all exported.
+
+## Theming
+
+Every colour, radius and shadow resolves through a CSS custom property, so
+themes swap at runtime with no rebuild.
+
+```ts
+import { setTheme, persistTheme } from '@octans/ui'
+
+setTheme('dark') // 'light' | 'dark' | 'system'
+persistTheme() // remember the choice in localStorage
+```
+
+To rebrand, generate a theme from a seed colour — every ramp and semantic
+token follows, dark mode included:
+
+```ts
+import { createTheme, applyCustomTheme } from '@octans/ui'
+
+applyCustomTheme(createTheme({ name: 'Violet', primary: '#7b5cff' }))
+```
+
+Or override tokens directly in CSS:
+
+```css
+:root {
+  --octans-primary-500: #7b5cff;
+  --octans-primary-600: #6a48f0;
+}
+```
+
+See **Design Tokens** for the full list and the three-tier system, and
+**Theme Builder** to put a theme together interactively and export it as JSON.
+
+## Icons
+
+Icons are [Iconify](https://iconify.design) names, passed as strings:
+
+```vue
+<Icon icon="mdi:magnify" />
+<Button icon="mdi:plus">Add work</Button>
+```
+
+The icons the library itself renders ship bundled, so its own components work
+offline. Anything **you** pass resolves over the network from the Iconify API
+the first time it is used — no build step, but a round trip on first paint and
+nothing at all in an air-gapped deployment.
+
+### Bundling your own icons
+
+`octans-icons` scans your source, fetches only the names it finds, and writes a
+file that registers them. Run it before a build and commit the output:
+
+<CodeTabs labels={['pnpm', 'npm', 'yarn', 'bun']}>
+
+```sh
+pnpm dlx octans-icons
+```
+
+```sh
+npx octans-icons
+```
+
+```sh
+yarn dlx octans-icons
+```
+
+```sh
+bunx octans-icons
+```
+
+</CodeTabs>
+
+That writes `src/octansIcons.ts`. Import it once, before anything renders:
+
+```ts
+import './octansIcons'
+```
+
+Re-run it whenever you add an icon — wiring it into a `prebuild` script keeps it
+honest. `--out` chooses the path, `--dry-run` lists what it found without
+writing, and `--help` covers the rest.
+
+Two things it cannot see, both of which simply keep resolving through the API:
+names your code assembles at runtime (`` `mdi:${name}` ``), and names that only
+exist in data you fetch from a server. Put the literal strings in an array if
+you want those bundled too.
+
+To bundle a whole collection instead — simpler, but `@iconify-json/mdi` is
+roughly 1.5 MB against a typical app's few kB of actual icons:
+
+```ts
+import { addCollection } from '@octans/ui'
+import mdi from '@iconify-json/mdi/icons.json'
+
+addCollection(mdi)
+```
+
+## Language
+
+English ships as the built-in dictionary. Register others at install time, or
+later:
+
+```ts
+createApp(App).use(UI, {
+  locale: 'fr',
+  translations: { fr: { 'ui.cancel': 'Annuler' } }
+})
+```
+
+Dates are formatted with DayJS, which carries its own locale data —
+`setLocale('fr')` switches both.
+
+## Via a script tag
+
+There is a UMD build for pages without a bundler. Vue must be on the page
+already, as `window.Vue`.
+
+```html
+<link
+  rel="stylesheet"
+  href="…/@octans/ui/dist/style.css"
+/>
+<script src="…/@octans/ui/dist/ui.umd.js"></script>
+<script>
+  const app = Vue.createApp({})
+  app.use(UI)
+  app.mount('#app')
+</script>
+```
+
+## Where to next
+
+- **Design Tokens** — the theming contract
+- **Theme Builder** — build and export a theme
+- **Global UI ($ui)** — toasts, modals, loaders, the save bar
+- **AppFrame** — the application shell, and how the pieces fit together
+
+Everything in the **Components** section of the sidebar has live examples and a
+props table on each page.
+
+## Contributing
+
+The source lives at
+[github.com/tarwin/octans-ui](https://github.com/tarwin/octans-ui). The library
+is **pre-1.0** and the public API is still moving, particularly around theming
+— so issues about rough edges are as useful as pull requests.
