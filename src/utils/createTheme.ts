@@ -123,8 +123,7 @@ export function createTheme(options: CreateThemeOptions): CustomTheme {
     const seed = options[role]
     if (!seed) continue
 
-    const ramp =
-      role === 'neutral' ? neutralRamp! : generateRamp(role, seed)
+    const ramp = role === 'neutral' ? neutralRamp! : generateRamp(role, seed)
     ramps[role] = ramp.gradient
     for (const [step, value] of Object.entries(ramp.colors)) {
       tokens[`${role}-${step}`] = value
@@ -166,7 +165,9 @@ function pickLabel(fill: Rgba, darkText: string): string {
     (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
   const white = ratio(1, fillLum)
   if (white >= 4.5) return '#ffffff'
-  const darkLum = relativeLuminance(parseColor(darkText) ?? { r: 17, g: 21, b: 26, a: 1 })
+  const darkLum = relativeLuminance(
+    parseColor(darkText) ?? { r: 17, g: 21, b: 26, a: 1 }
+  )
   return ratio(darkLum, fillLum) > white ? darkText : '#ffffff'
 }
 

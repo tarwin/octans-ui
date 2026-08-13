@@ -268,8 +268,7 @@ export default defineComponent({
       // from. The two shorthands normalise onto them — `destructive` means
       // `color="error"`, and `type="destructive"` means the error role on the
       // primary structure.
-      const structure =
-        props.type === 'destructive' ? 'primary' : props.type
+      const structure = props.type === 'destructive' ? 'primary' : props.type
       const color = props.destructive
         ? 'error'
         : (props.color ?? (props.type === 'destructive' ? 'error' : undefined))

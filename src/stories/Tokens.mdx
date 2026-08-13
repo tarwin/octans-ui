@@ -204,14 +204,14 @@ layer pick it up (or let `createTheme` generate the ramp from one seed):
 
 ### Text
 
-| Token                                              | Use                                 |
-| -------------------------------------------------- | ----------------------------------- |
-| `--octans-text`                                    | Body text                           |
-| `--octans-text-subdued`                            | Secondary text, help text, captions |
-| `--octans-text-disabled`                           | Disabled labels                     |
-| `--octans-text-on-primary`                         | Text on a primary-filled surface    |
-| `--octans-text-link` / `--octans-text-link-hover`  | Links                               |
-| `--octans-text-success` / `-warning` / `-error`    | Status text                         |
+| Token                                             | Use                                 |
+| ------------------------------------------------- | ----------------------------------- |
+| `--octans-text`                                   | Body text                           |
+| `--octans-text-subdued`                           | Secondary text, help text, captions |
+| `--octans-text-disabled`                          | Disabled labels                     |
+| `--octans-text-on-primary`                        | Text on a primary-filled surface    |
+| `--octans-text-link` / `--octans-text-link-hover` | Links                               |
+| `--octans-text-success` / `-warning` / `-error`   | Status text                         |
 
 ### Borders
 
@@ -247,14 +247,14 @@ fetches no web fonts.
 Layout dimensions are custom properties too (defined in the global stylesheet
 rather than the theme, since they are geometry, not colour):
 
-| Token                                       | Default | Use                                  |
-| ------------------------------------------- | ------- | ------------------------------------ |
-| `--octans-page-width`                       | 1100px  | `<Page>` default width               |
-| `--octans-page-width-narrow` / `-wide`      | 720px / 1400px | The other `size` presets      |
-| `--octans-page-padding-x` / `-y`            | 20px    | Page padding                         |
-| `--octans-layout-gutter`                    | 20px    | Gap between `Layout` sections        |
+| Token                                                               | Default           | Use                                        |
+| ------------------------------------------------------------------- | ----------------- | ------------------------------------------ |
+| `--octans-page-width`                                               | 1100px            | `<Page>` default width                     |
+| `--octans-page-width-narrow` / `-wide`                              | 720px / 1400px    | The other `size` presets                   |
+| `--octans-page-padding-x` / `-y`                                    | 20px              | Page padding                               |
+| `--octans-layout-gutter`                                            | 20px              | Gap between `Layout` sections              |
 | `--octans-layout-basis-half` / `-third` / `-primary` / `-secondary` | 450/240/680/300px | Where `LayoutSection` sizes start wrapping |
-| `--octans-stack-gap`                        | 16px    | Default `Stack` gap                  |
+| `--octans-stack-gap`                                                | 16px              | Default `Stack` gap                        |
 
 `Page` is a CSS container (`octans-page`), and collapses its header actions by
 querying its own width rather than the viewport — so pages inside an `AppFrame`

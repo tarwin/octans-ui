@@ -3,15 +3,15 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 <Meta title="Documentation/Quick Start" />
 
-{/*
-  Tabs over a set of fenced code blocks. The blocks stay ordinary markdown
-  fences and arrive as `children`, so they keep Storybook's syntax highlighting
-  and Copy button — building the <pre> by hand would lose both.
+{/\*
+Tabs over a set of fenced code blocks. The blocks stay ordinary markdown
+fences and arrive as `children`, so they keep Storybook's syntax highlighting
+and Copy button — building the <pre> by hand would lose both.
 
-  Colours are deliberately absent apart from the active underline: everything
-  else is `currentColor` at reduced opacity, so this sits on whatever background
-  the docs theme happens to be without a second set of dark-mode rules.
-*/}
+Colours are deliberately absent apart from the active underline: everything
+else is `currentColor` at reduced opacity, so this sits on whatever background
+the docs theme happens to be without a second set of dark-mode rules.
+\*/}
 
 export const CodeTabs = ({ labels, children }) => {
   const id = useId()
@@ -20,36 +20,36 @@ export const CodeTabs = ({ labels, children }) => {
   // elements are panels, and they pair with `labels` by position.
   const panels = Children.toArray(children).filter((c) => typeof c === 'object')
 
-  // Roving tabindex: one stop in the tab order, arrows move between tabs. The
-  // expected behaviour for `role="tablist"`, and cheap enough to just do.
-  const onKeyDown = (e) => {
-    const next =
-      e.key === 'ArrowRight' ? active + 1 : e.key === 'ArrowLeft' ? active - 1 : null
-    if (next === null) return
-    e.preventDefault()
-    const i = (next + labels.length) % labels.length
-    setActive(i)
-    document.getElementById(`${id}-tab-${i}`)?.focus()
-  }
+// Roving tabindex: one stop in the tab order, arrows move between tabs. The
+// expected behaviour for `role="tablist"`, and cheap enough to just do.
+const onKeyDown = (e) => {
+const next =
+e.key === 'ArrowRight' ? active + 1 : e.key === 'ArrowLeft' ? active - 1 : null
+if (next === null) return
+e.preventDefault()
+const i = (next + labels.length) % labels.length
+setActive(i)
+document.getElementById(`${id}-tab-${i}`)?.focus()
+}
 
-  return (
-    <div style={{ margin: '16px 0' }}>
-      <div
-        role="tablist"
-        onKeyDown={onKeyDown}
-        style={{ display: 'flex', gap: 4, borderBottom: '1px solid rgba(128,128,128,0.25)' }}
-      >
-        {labels.map((label, i) => (
-          <button
-            key={label}
-            id={`${id}-tab-${i}`}
-            role="tab"
-            type="button"
-            aria-selected={i === active}
-            aria-controls={`${id}-panel-${i}`}
-            tabIndex={i === active ? 0 : -1}
-            onClick={() => setActive(i)}
-            style={{
+return (
+
+<div style={{ margin: '16px 0' }}>
+<div
+role="tablist"
+onKeyDown={onKeyDown}
+style={{ display: 'flex', gap: 4, borderBottom: '1px solid rgba(128,128,128,0.25)' }} >
+{labels.map((label, i) => (
+<button
+key={label}
+id={`${id}-tab-${i}`}
+role="tab"
+type="button"
+aria-selected={i === active}
+aria-controls={`${id}-panel-${i}`}
+tabIndex={i === active ? 0 : -1}
+onClick={() => setActive(i)}
+style={{
               appearance: 'none',
               background: 'none',
               border: 0,
@@ -62,36 +62,34 @@ export const CodeTabs = ({ labels, children }) => {
               color: 'inherit',
               opacity: i === active ? 1 : 0.6,
               cursor: 'pointer'
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {panels.map((panel, i) => (
-        <div
-          key={i}
-          id={`${id}-panel-${i}`}
-          role="tabpanel"
-          aria-labelledby={`${id}-tab-${i}`}
-          hidden={i !== active}
-        >
-          {panel}
-        </div>
-      ))}
-    </div>
-  )
+            }} >
+{label}
+</button>
+))}
+</div>
+{panels.map((panel, i) => (
+<div
+key={i}
+id={`${id}-panel-${i}`}
+role="tabpanel"
+aria-labelledby={`${id}-tab-${i}`}
+hidden={i !== active} >
+{panel}
+</div>
+))}
+</div>
+)
 }
 
-{/*
-  The mark rather than the wordmark: the sidebar already shows the wordmark, so
-  repeating the name here would just be the same lockup twice. Served from
-  `.storybook/public` via `staticDirs`, and referenced relatively so a static
-  build deployed under a sub-path still finds it.
+{/\*
+The mark rather than the wordmark: the sidebar already shows the wordmark, so
+repeating the name here would just be the same lockup twice. Served from
+`.storybook/public` via `staticDirs`, and referenced relatively so a static
+build deployed under a sub-path still finds it.
 
-  `aria-hidden` because the `# Quick start` heading directly below already names
-  the page — a screen reader gains nothing from "Octans" twice in a row.
-*/}
+`aria-hidden` because the `# Quick start` heading directly below already names
+the page — a screen reader gains nothing from "Octans" twice in a row.
+\*/}
 
 <img
   src="./octans-logo.svg"
@@ -108,7 +106,7 @@ export const CodeTabs = ({ labels, children }) => {
 
 Friendly, accessible, themeable UI primitives plus the application shell pieces (nav, frame, sheets, toasts) that usually get rebuilt from scratch in every project.
 
-> *Not everyone is going to love it*. That's ok. It's here to get things built.
+> _Not everyone is going to love it_. That's ok. It's here to get things built.
 
 **Source: [github.com/tarwin/octans-ui](https://github.com/tarwin/octans-ui)** —
 issues and pull requests welcome.

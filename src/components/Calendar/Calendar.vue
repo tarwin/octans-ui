@@ -151,8 +151,7 @@ const minutes = computed(() => {
       label,
       value: i,
       disabled:
-        compare !== null &&
-        (compare < props.minTime || compare > props.maxTime)
+        compare !== null && (compare < props.minTime || compare > props.maxTime)
     })
   }
   return minutes

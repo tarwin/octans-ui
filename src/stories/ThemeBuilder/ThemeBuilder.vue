@@ -558,8 +558,8 @@ onBeforeUnmount(() => {
       <h3 :class="$style.H3">Start from seeds</h3>
       <p :class="$style.SeedsHelp">
         One colour per role — Generate turns each into a full ramp (your colour
-        lands on step 500), dark mode included. Blank roles keep the base
-        theme; fine-tune any token below afterwards.
+        lands on step 500), dark mode included. Blank roles keep the base theme;
+        fine-tune any token below afterwards.
       </p>
       <div :class="$style.SeedsGrid">
         <div
@@ -579,9 +579,7 @@ onBeforeUnmount(() => {
               :class="[$style.Input, $style.SeedInput]"
               :value="seeds[role]"
               placeholder="—"
-              @change="
-                seeds[role] = ($event.target as HTMLInputElement).value
-              "
+              @change="seeds[role] = ($event.target as HTMLInputElement).value"
             />
           </div>
         </div>
@@ -625,162 +623,162 @@ onBeforeUnmount(() => {
 
     <div :class="$style.Columns">
       <div :class="$style.TokensColumn">
-      <section
-        :class="$style.Tokens"
-        :style="{ maxHeight: tokensHeight + 'px' }"
-      >
-        <div :class="$style.TokensHead">
-          <h3 :class="$style.H3">Tokens</h3>
-          <input
-            v-model="filter"
-            :class="[$style.Input, $style.Filter]"
-            placeholder="Filter tokens…"
-          />
-        </div>
-
-        <div
-          v-for="group in visibleGroups"
-          :key="group.title"
-          :class="$style.Group"
+        <section
+          :class="$style.Tokens"
+          :style="{ maxHeight: tokensHeight + 'px' }"
         >
-          <h4 :class="$style.H4">
-            {{ group.title }}
-            <span :class="$style.Tier">{{ group.tier }}</span>
-            <!--
+          <div :class="$style.TokensHead">
+            <h3 :class="$style.H3">Tokens</h3>
+            <input
+              v-model="filter"
+              :class="[$style.Input, $style.Filter]"
+              placeholder="Filter tokens…"
+            />
+          </div>
+
+          <div
+            v-for="group in visibleGroups"
+            :key="group.title"
+            :class="$style.Group"
+          >
+            <h4 :class="$style.H4">
+              {{ group.title }}
+              <span :class="$style.Tier">{{ group.tier }}</span>
+              <!--
               One toggle per ramp, tinted with that ramp's own mid step. The
               Status group holds three of them, so the tint is what tells them
               apart at a glance — a row of identical icons would need the
               tooltip read out three times.
             -->
-            <button
+              <button
+                v-for="ramp in rampsIn(group)"
+                :key="ramp.prefix"
+                :class="[
+                  $style.RampToggle,
+                  rampOpen[ramp.prefix] && $style.RampToggle__open
+                ]"
+                :style="{ color: valueFor(`${ramp.prefix}-500`) }"
+                :aria-expanded="!!rampOpen[ramp.prefix]"
+                :aria-label="`Generate the ${ramp.title.toLowerCase()} ramp from a gradient`"
+                :title="`Generate the ${ramp.title.toLowerCase()} ramp from a gradient`"
+                @click="toggleRamp(ramp.prefix)"
+              >
+                <Icon icon="mdi:auto-fix" />
+              </button>
+            </h4>
+            <p
+              v-if="group.description"
+              :class="$style.GroupDesc"
+            >
+              {{ group.description }}
+            </p>
+
+            <template
               v-for="ramp in rampsIn(group)"
               :key="ramp.prefix"
-              :class="[
-                $style.RampToggle,
-                rampOpen[ramp.prefix] && $style.RampToggle__open
-              ]"
-              :style="{ color: valueFor(`${ramp.prefix}-500`) }"
-              :aria-expanded="!!rampOpen[ramp.prefix]"
-              :aria-label="`Generate the ${ramp.title.toLowerCase()} ramp from a gradient`"
-              :title="`Generate the ${ramp.title.toLowerCase()} ramp from a gradient`"
-              @click="toggleRamp(ramp.prefix)"
             >
-              <Icon icon="mdi:auto-fix" />
-            </button>
-          </h4>
-          <p
-            v-if="group.description"
-            :class="$style.GroupDesc"
-          >
-            {{ group.description }}
-          </p>
+              <div
+                v-if="rampOpen[ramp.prefix]"
+                :class="$style.Ramp"
+              >
+                <div :class="$style.RampHead">
+                  <span :class="$style.RampName">{{ ramp.title }}</span>
+                  <button
+                    :class="[$style.Btn, $style.BtnGhost]"
+                    title="Drop every override on this ramp, and its gradient"
+                    @click="resetRamp(ramp.prefix)"
+                  >
+                    Reset ramp
+                  </button>
+                </div>
 
-          <template
-            v-for="ramp in rampsIn(group)"
-            :key="ramp.prefix"
-          >
-            <div
-              v-if="rampOpen[ramp.prefix]"
-              :class="$style.Ramp"
-            >
-              <div :class="$style.RampHead">
-                <span :class="$style.RampName">{{ ramp.title }}</span>
-                <button
-                  :class="[$style.Btn, $style.BtnGhost]"
-                  title="Drop every override on this ramp, and its gradient"
-                  @click="resetRamp(ramp.prefix)"
-                >
-                  Reset ramp
-                </button>
-              </div>
-
-              <!--
+                <!--
                 `hide-shape` because nothing here is ever painted as a gradient:
                 the ramp only samples positions along it, so a shape and an
                 angle would be controls with no effect. The ends are pinned
                 because the lowest step IS the left end — a stop dragged inward
                 would make several steps come out identical.
               -->
-              <GradientPicker
-                :model-value="gradientFor(ramp.prefix)"
-                hide-shape
-                alpha
-                pin-start
-                pin-end
-                @update:model-value="setRampGradient(ramp.prefix, $event)"
-              />
+                <GradientPicker
+                  :model-value="gradientFor(ramp.prefix)"
+                  hide-shape
+                  alpha
+                  pin-start
+                  pin-end
+                  @update:model-value="setRampGradient(ramp.prefix, $event)"
+                />
 
-              <p
-                v-if="rampError[ramp.prefix]"
-                :class="$style.JsonError"
-              >
-                {{ rampError[ramp.prefix] }}
-              </p>
-            </div>
-          </template>
+                <p
+                  v-if="rampError[ramp.prefix]"
+                  :class="$style.JsonError"
+                >
+                  {{ rampError[ramp.prefix] }}
+                </p>
+              </div>
+            </template>
 
-          <div
-            v-for="token in group.tokens"
-            :key="token.name"
-            :class="$style.Row"
-          >
-            <div :class="$style.RowMain">
-              <code :class="$style.TokenName">--octans-{{ token.name }}</code>
-              <span
-                v-if="token.description"
-                :class="$style.TokenDesc"
-              >
-                {{ token.description }}
-              </span>
-            </div>
+            <div
+              v-for="token in group.tokens"
+              :key="token.name"
+              :class="$style.Row"
+            >
+              <div :class="$style.RowMain">
+                <code :class="$style.TokenName">--octans-{{ token.name }}</code>
+                <span
+                  v-if="token.description"
+                  :class="$style.TokenDesc"
+                >
+                  {{ token.description }}
+                </span>
+              </div>
 
-            <div :class="$style.Controls">
-              <!--
+              <div :class="$style.Controls">
+                <!--
                 The text field stays alongside the picker rather than being
                 replaced by it: a token may legitimately hold something the
                 picker cannot show — `var()`, `color-mix()`, a gradient — and
                 that has to remain typeable.
               -->
-              <ColorSelector
-                v-if="isColorToken(token)"
-                :model-value="valueFor(token.name)"
-                :show-value="false"
-                alpha
-                :placement="'bottom-end'"
-                @update:model-value="setToken(token.name, $event as string)"
-              />
-              <input
-                :class="[$style.Input, $style.ValueInput]"
-                :value="valueFor(token.name)"
-                @change="
-                  setToken(
-                    token.name,
-                    ($event.target as HTMLInputElement).value
-                  )
-                "
-              />
-              <button
-                :class="[$style.Btn, $style.BtnGhost]"
-                :disabled="!(token.name in overrides)"
-                title="Reset to the base theme's value"
-                @click="resetToken(token.name)"
-              >
-                ↺
-              </button>
+                <ColorSelector
+                  v-if="isColorToken(token)"
+                  :model-value="valueFor(token.name)"
+                  :show-value="false"
+                  alpha
+                  :placement="'bottom-end'"
+                  @update:model-value="setToken(token.name, $event as string)"
+                />
+                <input
+                  :class="[$style.Input, $style.ValueInput]"
+                  :value="valueFor(token.name)"
+                  @change="
+                    setToken(
+                      token.name,
+                      ($event.target as HTMLInputElement).value
+                    )
+                  "
+                />
+                <button
+                  :class="[$style.Btn, $style.BtnGhost]"
+                  :disabled="!(token.name in overrides)"
+                  title="Reset to the base theme's value"
+                  @click="resetToken(token.name)"
+                >
+                  ↺
+                </button>
+              </div>
             </div>
           </div>
+        </section>
+        <div
+          :class="$style.ResizeHandle"
+          title="Drag to resize the token list"
+          aria-label="Drag to resize the token list"
+          role="separator"
+          aria-orientation="horizontal"
+          @pointerdown="startTokensResize"
+        >
+          <span :class="$style.ResizeGrip"></span>
         </div>
-      </section>
-      <div
-        :class="$style.ResizeHandle"
-        title="Drag to resize the token list"
-        aria-label="Drag to resize the token list"
-        role="separator"
-        aria-orientation="horizontal"
-        @pointerdown="startTokensResize"
-      >
-        <span :class="$style.ResizeGrip"></span>
-      </div>
       </div>
       <!-- .TokensColumn -->
 

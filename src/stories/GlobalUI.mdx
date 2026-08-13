@@ -278,7 +278,7 @@ state, with `visible` as a ref.
 Controls the contextual save bar (the "you have unsaved changes" bar),
 rendered by any mounted **`SaveBar`** — `GlobalNav` includes one. The app owns
 the state: set it as the form becomes dirty or clean; the bar's Save and
-Discard buttons only *announce* their clicks to subscribers.
+Discard buttons only _announce_ their clicks to subscribers.
 
 In `<script setup>`, prefer the **`useSaveBar()`** composable — it takes the
 handlers directly and unsubscribes them on unmount:

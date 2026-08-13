@@ -41,9 +41,7 @@ export default defineComponent({
             props.gap !== undefined
               ? {
                   gap:
-                    typeof props.gap === 'number'
-                      ? `${props.gap}px`
-                      : props.gap
+                    typeof props.gap === 'number' ? `${props.gap}px` : props.gap
                 }
               : undefined
         }),

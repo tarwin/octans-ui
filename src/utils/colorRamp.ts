@@ -19,11 +19,7 @@ import {
   type ColorFormat,
   type Rgba
 } from './color'
-import {
-  createGradient,
-  sampleGradient,
-  type Gradient
-} from './gradient'
+import { createGradient, sampleGradient, type Gradient } from './gradient'
 
 export interface RampStepPosition {
   /** The step's number, e.g. `200`. */

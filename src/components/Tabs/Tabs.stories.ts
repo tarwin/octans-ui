@@ -157,7 +157,11 @@ export const CustomTabContent: Story = {
       return {
         selected,
         tabs: [
-          { value: 'endpoint', label: 'Endpoint', icon: 'mdi:check-circle-outline' },
+          {
+            value: 'endpoint',
+            label: 'Endpoint',
+            icon: 'mdi:check-circle-outline'
+          },
           { value: 'proxy', label: 'Proxy Subdomain' },
           { value: 'javascript', label: 'JavaScript Embed Code' }
         ]
