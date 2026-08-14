@@ -239,6 +239,15 @@ export interface SelectOptionType {
 }
 ```
 
+## Acknowledgements
+
+- [Bryce Farrell](https://github.com/brycefarrell) — especially for ideas on how
+  to structure internal APIs to make them easy to use.
+- [Ramunė Rastonis](https://www.instagram.com/ramunerastonis/) — for design
+  consulting.
+
+Any shortcomings are my own fault.
+
 ## License
 
 [MIT](./LICENSE)
