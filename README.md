@@ -21,6 +21,24 @@ pnpm add @octans/ui
 if you use the components that render router links (`MaybeRouterLink`,
 `UnstyledLink`, and anything that accepts a `to` prop).
 
+### A note on the `vue-demi` build warning
+
+pnpm may report an ignored build script on install:
+
+```
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: vue-demi
+```
+
+This is safe to ignore. `vue-demi` arrives transitively via
+`reka-ui` → `@floating-ui/vue`, which still supports Vue 2 alongside Vue 3. Its
+postinstall only switches the package entry point to match the detected Vue
+version, and the shipped default is already the Vue 3 build — so skipping it
+changes nothing on Vue 3. Run `pnpm approve-builds` if you would rather the
+warning went away.
+
+It will disappear on its own once `reka-ui` moves to `@floating-ui/vue` v2,
+which dropped `vue-demi`.
+
 ## Usage
 
 ```ts
