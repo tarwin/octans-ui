@@ -197,6 +197,8 @@ const changePageSize = (event: Event) => {
 }
 
 .PageSize {
+  display: flex;
+  align-items: center;
   min-height: 30px;
   margin-left: 8px;
   padding-left: 8px;
@@ -212,11 +214,12 @@ const changePageSize = (event: Event) => {
     color: var(--octans-text-subdued);
   }
   appearance: none;
-  width: 50px;
+  width: 45px;
   min-height: 30px;
-  margin-right: -15px;
-  padding: 0 5px;
+  margin-right: -16px;
+  padding: 0 10px 0 5px;
   border: none;
+  border-radius: var(--octans-radius-field);
   background: transparent;
   font-size: 14px;
   text-align: center;
