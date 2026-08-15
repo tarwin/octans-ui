@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Octans UI — an opinionated Vue 3 UI framework</title>
+    <meta
+      name="description"
+      content="Octans UI is an opinionated Vue 3 component library: 77 accessible, themeable components plus the application shell to hang them on. Live Storybook docs, design tokens and an interactive theme builder."
+    />
+    <link rel="canonical" href="https://octans.dev/" />
+    <!-- Kept in step with the active theme by the switcher at the end of body. -->
+    <meta id="theme-color" name="theme-color" content="#f8f9fb" />
+
+    <!--
+      Open Graph and Twitter cards. The image URL must be absolute — crawlers
+      fetch it without a document to resolve a relative path against — so this
+      hard-codes the production origin rather than using `./`. Kept in step with
+      the same block in .storybook/manager-head.html.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Octans UI" />
+    <meta property="og:url" content="https://octans.dev/" />
+    <meta
+      property="og:title"
+      content="Octans UI — an opinionated Vue 3 UI framework"
+    />
+    <meta
+      property="og:description"
+      content="77 accessible, themeable Vue 3 components plus the application shell to hang them on."
+    />
+    <meta
+      property="og:image"
+      content="https://octans.dev/octans-og-image.png"
+    />
+    <meta property="og:image:width" content="1104" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The Octans UI logo beside the words: Octans UI, opinionated Vue 3 UI framework."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Octans UI — an opinionated Vue 3 UI framework"
+    />
+    <meta
+      name="twitter:description"
+      content="77 accessible, themeable Vue 3 components plus the application shell to hang them on."
+    />
+    <meta
+      name="twitter:image"
+      content="https://octans.dev/octans-og-image.png"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="./octans-logo.svg" />
+
+    <!--
+      Storybook used to be served from the root, so links shared before this
+      landing page existed carry its `?path=` query. Sending them on preserves
+      every bookmark and every README link ever posted, at the cost of one
+      redirect. Inline and first in <head> so it fires before any paint.
+    -->
+    <script>
+      if (location.search.includes('path=')) {
+        location.replace('./storybook/' + location.search + location.hash)
+      }
+    </script>
+
+    <!--
+      Applies a saved theme choice before the first paint. It has to be inline
+      and above the stylesheet: deferred to the end of body it would run after
+      the browser has already painted the system-preference colours, and a
+      light-mode reader who chose dark would see a white flash on every load.
+      Absent a saved choice nothing is set, and the media query decides.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('octans-theme')
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.dataset.theme = saved
+        }
+      } catch (error) {
+        // Private mode or blocked storage: the system preference still works.
+      }
+    </script>
+
+    <style>
+      /*
+        One narrow column, hairline rules, no webfonts. The system serif for
+        prose and the system mono for anything the reader would type sets the
+        whole tone, and nothing has to load before the page is readable.
+      */
+      :root {
+        --bg: #f8f9fb;
+        --raised: #ffffff;
+        --line: #e3e6ed;
+        --text: #1f2430;
+        --muted: #5d6577;
+        /* The brand indigo, a shade deeper so body-sized text clears 4.5:1. */
+        --accent: #4a52c4;
+        --code-string: #1f7a5c;
+        /* The grid pins: only the intersections, barely there. */
+        --dot: rgba(31, 36, 48, 0.11);
+
+        --serif: Charter, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+        --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas,
+          monospace;
+      }
+
+      /*
+        The dark palette is written twice on purpose. CSS has no way to share
+        one declaration block between a media query and an attribute selector,
+        and both are needed: the media query serves the reader who has made no
+        choice here, the attribute serves the one who clicked the switcher. The
+        `:not([data-theme='light'])` guard is what lets an explicit "light"
+        override a system preference for dark.
+      */
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0d1017;
+          --raised: #12161f;
+          --line: #232838;
+          --text: #e6e9f0;
+          --muted: #99a1b3;
+          /* The logo's pale arm colour: the brand indigo is too dark to read
+             here, the same reason .storybook/theme.ts steps up for its dark
+             chrome. */
+          --accent: #aeb6ff;
+          --code-string: #8fd3b4;
+          --dot: rgba(230, 233, 240, 0.09);
+        }
+      }
+
+      :root[data-theme='dark'] {
+        --bg: #0d1017;
+        --raised: #12161f;
+        --line: #232838;
+        --text: #e6e9f0;
+        --muted: #99a1b3;
+        --accent: #aeb6ff;
+        --code-string: #8fd3b4;
+        --dot: rgba(230, 233, 240, 0.09);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        /*
+          Just the pins where a graticule's lines would cross. Fixed, so the
+          page slides over it rather than dragging it along, and one gradient
+          instead of two means no lines to thicken at the intersections.
+        */
+        background-color: var(--bg);
+        background-image: radial-gradient(
+          circle at 1.5px 1.5px,
+          var(--dot) 1.5px,
+          transparent 0
+        );
+        background-size: 28px 28px;
+        background-attachment: fixed;
+        color: var(--text);
+        font-family: var(--serif);
+        font-size: 17px;
+        line-height: 1.65;
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .col {
+        width: 100%;
+        max-width: 660px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      a {
+        color: var(--accent);
+        /* Derived from the link colour so it follows the theme unattended. */
+        text-decoration-color: color-mix(in srgb, currentColor 38%, transparent);
+        text-underline-offset: 3px;
+      }
+
+      a:hover {
+        text-decoration-color: var(--accent);
+      }
+
+      /* ---- Header ------------------------------------------------------ */
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        flex-wrap: wrap;
+        padding-top: 56px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 24px;
+        height: 24px;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-family: var(--mono);
+        font-size: 14px;
+      }
+
+      /* Fills the rest of the row so the switcher's `margin-left: auto` has
+         somewhere to push it. The footer nav must stay content-sized. */
+      header nav {
+        flex: 1;
+      }
+
+      nav a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        color: var(--accent);
+      }
+
+      .theme {
+        margin-left: auto;
+        padding: 3px 10px;
+        border: 1px solid var(--line);
+        background: none;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        cursor: pointer;
+      }
+
+      .theme:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* ---- Hero -------------------------------------------------------- */
+
+      h1 {
+        margin: 64px 0 0;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: clamp(2.25rem, 7vw, 3.6rem);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+
+      h1 span {
+        color: var(--accent);
+      }
+
+      .lede {
+        margin: 28px 0 0;
+        font-size: 20px;
+        color: var(--muted);
+      }
+
+      .lede strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* ---- Install ----------------------------------------------------- */
+
+      .install {
+        display: flex;
+        align-items: stretch;
+        margin-top: 36px;
+        border: 1px solid var(--line);
+        background: var(--raised);
+      }
+
+      .install code {
+        flex: 1;
+        padding: 13px 16px;
+        font-family: var(--mono);
+        font-size: 14px;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .install .prompt {
+        color: var(--muted);
+      }
+
+      .install button {
+        flex: none;
+        padding: 0 16px;
+        border: 0;
+        border-left: 1px solid var(--line);
+        background: none;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .install button:hover {
+        color: var(--accent);
+      }
+
+      .caption {
+        margin: 10px 0 0;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* ---- Sections ---------------------------------------------------- */
+
+      h2 {
+        margin: 64px 0 16px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      p {
+        margin: 20px 0 0;
+        color: var(--muted);
+      }
+
+      p strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /*
+        Cells sit on a 1px grid: the container's background shows through the
+        gaps, so every rule is shared and none of them double up.
+      */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+      }
+
+      .grid > * {
+        background: var(--bg);
+        padding: 18px 20px;
+      }
+
+      .cell {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .cell:hover {
+        background: var(--raised);
+      }
+
+      .cell__title {
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .cell__title .arrow {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .cell p {
+        margin: 6px 0 0;
+        font-size: 16px;
+      }
+
+      /* The component census: label left, count right, one row per family. */
+      .census {
+        grid-template-columns: 1fr 1fr 1fr;
+        font-family: var(--mono);
+        font-size: 14px;
+      }
+
+      .census > * {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 16px;
+      }
+
+      .census b {
+        font-weight: 400;
+        color: var(--accent);
+      }
+
+      /* ---- Code -------------------------------------------------------- */
+
+      pre {
+        margin: 20px 0 0;
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        background: var(--raised);
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text);
+      }
+
+      pre .k {
+        color: var(--accent);
+      }
+
+      pre .s {
+        color: var(--code-string);
+      }
+
+      pre .c {
+        color: var(--muted);
+      }
+
+      p code,
+      li code {
+        font-family: var(--mono);
+        font-size: 0.87em;
+        color: var(--text);
+      }
+
+      /* ---- Link list --------------------------------------------------- */
+
+      ul.links {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 14px;
+      }
+
+      ul.links li {
+        border-bottom: 1px solid var(--line);
+      }
+
+      ul.links a {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 4px;
+        text-decoration: none;
+      }
+
+      ul.links a:hover {
+        background: var(--raised);
+      }
+
+      ul.links span {
+        color: var(--muted);
+      }
+
+      /* ---- Footer ------------------------------------------------------ */
+
+      footer {
+        margin-top: 72px;
+        padding: 24px 0 56px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      footer nav {
+        font-size: 13px;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 560px) {
+        .grid,
+        .census {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          gap: 16px;
+        }
+
+        nav {
+          gap: 16px;
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="col">
+      <header>
+        <a class="brand" href="./">
+          <img src="./octans-logo.svg" alt="" width="24" height="24" />
+          octans ui
+        </a>
+        <nav>
+          <a href="./storybook/?path=/docs/documentation-quick-start--docs"
+            >docs</a
+          >
+          <a
+            href="./storybook/?path=/story/documentation-kitchen-sink--all-components"
+            >components</a
+          >
+          <a href="https://github.com/tarwin/octans-ui" rel="noopener"
+            >github ↗</a
+          >
+          <button
+            id="theme"
+            class="theme"
+            type="button"
+            aria-live="polite"
+          >
+            ◐ auto
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        <h1><span>77 components</span> for Vue 3.</h1>
+
+        <p class="lede">
+          An <strong>opinionated</strong> component library — accessible,
+          themeable primitives and the application shell to hang them on.
+        </p>
+
+        <div class="install">
+          <code id="install-cmd"
+            ><span class="prompt">$</span> pnpm add @octans/ui</code
+          >
+          <button type="button" data-copy="install-cmd">copy</button>
+        </div>
+        <p class="caption">vue 3.5+ · vue-router optional · MIT</p>
+
+        <h2>Start here</h2>
+        <div class="grid">
+          <a
+            class="cell"
+            href="./storybook/?path=/docs/documentation-quick-start--docs"
+          >
+            <span class="cell__title">quick start <span class="arrow">→</span></span>
+            <p>
+              Install, register the plugin, render your first Card. Copyable
+              snippets for pnpm, npm, yarn and a plain script tag.
+            </p>
+          </a>
+          <a
+            class="cell"
+            href="./storybook/?path=/story/documentation-kitchen-sink--all-components"
+          >
+            <span class="cell__title">kitchen sink <span class="arrow">→</span></span>
+            <p>
+              Every component on one page, live. Switch theme or language from
+              the toolbar and watch the lot follow.
+            </p>
+          </a>
+          <a class="cell" href="https://github.com/tarwin/octans-ui" rel="noopener">
+            <span class="cell__title">github <span class="arrow">↗</span></span>
+            <p>
+              Source, issues and the contributing guide. MIT licensed — fork it,
+              file a bug, or send a pull request.
+            </p>
+          </a>
+          <a
+            class="cell"
+            href="./storybook/?path=/story/documentation-theme-builder--builder"
+          >
+            <span class="cell__title">theme builder <span class="arrow">→</span></span>
+            <p>
+              Pick a seed colour and every ramp and semantic token follows, dark
+              mode included. Save it and preview any story in it.
+            </p>
+          </a>
+        </div>
+
+        <h2>What's in it</h2>
+        <div class="grid census">
+          <div>Forms <b>22</b></div>
+          <div>Layout <b>13</b></div>
+          <div>Feedback <b>10</b></div>
+          <div>Data display <b>9</b></div>
+          <div>Utilities <b>6</b></div>
+          <div>Navigation <b>5</b></div>
+          <div>Typography <b>5</b></div>
+          <div>Overlays <b>4</b></div>
+          <div>Actions <b>3</b></div>
+        </div>
+        <p>
+          Plus the shell: <code>AppFrame</code>, <code>Page</code>,
+          <code>GlobalNav</code> and <code>Navigation</code> — the scaffolding
+          an admin app needs before it can show a single button.
+        </p>
+
+        <h2>Usage</h2>
+        <pre><code><span class="k">import</span> { createApp } <span class="k">from</span> <span class="s">'vue'</span>
+<span class="k">import</span> Octans <span class="k">from</span> <span class="s">'@octans/ui'</span>
+<span class="k">import</span> <span class="s">'@octans/ui/style.css'</span>
+
+createApp(App).use(Octans).mount(<span class="s">'#app'</span>)
+<span class="c">// $ui.toast(), $ui.confirm(), $t() — available in every template</span></code></pre>
+        <p>
+          Components import individually too, if you would rather not install
+          the plugin: <code>import { Button, Card } from '@octans/ui'</code>.
+        </p>
+
+        <h2>Also in the docs</h2>
+        <ul class="links">
+          <li>
+            <a href="./storybook/?path=/docs/documentation-design-tokens--docs">
+              design tokens <span>every custom property</span>
+            </a>
+          </li>
+          <li>
+            <a href="./storybook/?path=/docs/documentation-global-ui-ui--docs">
+              global ui ($ui) <span>toasts, confirms, prompts</span>
+            </a>
+          </li>
+          <li>
+            <a href="./storybook/?path=/docs/documentation-translations--docs">
+              translations <span>8 locales, English fallback</span>
+            </a>
+          </li>
+          <li>
+            <a href="./storybook/?path=/docs/documentation-changelog--docs">
+              changelog <span>what shipped when</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://www.npmjs.com/package/@octans/ui" rel="noopener">
+              npm ↗ <span>@octans/ui</span>
+            </a>
+          </li>
+        </ul>
+      </main>
+
+      <footer>
+        <span>MIT licensed</span>
+        <nav>
+          <a href="./storybook/">storybook</a>
+          <a href="https://github.com/tarwin/octans-ui" rel="noopener">github</a>
+          <a href="https://github.com/tarwin/octans-ui/issues" rel="noopener"
+            >issues</a
+          >
+        </nav>
+      </footer>
+    </div>
+
+    <script>
+      /*
+        Three states rather than two: "auto" is a real answer, and dropping it
+        would strand anyone whose OS already switches at dusk. Auto is the
+        absence of the attribute, so the media query in the stylesheet is what
+        decides — no value is stored and nothing has to be kept in step.
+      */
+      ;(function () {
+        var ORDER = ['auto', 'light', 'dark']
+        var LABELS = { auto: '◐ auto', light: '☀ light', dark: '☾ dark' }
+        var PAGE_COLOUR = { light: '#f8f9fb', dark: '#0d1017' }
+
+        var root = document.documentElement
+        var button = document.getElementById('theme')
+        var meta = document.getElementById('theme-color')
+        var prefersDark = matchMedia('(prefers-color-scheme: dark)')
+
+        var chosen = function () {
+          return root.dataset.theme || 'auto'
+        }
+
+        var paint = function () {
+          var mode = chosen()
+          button.textContent = LABELS[mode]
+          button.setAttribute('aria-label', 'Theme: ' + mode + '. Change it.')
+          var dark = mode === 'dark' || (mode === 'auto' && prefersDark.matches)
+          meta.content = dark ? PAGE_COLOUR.dark : PAGE_COLOUR.light
+        }
+
+        button.addEventListener('click', function () {
+          var next = ORDER[(ORDER.indexOf(chosen()) + 1) % ORDER.length]
+          if (next === 'auto') {
+            delete root.dataset.theme
+          } else {
+            root.dataset.theme = next
+          }
+          try {
+            if (next === 'auto') {
+              localStorage.removeItem('octans-theme')
+            } else {
+              localStorage.setItem('octans-theme', next)
+            }
+          } catch (error) {
+            // Storage refused: the choice still holds for this page view.
+          }
+          paint()
+        })
+
+        // On auto, the OS can flip underneath us mid-visit.
+        prefersDark.addEventListener('change', paint)
+        paint()
+      })()
+    </script>
+
+    <script>
+      // Progressive: the command is selectable text first, and this only adds
+      // the shortcut. Clipboard access can be refused (insecure origin, denied
+      // permission), so the button says so rather than silently doing nothing.
+      document.querySelectorAll('[data-copy]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var source = document.getElementById(button.dataset.copy)
+          var text = source.textContent.replace(/^\s*\$\s*/, '')
+          navigator.clipboard.writeText(text).then(
+            function () {
+              button.textContent = 'copied'
+              setTimeout(function () {
+                button.textContent = 'copy'
+              }, 1600)
+            },
+            function () {
+              button.textContent = 'select it'
+            }
+          )
+        })
+      })
+    </script>
+  </body>
+</html>

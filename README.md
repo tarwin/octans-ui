@@ -7,8 +7,9 @@ shell components.
 
 <br clear="left" />
 
-[octans.dev](https://octans.dev) — live Storybook docs ·
-[github.com/tarwin/octans-ui](https://github.com/tarwin/octans-ui) ·
+[octans.dev](https://octans.dev) ·
+[Quick start](https://octans.dev/storybook/?path=/docs/documentation-quick-start--docs) ·
+[Kitchen sink](https://octans.dev/storybook/?path=/story/documentation-kitchen-sink--all-components) ·
 [Issues](https://github.com/tarwin/octans-ui/issues)
 
 ## Install
@@ -191,6 +192,7 @@ pnpm dev            # Storybook on :6006
 | Script            | Does                                             |
 | ----------------- | ------------------------------------------------ |
 | `pnpm dev`        | Storybook dev server                             |
+| `pnpm build-site` | Landing page + Storybook into `site-dist/`       |
 | `pnpm build-lib`  | Build the ES + UMD bundles and type declarations |
 | `pnpm type-check` | `vue-tsc --noEmit`                               |
 | `pnpm lint`       | ESLint                                           |

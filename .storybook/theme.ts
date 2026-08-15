@@ -30,13 +30,16 @@ export const REPO_URL = 'https://github.com/tarwin/octans-ui'
 
 const shared = {
   brandTitle: 'Octans UI',
-  // The logo goes home, which is what clicking a logo does everywhere else.
-  // GitHub is the toolbar link in `manager.ts` instead.
+  // The logo goes home, which is what clicking a logo does everywhere else —
+  // and home is now the landing page, one level up from the Storybook that is
+  // deployed at `/storybook/`. GitHub is the toolbar link in `manager.ts`.
   //
-  // Relative rather than `/` so it still lands on the docs root when Storybook
-  // is deployed under a subpath — a GitHub Pages project site is `/octans-ui/`,
-  // where `/` would leave the site entirely.
-  brandUrl: './',
+  // Relative rather than `/` so it still lands on the site root when the whole
+  // thing is served under a subpath — a GitHub Pages project site is
+  // `/octans-ui/`, where `/` would leave the site entirely. In `storybook dev`
+  // there is no landing page above it, so `../` simply reloads the dev server
+  // root; harmless.
+  brandUrl: '../',
   brandTarget: '_self',
 
   fontBase: FONT,

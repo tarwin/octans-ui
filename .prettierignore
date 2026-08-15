@@ -1,5 +1,6 @@
 dist
 storybook-static
+site-dist
 coverage
 pnpm-lock.yaml
 

@@ -1,13 +1,127 @@
 <!--
-  Injected into the Storybook manager's <head>. The favicon is the browser-tab
-  identity of the docs site, which the theme's brandImage does not reach.
+  Injected into the Storybook manager's <head>. This is the only HTML shell the
+  docs site has — every story is a `?path=` query on the same document — so the
+  social card and description below cover the whole of /storybook/.
 
-  No <title> here: Storybook rewrites the document title on every navigation
-  ("Button - Docs ⋅ Storybook"), and a second static <title> would be ignored
-  anyway — browsers honour the first one in the document.
+  The favicon is the browser-tab identity of the docs site, which the theme's
+  brandImage does not reach.
+
+  No <title> here: Storybook writes one from the `title` preset in main.ts, and
+  a second static <title> would be ignored anyway — browsers honour the first
+  one in the document. The script at the bottom handles the titles the manager
+  writes at runtime.
 -->
 <link
   rel="icon"
   type="image/svg+xml"
   href="./octans-logo.svg"
 />
+
+<meta
+  name="description"
+  content="Live documentation for Octans UI — 77 accessible, themeable Vue 3 components, design tokens and an interactive theme builder."
+/>
+<link
+  rel="canonical"
+  href="https://octans.dev/storybook/"
+/>
+
+<!--
+  Open Graph and Twitter cards. The image URL has to be absolute — a crawler
+  fetches it with no document to resolve a relative path against — so the
+  production origin is hard-coded, matching the same block in site/index.html.
+-->
+<meta
+  property="og:type"
+  content="website"
+/>
+<meta
+  property="og:site_name"
+  content="Octans UI"
+/>
+<meta
+  property="og:url"
+  content="https://octans.dev/storybook/"
+/>
+<meta
+  property="og:title"
+  content="Octans UI — component documentation"
+/>
+<meta
+  property="og:description"
+  content="77 accessible, themeable Vue 3 components, design tokens and an interactive theme builder."
+/>
+<meta
+  property="og:image"
+  content="https://octans.dev/octans-og-image.png"
+/>
+<meta
+  property="og:image:width"
+  content="1104"
+/>
+<meta
+  property="og:image:height"
+  content="630"
+/>
+<meta
+  property="og:image:alt"
+  content="The Octans UI logo beside the words: Octans UI, opinionated Vue 3 UI framework."
+/>
+<meta
+  name="twitter:card"
+  content="summary_large_image"
+/>
+<meta
+  name="twitter:title"
+  content="Octans UI — component documentation"
+/>
+<meta
+  name="twitter:description"
+  content="77 accessible, themeable Vue 3 components, design tokens and an interactive theme builder."
+/>
+<meta
+  name="twitter:image"
+  content="https://octans.dev/octans-og-image.png"
+/>
+
+<script>
+  /*
+    The manager rewrites document.title on every navigation, as
+    "<section> / <component> - <story> ⋅ Storybook" (`getDescription` in the
+    manager runtime). That suffix is hard-coded there with no configuration
+    hook, so the only place to correct it is here — watch the <title> element
+    and swap the trailing product name as it is written. Tab titles then read
+    "Layout / Card - Docs ⋅ Octans UI", which is what someone scanning a row of
+    pinned tabs is actually looking for.
+
+    Runs at parse time rather than on DOMContentLoaded: the <title> element is
+    emitted above this file in the template, so it already exists, and the
+    manager bundle that does the writing loads after it.
+  */
+  ;(function () {
+    var FROM = ' ⋅ Storybook'
+    var TO = ' ⋅ Octans UI'
+    var title = document.querySelector('title')
+    if (!title) return
+
+    function rebrand() {
+      var current = document.title
+      var next =
+        current === 'Storybook'
+          ? 'Octans UI'
+          : current.slice(-FROM.length) === FROM
+            ? current.slice(0, -FROM.length) + TO
+            : null
+      // Assigning re-enters this observer, so the guard is load-bearing: the
+      // second pass has to find nothing to do or it would loop forever.
+      if (next && next !== current) document.title = next
+    }
+
+    new MutationObserver(rebrand).observe(title, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    })
+    rebrand()
+  })()
+</script>

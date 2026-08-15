@@ -31,3 +31,6 @@ coverage
 
 *storybook.log
 storybook-static
+
+# The assembled site (landing page + Storybook) — `pnpm build-site`.
+site-dist

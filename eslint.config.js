@@ -13,6 +13,7 @@ export default defineConfigWithVueTs(
     ignores: [
       'dist/**',
       'storybook-static/**',
+      'site-dist/**',
       'public/tzData.js',
       'coverage/**'
     ]

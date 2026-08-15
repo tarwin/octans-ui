@@ -1,8 +1,11 @@
 name: Deploy docs
 
-# Publishes the built Storybook to GitHub Pages, which serves it at
+# Publishes the docs site to GitHub Pages, which serves it at
 # https://octans.dev — the custom domain is configured in the repo's
 # Settings → Pages, not here.
+#
+# The site is the landing page at the root plus the built Storybook under
+# /storybook/; `pnpm build-site` assembles both into site-dist.
 
 on:
   push:
@@ -37,14 +40,14 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build Storybook
-        run: pnpm run build-storybook
+      - name: Build site
+        run: pnpm run build-site
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: storybook-static
+          path: site-dist
 
   deploy:
     needs: build
