@@ -55,13 +55,6 @@
     />
     <link rel="icon" type="image/png" sizes="32x32" href="./octans-icon-tiny.png" />
 
-    <!--
-      The SVG is what any current browser picks. The PNG is the fallback for
-      the ones that cannot use it, and the icon iOS puts on the home screen —
-      one 1024px file for both, which the OS scales down. `sizes` states what
-      the file actually is rather than the slot it is being used for, so
-      nothing has to change if a second size is ever added.
-    -->
     <link rel="icon" type="image/svg+xml" href="./octans-logo.svg" />
     <link
       rel="icon"
@@ -71,25 +64,15 @@
     />
     <link rel="apple-touch-icon" href="./octans-icon.png" />
 
-    <!--
-      Storybook used to be served from the root, so links shared before this
-      landing page existed carry its `?path=` query. Sending them on preserves
-      every bookmark and every README link ever posted, at the cost of one
-      redirect. Inline and first in <head> so it fires before any paint.
-    -->
+    <meta name="twitter:site" content="@OctansUI" />
+    <meta property="og:locale" content="en_US" />
+
     <script>
       if (location.search.includes('path=')) {
         location.replace('./storybook/' + location.search + location.hash)
       }
     </script>
 
-    <!--
-      Applies a saved theme choice before the first paint. It has to be inline
-      and above the stylesheet: deferred to the end of body it would run after
-      the browser has already painted the system-preference colours, and a
-      light-mode reader who chose dark would see a white flash on every load.
-      Absent a saved choice nothing is set, and the media query decides.
-    -->
     <script>
       try {
         var saved = localStorage.getItem('octans-theme')
@@ -102,11 +85,6 @@
     </script>
 
     <style>
-      /*
-        One narrow column, hairline rules, no webfonts. The system serif for
-        prose and the system mono for anything the reader would type sets the
-        whole tone, and nothing has to load before the page is readable.
-      */
       :root {
         --bg: #f8f9fb;
         --raised: #ffffff;
@@ -124,14 +102,6 @@
           monospace;
       }
 
-      /*
-        The dark palette is written twice on purpose. CSS has no way to share
-        one declaration block between a media query and an attribute selector,
-        and both are needed: the media query serves the reader who has made no
-        choice here, the attribute serves the one who clicked the switcher. The
-        `:not([data-theme='light'])` guard is what lets an explicit "light"
-        override a system preference for dark.
-      */
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme='light']) {
           --bg: #0d1017;
@@ -139,9 +109,6 @@
           --line: #232838;
           --text: #e6e9f0;
           --muted: #99a1b3;
-          /* The logo's pale arm colour: the brand indigo is too dark to read
-             here, the same reason .storybook/theme.ts steps up for its dark
-             chrome. */
           --accent: #aeb6ff;
           --code-string: #8fd3b4;
           --dot: rgba(230, 233, 240, 0.09);
