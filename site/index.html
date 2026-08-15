@@ -54,7 +54,21 @@
       content="https://octans.dev/octans-og-image.png"
     />
 
+    <!--
+      The SVG is what any current browser picks. The PNG is the fallback for
+      the ones that cannot use it, and the icon iOS puts on the home screen —
+      one 1024px file for both, which the OS scales down. `sizes` states what
+      the file actually is rather than the slot it is being used for, so
+      nothing has to change if a second size is ever added.
+    -->
     <link rel="icon" type="image/svg+xml" href="./octans-logo.svg" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="1024x1024"
+      href="./octans-icon.png"
+    />
+    <link rel="apple-touch-icon" href="./octans-icon.png" />
 
     <!--
       Storybook used to be served from the root, so links shared before this

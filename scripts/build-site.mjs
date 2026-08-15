@@ -2,7 +2,9 @@
 //
 //   site-dist/
 //     index.html          ← site/index.html, the landing page
-//     octans-logo.svg     ← favicon and hero mark
+//     octans-logo.svg     ← SVG favicon and header mark
+//     octans-icon.png     ← PNG favicon fallback and iOS home-screen icon,
+//                           shared with Storybook, which reaches it as ../
 //     octans-og-image.png ← the og:image both the landing page and Storybook
 //                           point at, by absolute URL
 //     storybook/          ← already written here by `storybook build -o`
@@ -24,7 +26,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'site-dist')
 
 /** Root-level files the landing page references by name. */
-const ROOT_ASSETS = ['octans-logo.svg', 'octans-og-image.png']
+const ROOT_ASSETS = [
+  'octans-logo.svg',
+  'octans-icon.png',
+  'octans-og-image.png'
+]
 
 const exists = async (path) => {
   try {

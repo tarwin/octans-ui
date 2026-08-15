@@ -16,6 +16,24 @@
   type="image/svg+xml"
   href="./octans-logo.svg"
 />
+<!--
+  The PNG fallback and the iOS home-screen icon, one 1024px file for both. It
+  lives at the site root next to the landing page rather than in
+  .storybook/public, so `../` rather than `./` — a second copy of a binary is a
+  thing that drifts. That path resolves in the deployed site (and under a
+  project subpath); in `storybook dev` there is nothing above the server root,
+  so it 404s there and the SVG above carries the tab on its own.
+-->
+<link
+  rel="icon"
+  type="image/png"
+  sizes="1024x1024"
+  href="../octans-icon.png"
+/>
+<link
+  rel="apple-touch-icon"
+  href="../octans-icon.png"
+/>
 
 <meta
   name="description"
