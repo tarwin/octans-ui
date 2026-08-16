@@ -55,8 +55,14 @@ const isCommentLine = (line) => {
 
 // Stories and fixtures are Storybook-only; tests never render to a real screen.
 // None of them are reasons to ship an icon.
+//
+// src/stories/ counts whole: nothing in it is reachable from src/lib.ts, and it
+// holds plain .vue helpers (ShellPreview, KitchenSink) that a `.stories.`
+// filename test misses — which is how five ThemeBuilder-only icons ended up
+// looking like shipped ones.
 const isDocsOnly = (path) =>
   /\.stories\./.test(path) ||
+  /[/\\]stories[/\\]/.test(path) ||
   /[/\\]styleguide[/\\]/.test(path) ||
   /\.(test|spec)\.ts$/.test(path)
 
