@@ -150,6 +150,10 @@ function discardChanges() {
   margin-left: auto;
 }
 .Action {
+  // A `<button>` inherits no typography of its own. This rule sets no size, so
+  // inheriting also lifts the labels off the user agent's 13.33px onto the
+  // bar's own 14px, which is what the rest of the library uses.
+  font: inherit;
   position: relative;
   appearance: none;
   padding: 6px 16px;

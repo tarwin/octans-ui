@@ -28,6 +28,12 @@ function applyTheme(theme: unknown) {
 // Dark corrects itself as soon as the sync below runs.
 addons.setConfig({
   theme: octansLight,
+  // The manager's own default, matching `options.showPanel` in preview.ts.
+  // That parameter is what holds the panel shut from story to story, but it
+  // only applies once the preview has connected and sent its parameters up;
+  // this covers the window before that, and a manager rendered with no story
+  // selected at all.
+  showPanel: false,
   sidebar: {
     // Renders "Documentation" and "Components" as section headings rather
     // than as two more folders to expand — the split is the point, and the

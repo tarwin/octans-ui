@@ -189,6 +189,9 @@ $toneInfo: var(--octans-info);
 }
 
 .Action {
+  // A `<button>` inherits no font of its own; the weight and size below still
+  // win, being the later declarations.
+  font: inherit;
   appearance: none;
   padding: 4px 8px;
   background: $focusColor;

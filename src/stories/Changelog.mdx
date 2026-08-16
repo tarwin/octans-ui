@@ -4,6 +4,32 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.1.0
+
+Fixed
+
+- Dark mode: form controls showed black text and the wrong font in Pagination,
+  ActionList, TimePicker, Tag, Select and NavField.
+- `color-scheme` now follows the theme, so native dropdowns, scrollbars and
+  date/time inputs do too.
+- Popper content kept the host page's styling instead of the theme's.
+- AppFrame `sidebarOnly` + `sidebarCollapse: 'hide'` had no collapse control.
+- Navigation's rail toggle overlapped and displaced the logo.
+- Tag's close icon sat 2px high; GlobalNav's last separator was flush against
+  the title.
+
+Changed
+
+- `--octans-surface-nav` defaults to `#202e41`.
+- `--ui-font` and `--ui-monospace-font` now drive every component.
+
+Added
+
+- Theme Builder: app-shell preview, live contrast readouts, and `text-on-*`
+  derived from the fill you set.
+- [llms.txt](https://octans.dev/llms.txt) and an
+  [Agent Skill](https://octans.dev/skill/SKILL.md) for AI agents.
+
 ## 1.0.0
 
 First release.

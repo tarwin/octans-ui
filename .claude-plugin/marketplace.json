@@ -1,0 +1,11 @@
+{
+  "name": "octans",
+  "owner": { "name": "Tarwin Stroh-Spijer", "url": "https://github.com/tarwin" },
+  "plugins": [
+    {
+      "name": "octans-ui",
+      "source": "./plugins/octans-ui",
+      "description": "Build with the @octans/ui Vue 3 component library — tokens, theming, and the dark-mode traps."
+    }
+  ]
+}

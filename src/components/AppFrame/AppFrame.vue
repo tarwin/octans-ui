@@ -222,6 +222,28 @@ const attrs = computed(() => {
           >
             <Icon icon="mdi:menu" />
           </button>
+          <!--
+            `sidebarCollapse: 'hide'` normally moves the show/hide control into
+            the GlobalNav — but this layout has no bar to move it to, which
+            left the combination with no control at all: the sidebar could not
+            be collapsed, and a frame that started collapsed could not be got
+            back. Same floating affordance as the narrow drawer button above.
+          -->
+          <button
+            v-else-if="sidebarCollapse === 'hide' && hasSidebar"
+            :class="$style.DrawerButton"
+            type="button"
+            :aria-label="sidebarMin ? 'Expand sidebar' : 'Collapse sidebar'"
+            :data-ui-tooltip="
+              sidebarMin ? 'Expand sidebar' : 'Collapse sidebar'
+            "
+            data-ui-tooltip-position="right"
+            @click="sidebarMin = !sidebarMin"
+            @mouseenter="sidebarMin && setPeek(true)"
+            @mouseleave="setPeek(false)"
+          >
+            <Icon :icon="sidebarMin ? 'mdi:menu-open' : 'mdi:menu-close'" />
+          </button>
         </template>
         <ScrollPane
           :class="$style.Main"

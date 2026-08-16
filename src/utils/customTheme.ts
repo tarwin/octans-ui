@@ -219,9 +219,13 @@ export function restoreCustomTheme(): CustomTheme | undefined {
  * including inherited and overridden values. Used to seed the editor with real
  * starting values rather than blanks.
  */
-export function getResolvedTokenValue(name: string): string {
+export function getResolvedTokenValue(name: string, from?: Element): string {
   if (!isBrowser()) return ''
-  return getComputedStyle(document.documentElement)
+  // `from` matters for a token defined through others: `--octans-primary` is
+  // `var(--octans-primary-500)`, so it only reads back as the overridden
+  // colour when resolved on the element the overrides are set on. Defaults to
+  // the document, which is where an applied theme lives.
+  return getComputedStyle(from ?? document.documentElement)
     .getPropertyValue(tokenVar(name))
     .trim()
 }

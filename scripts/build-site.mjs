@@ -21,6 +21,7 @@
 import { cp, mkdir, rm, stat } from 'node:fs/promises'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { buildLlms } from './build-llms.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'site-dist')
@@ -68,6 +69,8 @@ for (const asset of ROOT_ASSETS) {
   }
   await cp(from, join(out, asset))
 }
+
+await buildLlms()
 
 console.log(
   `✓ site assembled in ${relative(root, out)}/ — landing page at /, Storybook at /storybook/`

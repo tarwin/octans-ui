@@ -120,6 +120,11 @@
 @mixin octans-dark-tokens {
   @include octans-derived-tokens;
 
+  // The counterpart to `color-scheme: light` on `:root` — see the note there.
+  // Being in the mixin, a subtree marked `data-octans-theme="dark"` inside a
+  // light document gets dark scrollbars and dropdowns too.
+  color-scheme: dark;
+
   --octans-surface: var(--octans-neutral-900);
   --octans-surface-raised: var(--octans-neutral-800);
   --octans-surface-sunken: var(--octans-neutral-950);
@@ -128,9 +133,10 @@
   --octans-surface-disabled: var(--octans-neutral-800);
   --octans-surface-control: var(--octans-neutral-800);
   --octans-surface-tooltip: var(--octans-neutral-700);
-  // The bar keeps its dark chrome, but steps off the app background so it
-  // still reads as a distinct band.
-  --octans-surface-nav: var(--octans-neutral-800);
+  // Same value as light — the bar's chrome does not follow the app theme. It
+  // still sits above the dark app background rather than merging into it,
+  // helped by the bar's own shadow; see the note in `:root`.
+  --octans-surface-nav: #202e41;
   --octans-overlay: rgba(0, 0, 0, 0.6);
   // Veils the thing it covers rather than the page behind it, so unlike
   // `--octans-overlay` it follows the surface, not the dark.
@@ -216,6 +222,14 @@
 
 :root {
   @include octans-derived-tokens;
+
+  // Which user agent palette to paint the parts of a page CSS cannot reach:
+  // the native `<option>` popup a `<select>` opens, scrollbars, the internals
+  // of `input[type='date'|'time'|'number']`, and the default `color` of form
+  // controls — which do NOT inherit it. Left unset, all of those keep their
+  // light defaults under a dark theme. Components still set their own colours
+  // explicitly; this is for the chrome underneath them.
+  color-scheme: light;
 
   // --- primitives: neutral (cool grey) ------------------------------------
   --octans-neutral-0: #ffffff;
@@ -335,8 +349,14 @@
    * The app bar (`GlobalNav`). Its own chrome, independent of the app theme —
    * dark over a light app the way admin bars usually are. A theme that wants
    * a branded or light bar overrides this pair.
+   *
+   * A literal rather than a neutral step: the bar is deliberately cooler than
+   * the greys around it, and pinning it to the ramp would drag it along with
+   * a re-tinted neutral. Restated verbatim in the dark block, so the bar is
+   * the same colour in both themes — which is what "independent of the app
+   * theme" means.
    */
-  --octans-surface-nav: var(--octans-neutral-800);
+  --octans-surface-nav: #202e41;
   /** Scrim behind modals and overlays. */
   --octans-overlay: rgba(17, 21, 26, 0.45);
   /**

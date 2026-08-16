@@ -165,8 +165,20 @@ defineExpose({
         :disabled="!teleportTo"
       >
         <!-- TODO: need to play with settings here to make sure they are correct -->
+        <!--
+          `UIElement` carries the library's baseline — text colour, font,
+          box-sizing. It is needed HERE because the portal moves the content to
+          <body>, away from everything it was written next to, so it inherits
+          the host page's defaults instead: black text and the user agent's
+          serif, whatever the theme says. `asChild` merges this class onto the
+          slot's own root element, which is why bring-your-own-content overlays
+          get it without having to remember to. Components that build their own
+          content on top of Popper (ActionListMenu) already set it themselves;
+          the class is idempotent, so both is fine.
+        -->
         <PopoverContent
           asChild
+          class="UIElement"
           :side="alignment.side"
           :align="alignment.align"
           avoidCollisions

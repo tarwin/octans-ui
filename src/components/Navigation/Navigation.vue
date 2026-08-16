@@ -148,6 +148,18 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
         minimizePosition === 'edge' &&
         !hasTitleGroup &&
         $style.Navigation__edgePad,
+      // On the rail the toggle sits OVER the brand mark and reveals on hover,
+      // rather than taking a row of its own. Two bugs came from it taking a
+      // row: `edge` pushed the logo 38px down the moment you collapsed, so it
+      // moved between states; `top` left the two sharing a 64px flex row,
+      // where they overlapped outright and the transparent button swallowed
+      // clicks meant for the logo. `bottom` is pinned away from both and is
+      // left alone.
+      childMin &&
+        hasTitleGroup &&
+        showMinButton &&
+        minimizePosition !== 'bottom' &&
+        $style.Navigation__railOverlay,
       accentStripe && $style.Navigation__stripe
     ]"
     :style="rootStyle"
@@ -403,6 +415,61 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
 }
 .Navigation__edgeButton.NavMin .TitleGroup {
   margin-top: 48px;
+}
+
+// --- the rail's overlaid toggle ---------------------------------------------
+// The brand mark keeps the top slot in both states — collapsing must not move
+// it — and the toggle sits on top, appearing on hover or keyboard focus. It
+// already carries a surface, border and shadow, so it reads over a logo.
+.Navigation__railOverlay {
+  .TitleGroup {
+    position: relative;
+    // Cancels the row the edge button used to claim.
+    margin-top: 10px;
+  }
+
+  .Min_Button {
+    z-index: 4;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--octans-border);
+    background: var(--octans-surface);
+    color: var(--octans-text-subdued);
+    box-shadow: var(--octans-shadow-sm);
+    font-size: 16px;
+    opacity: 0;
+    // Not just invisible — unclickable. An `opacity: 0` button still takes
+    // the pointer, which is what made the logo un-clickable under the `top`
+    // position: you aimed at the brand mark and collapsed the menu instead.
+    pointer-events: none;
+    transition: opacity 120ms ease;
+  }
+
+  // The `top` button is a child of the title group, so it centres against it.
+  .TitleGroup .Min_Button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  // The `edge` button is a sibling, absolute against the nav itself, so it is
+  // centred on the title group's box instead: 10px of margin plus half of its
+  // 48px min-height.
+  .Min_Button__edge {
+    top: 34px;
+    right: 50%;
+    transform: translate(50%, -50%);
+  }
+
+  // Keyboard included: tabbing to the button reveals it rather than moving
+  // focus somewhere invisible.
+  &:hover .Min_Button,
+  &:focus-within .Min_Button {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .Min_Button {

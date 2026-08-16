@@ -579,7 +579,7 @@ function legendSwatches(series: CalendarHeatmapSeries): string[] {
   display: inline-flex;
   flex-direction: column;
   gap: 8px;
-  font-family: $defaultFontFamily;
+  font-family: var(--octans-font);
 }
 
 .CalendarHeatmap_grid {

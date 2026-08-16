@@ -195,7 +195,17 @@ watch(
         </template>
         <div
           v-if="title"
-          :class="[$style.Title, hasClickTitleListener && $style.Title__button]"
+          :class="[
+            $style.Title,
+            hasClickTitleListener && $style.Title__button,
+            // A plain title has no padding of its own, so a separator before
+            // it sits flush against the text while every other gap in the row
+            // gets the neighbouring button's 12px. Only needed when it follows
+            // a prefix action, and only when it is not already a button.
+            hasPrefixTitleActions &&
+              !hasClickTitleListener &&
+              $style.Title__afterPrefix
+          ]"
           @click="onClickTitle"
         >
           {{ title }}
@@ -252,6 +262,12 @@ watch(
 }
 .Title__button {
   @include navButtonBase;
+}
+// Matches the horizontal padding `navButtonBase` gives the prefix actions, so
+// the separator between the last action and the title is spaced the same as
+// the ones between the actions themselves.
+.Title__afterPrefix {
+  padding-left: 12px;
 }
 .Hamburger {
   display: flex;

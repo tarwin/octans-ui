@@ -230,7 +230,9 @@ $textColor: var(--octans-text);
   padding: 0;
   border: none;
   background: none;
-  font-size: inherit;
+  // Was `font-size: inherit`, which got the size but left the family at the
+  // user agent's Arial — a `<button>` inherits neither on its own.
+  font: inherit;
 
   &:active {
     outline: none;

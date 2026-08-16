@@ -120,6 +120,9 @@ export default defineComponent({
 @import '../../styles/variables';
 
 .ActionListButton {
+  // Neither a `<button>` nor an `<a>` inherits the surrounding font. The
+  // `font-size` below still wins, being the later declaration.
+  font: inherit;
   display: flex;
   align-items: center;
   // justify-content: space-between;
@@ -127,6 +130,10 @@ export default defineComponent({
   padding: 10px 16px;
   background: var(--octans-surface);
   border: 0;
+  // Neither a `<button>` nor an `<a href>` inherits `color` — one starts from
+  // the user agent's `buttontext`, the other from its link blue. The menu
+  // around this sits on `--octans-surface`, so both have to be told.
+  color: var(--octans-text);
   font-size: 14px;
   text-align: left;
   text-decoration: none;

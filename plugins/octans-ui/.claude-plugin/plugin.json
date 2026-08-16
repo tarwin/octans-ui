@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "octans-ui",
+  "description": "Teaches Claude to build with the @octans/ui Vue 3 component library: setup, design tokens, theming, and the inheritance traps that break dark mode.",
+  "version": "1.0.0",
+  "author": { "name": "Tarwin Stroh-Spijer" },
+  "homepage": "https://octans.dev",
+  "repository": "https://github.com/tarwin/octans-ui",
+  "license": "MIT",
+  "keywords": ["vue", "component-library", "design-tokens", "ui"]
+}

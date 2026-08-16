@@ -163,7 +163,7 @@ export default defineComponent({
   }
 
   .noTitle & {
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--octans-text-subdued);
   }
 }
 .title {
@@ -171,7 +171,8 @@ export default defineComponent({
   font-weight: 500;
 }
 .description {
-  color: rgba(0, 0, 0, 0.54);
+  // Was a hard-coded translucent black, which is invisible on a dark surface.
+  color: var(--octans-text-subdued);
   font-size: 12px;
   white-space: nowrap;
   text-overflow: ellipsis;

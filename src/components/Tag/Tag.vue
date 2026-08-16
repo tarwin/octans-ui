@@ -74,6 +74,12 @@ $size: 28px;
 }
 
 .Tag_button {
+  // Centres the icon. Without this the button is a block box and the icon an
+  // inline SVG sitting on the text baseline, which left it ~2px high of the
+  // label beside it. Same treatment as the other icon buttons in the library.
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 $size;
   width: $size;
   height: $size;
@@ -81,6 +87,10 @@ $size: 28px;
   background: transparent;
   border: none;
   border-radius: 0 $radius $radius 0;
+  // `.Tag` sets the text colour, but a `<button>` does not inherit it — it
+  // falls back to the user agent's `buttontext`, which is what made the close
+  // icon (drawn in `currentColor`) black on a dark tag.
+  color: var(--octans-text);
   font-size: 16px;
 
   &:focus {
