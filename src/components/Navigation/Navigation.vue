@@ -62,6 +62,29 @@ const hasTitleGroup = computed(
     (showMinButton.value && props.minimizePosition === 'top')
 )
 
+/**
+ * On the rail, the toggle sits OVER the brand mark and reveals on hover
+ * instead of taking a row of its own.
+ *
+ * Taking a row caused both of the bugs this replaces: `edge` pushed the title
+ * group down 48px the moment you collapsed, so the logo moved between states,
+ * and `top` left button and logo sharing a 64px flex row, where they
+ * overlapped and the transparent button swallowed clicks meant for the logo.
+ * `bottom` is pinned away from the header and keeps its own place.
+ *
+ * While this is on, the button renders INSIDE the title group whichever
+ * position is configured — that is what lets one rule centre it, rather than
+ * offsetting the absolutely-positioned `edge` variant by a hard-coded guess at
+ * where the group happens to be.
+ */
+const railOverlay = computed(
+  () =>
+    childMin.value &&
+    hasTitleGroup.value &&
+    showMinButton.value &&
+    props.minimizePosition !== 'bottom'
+)
+
 // `highlight` and `accentStripe` double as colours: `true` leaves the default
 // (primary), a string becomes the colour via the custom property each reads.
 const rootStyle = computed(() => ({
@@ -148,25 +171,14 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
         minimizePosition === 'edge' &&
         !hasTitleGroup &&
         $style.Navigation__edgePad,
-      // On the rail the toggle sits OVER the brand mark and reveals on hover,
-      // rather than taking a row of its own. Two bugs came from it taking a
-      // row: `edge` pushed the logo 38px down the moment you collapsed, so it
-      // moved between states; `top` left the two sharing a 64px flex row,
-      // where they overlapped outright and the transparent button swallowed
-      // clicks meant for the logo. `bottom` is pinned away from both and is
-      // left alone.
-      childMin &&
-        hasTitleGroup &&
-        showMinButton &&
-        minimizePosition !== 'bottom' &&
-        $style.Navigation__railOverlay,
+      railOverlay && $style.Navigation__railOverlay,
       accentStripe && $style.Navigation__stripe
     ]"
     :style="rootStyle"
   >
     <!-- Reachable in both states, out of the content's way. -->
     <button
-      v-if="showMinButton && minimizePosition === 'edge'"
+      v-if="showMinButton && minimizePosition === 'edge' && !railOverlay"
       :class="[$style.Min_Button, $style.Min_Button__edge]"
       type="button"
       :aria-label="childMin ? 'Expand menu' : 'Collapse menu'"
@@ -207,7 +219,7 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
         ></slot>
       </div>
       <button
-        v-if="showMinButton && minimizePosition === 'top'"
+        v-if="showMinButton && (minimizePosition === 'top' || railOverlay)"
         :class="$style.Min_Button"
         type="button"
         :aria-label="childMin ? 'Expand menu' : 'Collapse menu'"
@@ -407,13 +419,23 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
   justify-content: center;
   .LogoWrap {
     max-width: none;
+    // No side padding on the rail. The wrap is only as wide as the rail
+    // allows, so 8px each side leaves a content box narrower than the square
+    // mark — which then overflows anchored to the left and sits ~4px right of
+    // centre, taking the overlaid toggle off-centre with it.
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
     :global(img),
     :global(svg) {
       max-width: none;
     }
   }
 }
-.Navigation__edgeButton.NavMin .TitleGroup {
+// Room for the edge button, which floats above the title group. Not needed
+// once the button is overlaid on the group instead of sitting above it — and
+// leaving it on is what kept the logo dropping 38px on collapse.
+.Navigation__edgeButton.NavMin:not(.Navigation__railOverlay) .TitleGroup {
   margin-top: 48px;
 }
 
@@ -446,21 +468,22 @@ function onClickItem(item: NavigationPrimaryItemType, event: MouseEvent) {
     transition: opacity 120ms ease;
   }
 
-  // The `top` button is a child of the title group, so it centres against it.
+  // Both positions render the button inside the title group here, so one rule
+  // centres it on whatever the group contains.
   .TitleGroup .Min_Button {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-  }
 
-  // The `edge` button is a sibling, absolute against the nav itself, so it is
-  // centred on the title group's box instead: 10px of margin plus half of its
-  // 48px min-height.
-  .Min_Button__edge {
-    top: 34px;
-    right: 50%;
-    transform: translate(50%, -50%);
+    // The base button tints itself with the nav's own focus colour on hover —
+    // but hover is the only state this is ever SEEN in, so that tint would be
+    // its whole appearance: a coloured block over the logo with a washed-out
+    // chevron. Keep it reading as the raised chrome control it is.
+    &:hover {
+      background: var(--octans-surface-hover);
+      color: var(--octans-text);
+    }
   }
 
   // Keyboard included: tabbing to the button reveals it rather than moving
