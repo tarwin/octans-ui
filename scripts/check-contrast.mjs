@@ -9,6 +9,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+// The pair table is shared with the Theme Builder, which measures a theme
+// being edited against the same rules. Node strips the types on import.
+import { CONTRAST_PAIRS } from '../src/utils/contrastPairs.ts'
+
 const css = readFileSync(resolve('src/styles/tokens.scss'), 'utf8')
 
 function parseBlock(source) {
@@ -169,92 +173,6 @@ function contrast(a, b) {
 
 // [foreground, background, label, minimum]
 //
-// 4.5 for body text (WCAG 1.4.3). 3.0 for UI components and graphical objects
-// needed to understand the interface (WCAG 1.4.11) — that covers input
-// outlines and focus rings, which is why `border-input` is held to 3.0.
-//
-// A plain divider is decorative and has NO WCAG requirement, so `border` gets
-// a loose sanity floor instead: enough to be visible, not so much that every
-// table row grows a heavy rule. Don't "fix" a border failure by darkening it
-// past what the design wants — check which of the two cases it actually is.
-const PAIRS = [
-  ['text', 'surface', 'body text on surface', 4.5],
-  ['text', 'surface-app', 'body text on app background', 4.5],
-  ['text', 'surface-raised', 'body text on raised surface', 4.5],
-  ['text-subdued', 'surface', 'subdued text on surface', 4.5],
-  ['text-subdued', 'surface-app', 'subdued text on app background', 4.5],
-  ['text-link', 'surface', 'link on surface', 4.5],
-
-  // Coloured text on the plain surface, and on its own role's soft surface —
-  // the Banner / InlineError / Badge patterns.
-  ['text-primary', 'surface', 'primary text on surface', 4.5],
-  ['text-secondary', 'surface', 'secondary text on surface', 4.5],
-  ['text-tertiary', 'surface', 'tertiary text on surface', 4.5],
-  ['text-info', 'surface', 'info text on surface', 4.5],
-  ['text-success', 'surface', 'success text on surface', 4.5],
-  ['text-warning', 'surface', 'warning text on surface', 4.5],
-  ['text-error', 'surface', 'error text on surface', 4.5],
-  ['text-info', 'info-surface', 'info text on info surface', 4.5],
-  ['text-success', 'success-surface', 'success text on success surface', 4.5],
-  ['text-warning', 'warning-surface', 'warning text on warning surface', 4.5],
-  ['text-error', 'error-surface', 'error text on error surface', 4.5],
-  ['text-secondary', 'secondary-surface', 'secondary button label', 4.5],
-  [
-    'text-tertiary',
-    'tertiary-surface',
-    'tertiary text on tertiary surface',
-    4.5
-  ],
-
-  // Labels on solid fills.
-  ['text-on-primary', 'primary', 'label on primary fill', 4.5],
-  ['text-on-secondary', 'secondary', 'label on secondary fill', 4.5],
-  ['text-on-tertiary', 'tertiary', 'label on tertiary fill', 4.5],
-  ['text-on-info', 'info', 'label on info fill', 4.5],
-  ['text-on-success', 'success', 'label on success fill', 4.5],
-  ['text-on-warning', 'warning', 'label on warning fill', 4.5],
-  ['text-on-error', 'error', 'label on error fill', 4.5],
-  // Hovered/pressed fills keep their labels too. Actives sit further from the
-  // fill than hovers, so checking the two ends covers the hover between them.
-  ['text-on-primary', 'primary-active', 'label on pressed primary', 4.5],
-  ['text-on-error', 'error-active', 'label on pressed error', 4.5],
-
-  // Alpha is dropped when parsing, so this measures the tooltip fill at full
-  // opacity. That is the honest direction to be wrong in: the real, partly
-  // transparent tooltip sits over lighter content in light mode, which only
-  // reduces contrast against its own light text.
-  ['text-on-tooltip', 'surface-tooltip', 'tooltip text on tooltip', 4.5],
-  ['text-on-nav', 'surface-nav', 'nav text on the app bar', 4.5],
-  ['border', 'surface', 'divider against surface (decorative)', 1.25],
-  // `border-strong` is the heavier of the two decorative borders — table and
-  // list dividers, the heatmap's month separator, swatch outlines. No WCAG
-  // requirement applies, so it gets a visibility floor like `border` rather
-  // than the 3:1 owed by controls. It used to carry input outlines too, which
-  // is what made its softness an accepted exception; those moved to
-  // `border-input` below and the exception went with them.
-  ['border-strong', 'surface', 'strong divider against surface', 1.6],
-  // Control outlines are held to a 2:1 visibility floor, not WCAG 1.4.11's
-  // 3:1 — a DELIBERATE softening (see the border block in tokens.scss): a
-  // field is rarely identified by its outline alone, and the focus ring below
-  // keeps the hard 3:1. Every control resolves through this one token, so a
-  // strict theme restores AA by setting `--octans-border-input:
-  // var(--octans-neutral-500)` and nothing else.
-  ['border-input', 'surface', 'control outline against surface', 2.0],
-  ['focus-ring', 'surface', 'focus ring against surface', 3.0],
-  // The primary FILL as a colour on the surface — toggle tracks, tab
-  // underlines, progress fills. A 2.5 floor, not 3:1: the deep pine 500 sits
-  // at ~2.5 on the dark surface, and each of those indicators carries a second
-  // cue (the knob, the label, the track). Anything using primary as TEXT must
-  // go through `text-primary`, which dark re-points at the pale 300 — Tabs
-  // was the offender that made this distinction load-bearing.
-  ['primary', 'surface', 'primary against surface', 2.5],
-  // The toggle knob stays light in dark mode, so anything drawn on it is
-  // measured against the knob rather than the surface. Pointing either of
-  // these at a theme-reactive token is exactly the mistake this row catches.
-  ['toggle-knob-icon', 'toggle-knob', 'toggle icon on knob', 3.0],
-  ['primary', 'toggle-knob', 'checked toggle icon on knob', 3.0]
-]
-
 let failures = 0
 let unresolved = 0
 for (const [themeName, map] of [
@@ -262,7 +180,7 @@ for (const [themeName, map] of [
   ['DARK', dark]
 ]) {
   console.log(`\n${themeName}`)
-  for (const [fg, bg, label, min] of PAIRS) {
+  for (const { fg, bg, label, min } of CONTRAST_PAIRS) {
     const fgRgb = resolveToken(map, fg)
     const bgRgb = resolveToken(map, bg)
     if (!fgRgb || !bgRgb) {

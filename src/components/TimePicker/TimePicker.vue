@@ -669,6 +669,9 @@ const handleMobileInput = (event: Event) => {
 }
 
 .TimeInput {
+  // An `<input>` inherits neither font nor colour; `font-size` below still
+  // wins, being the later declaration.
+  font: inherit;
   font-size: 1rem;
   padding: 8px;
   border: none;
@@ -676,6 +679,10 @@ const handleMobileInput = (event: Event) => {
   width: 4em;
   text-align: center;
   background: transparent;
+  // Form controls inherit neither background nor colour. The wrapper carries
+  // the surface, so this only needs the text — without it the digits stayed
+  // the user agent's black over a dark field.
+  color: var(--octans-text);
 
   &:focus {
     outline: none;
@@ -683,6 +690,9 @@ const handleMobileInput = (event: Event) => {
 
   &:disabled {
     background: transparent;
+    // Explicit, since an authored `color` opts out of the user agent's own
+    // dimming of a disabled control.
+    color: var(--octans-text-disabled);
     cursor: $inputDisabledCursor;
   }
 }
@@ -704,14 +714,19 @@ const handleMobileInput = (event: Event) => {
   }
 
   button {
+    font: inherit;
     border: none;
     background: transparent;
+    // As with `.TimeInput` — a `<button>` starts from `buttontext`, not from
+    // the surrounding text colour.
+    color: var(--octans-text);
     cursor: pointer;
     font-size: 0.75rem;
     line-height: 1.4;
     padding: 0;
 
     &:disabled {
+      color: var(--octans-text-disabled);
       cursor: $inputDisabledCursor;
     }
   }
@@ -754,12 +769,17 @@ const handleMobileInput = (event: Event) => {
 }
 
 .TimeSelect {
+  font: inherit;
   min-width: 50px;
   padding: 3px 10px;
   font-size: 16px;
   border: 1px solid $inputBorderColor;
   border-radius: var(--octans-radius-field);
   background: var(--octans-surface);
+  // A `<select>` does not inherit `color` either. The `<option>` list it opens
+  // is drawn by the OS and takes its cue from `color-scheme` instead, which
+  // `tokens.scss` now sets per theme.
+  color: var(--octans-text);
 }
 
 .ClearAction {

@@ -158,11 +158,18 @@ const preview: Preview = {
     // whereas a value set here would be read once at startup and pin them to
     // whatever the theme was at load.
     options: {
-      // The manager remembers showPanel as sticky state, so the full-page
-      // documentation stories (Theme Builder, Kitchen Sink) hiding it would
-      // leave it hidden everywhere. Asserting the default here makes every
-      // ordinary story bring the panel back.
-      showPanel: true,
+      // The addons panel (Controls / Actions / Interactions) stays shut unless
+      // it is asked for. This is a component library's documentation before it
+      // is a development harness: most visitors are reading the docs, and a
+      // panel that opens itself on every story crowds the canvas — which is
+      // the thing they came to look at.
+      //
+      // Asserted on every story rather than left to the manager's own default,
+      // because it remembers the panel as sticky state: without this, opening
+      // it once to poke at some controls would leave it open everywhere, for
+      // the rest of the session and the next one. The toolbar toggle still
+      // works whenever you do want it.
+      showPanel: false,
       // Two roots: the guides and tools you read, then the components you
       // look up. Without the split, ~70 component entries bury the docs in
       // one long alphabetical list.

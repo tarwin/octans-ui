@@ -276,7 +276,7 @@ $shadowBorderError: 0 0 0 1px $errorColor;
   padding: 0;
   text-align: center;
   font-size: 18px;
-  font-family: $defaultFontFamily;
+  font-family: var(--octans-font);
 
   background: var(--octans-surface);
   // Inputs do not inherit colour from the theme.

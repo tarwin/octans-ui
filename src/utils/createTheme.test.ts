@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createTheme } from './createTheme'
+import {
+  createTheme,
+  DEFAULT_DARK_TEXT,
+  labelForFill,
+  ROLE_FILL_STEP
+} from './createTheme'
 import { importCustomTheme, exportCustomTheme } from './customTheme'
 import { parseColor, relativeLuminance } from './color'
 import { TOKEN_RAMP_BY_PREFIX } from './tokens'
@@ -103,5 +108,46 @@ describe('createTheme', () => {
     expect(() =>
       createTheme({ name: 'Broken', primary: 'not-a-colour' })
     ).toThrow(/primary/)
+  })
+})
+
+describe('labelForFill', () => {
+  // The Theme Builder re-runs this every time a fill is edited by hand, so it
+  // is a contract now, not an implementation detail of the seed path.
+  it('puts white on a dark fill and the theme near-black on a pale one', () => {
+    expect(labelForFill('#101a4a')).toBe('#ffffff')
+    expect(labelForFill('#ffe066')).toBe(DEFAULT_DARK_TEXT)
+  })
+
+  it('uses the near-black it is handed rather than a fixed one', () => {
+    expect(labelForFill('#ffe066', '#2b1a05')).toBe('#2b1a05')
+  })
+
+  it('always returns the more legible of the two', () => {
+    for (const fill of [
+      '#101a4a',
+      '#ffe066',
+      '#7b8798',
+      '#386657',
+      '#e2e6ec'
+    ]) {
+      const label = labelForFill(fill)!
+      const other = label === '#ffffff' ? DEFAULT_DARK_TEXT : '#ffffff'
+      expect(contrast(label, fill)).toBeGreaterThanOrEqual(
+        contrast(other, fill)
+      )
+    }
+  })
+
+  it('returns null for a fill it cannot read, so callers leave it alone', () => {
+    expect(labelForFill('var(--octans-primary-500)')).toBeNull()
+    expect(labelForFill('')).toBeNull()
+  })
+
+  it('agrees with what createTheme writes for a seeded role', () => {
+    const theme = createTheme({ name: 'Lemon', primary: '#ffe066' })
+    expect(theme.tokens['text-on-primary']).toBe(
+      labelForFill(theme.tokens[`primary-${ROLE_FILL_STEP.primary}`])
+    )
   })
 })

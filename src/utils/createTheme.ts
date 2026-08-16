@@ -16,7 +16,7 @@
  * later still finds your colours, because it reads the ramps you set.
  */
 
-import { parseColor, relativeLuminance, type Rgba } from './color'
+import { contrastRatio, parseColor, type Rgba } from './color'
 import { rampColors, seedGradient } from './colorRamp'
 import { createThemeId, type CustomTheme } from './customTheme'
 import type { ThemeType } from './theme'
@@ -37,12 +37,23 @@ export const THEME_SEED_ROLES = [
 
 export type ThemeSeedRoleType = (typeof THEME_SEED_ROLES)[number]
 
+/** The roles that have a fill, and therefore a `text-on-<role>` label. */
+export const THEME_FILL_ROLES = THEME_SEED_ROLES.filter(
+  (role): role is ThemeFillRoleType => role !== 'neutral'
+)
+
+export type ThemeFillRoleType = Exclude<ThemeSeedRoleType, 'neutral'>
+
 /**
  * The ramp step each role's semantic FILL token points at (see tokens.scss).
  * `createTheme` measures the generated colour at this step to pick a legible
  * `text-on-<role>`.
+ *
+ * Exported because the Theme Builder needs the same mapping: a fill edited by
+ * hand has to re-derive its label the way a seeded one does, and it can only
+ * know which step to read from here.
  */
-const FILL_STEP: Record<Exclude<ThemeSeedRoleType, 'neutral'>, number> = {
+export const ROLE_FILL_STEP: Record<ThemeFillRoleType, number> = {
   primary: 500,
   secondary: 500,
   tertiary: 500,
@@ -117,7 +128,7 @@ export function createTheme(options: CreateThemeOptions): CustomTheme {
   const neutralRamp = options.neutral
     ? generateRamp('neutral', options.neutral)
     : null
-  const darkText = neutralRamp?.colors[950] ?? '#11151a'
+  const darkText = neutralRamp?.colors[950] ?? DEFAULT_DARK_TEXT
 
   for (const role of THEME_SEED_ROLES) {
     const seed = options[role]
@@ -130,8 +141,8 @@ export function createTheme(options: CreateThemeOptions): CustomTheme {
     }
 
     if (role !== 'neutral') {
-      const fill = parseColor(ramp.colors[FILL_STEP[role]])
-      if (fill) tokens[`text-on-${role}`] = pickLabel(fill, darkText)
+      const label = labelForFill(ramp.colors[ROLE_FILL_STEP[role]], darkText)
+      if (label) tokens[`text-on-${role}`] = label
     }
   }
 
@@ -153,22 +164,33 @@ export function createTheme(options: CreateThemeOptions): CustomTheme {
   }
 }
 
+/** What `darkText` falls back to when a theme seeds no neutral of its own. */
+export const DEFAULT_DARK_TEXT = '#11151a'
+
 /**
- * White if it clears WCAG's 4.5:1 on the fill — the house style for labels on
- * fills — otherwise whichever of white and the theme's near-black measures
- * stronger. Measured, not guessed by lightness: on a mid-tone fill the two can
- * sit either side of the threshold by a whisker.
+ * The label a fill wants: white if it clears WCAG's 4.5:1 there — the house
+ * style for labels on fills — otherwise whichever of white and the theme's
+ * near-black measures stronger. Measured, not guessed by lightness: on a
+ * mid-tone fill the two can sit either side of the threshold by a whisker.
+ *
+ * Returns null when the fill cannot be parsed, so a caller can leave whatever
+ * is already there alone rather than write a guess over it.
+ *
+ * Exported for the Theme Builder, which re-derives labels as fills are edited
+ * by hand. Both paths must agree — a fill that arrives via a seed and the same
+ * fill typed into the token list should end up with the same label.
  */
-function pickLabel(fill: Rgba, darkText: string): string {
-  const fillLum = relativeLuminance(fill)
-  const ratio = (a: number, b: number) =>
-    (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
-  const white = ratio(1, fillLum)
-  if (white >= 4.5) return '#ffffff'
-  const darkLum = relativeLuminance(
-    parseColor(darkText) ?? { r: 17, g: 21, b: 26, a: 1 }
-  )
-  return ratio(darkLum, fillLum) > white ? darkText : '#ffffff'
+export function labelForFill(
+  fill: string,
+  darkText: string = DEFAULT_DARK_TEXT
+): string | null {
+  const fillRgb = parseColor(fill)
+  if (!fillRgb) return null
+  const white: Rgba = { r: 255, g: 255, b: 255, a: 1 }
+  const onWhite = contrastRatio(white, fillRgb)
+  if (onWhite >= 4.5) return '#ffffff'
+  const darkRgb = parseColor(darkText) ?? parseColor(DEFAULT_DARK_TEXT)!
+  return contrastRatio(darkRgb, fillRgb) > onWhite ? darkText : '#ffffff'
 }
 
 function generateRamp(role: ThemeSeedRoleType, seed: string) {

@@ -85,7 +85,12 @@ const changePageSize = (event: Event) => {
 </script>
 
 <template>
-  <div :class="$style.Pagination">
+  <!--
+    `UIElement` carries the library's typographic baseline, and every sibling
+    component's root already has it. Without it the `font: inherit` on the
+    buttons below would reach past the component to the host page's font.
+  -->
+  <div :class="['UIElement', $style.Pagination]">
     <button
       :class="$style.Button"
       :disabled="!hasPrev"
@@ -153,6 +158,10 @@ const changePageSize = (event: Event) => {
 
 .Button,
 .Ellipsis {
+  // A `<button>` inherits neither font nor colour from its surroundings — it
+  // starts from the user agent's, which is Arial here. The `font-size` below
+  // still wins, being the later declaration.
+  font: inherit;
   min-width: 30px;
   min-height: 30px;
   padding: 0 5px;
@@ -160,10 +169,14 @@ const changePageSize = (event: Event) => {
   border: 0;
   border-radius: var(--octans-radius-field);
   font-size: 14px;
+  // A `<button>` does not inherit `color` — it starts from the user agent's
+  // `buttontext`, which left the page numbers black on a dark surface.
+  color: var(--octans-text);
 
   &:disabled {
-    // color: $buttonDisabledTextColor;
-    color: rgba(0, 0, 0, 0.247);
+    // Explicit, because setting `color` above also opts out of the user
+    // agent's own dimming of a disabled control.
+    color: var(--octans-text-disabled);
   }
 }
 
@@ -180,9 +193,11 @@ const changePageSize = (event: Event) => {
 
   &.selected,
   &.selected:hover {
-    // background: $focusColor;
     background: var(--octans-primary);
-    color: var(--octans-surface);
+    // The token that exists for exactly this: content on a primary fill.
+    // `--octans-surface` used to stand in for it, which worked in light (near
+    // white) but went dark-on-dark once the surface flipped.
+    color: var(--octans-text-on-primary);
   }
   &.selected:focus {
     box-shadow: inset 0 0 0 2px
@@ -205,8 +220,10 @@ const changePageSize = (event: Event) => {
   border-left: 1px solid var(--octans-border);
 }
 .PageSize_select {
-  // Form controls inherit neither background nor colour, so these must be
-  // explicit or the control keeps the user agent's light default in dark mode.
+  // Form controls inherit neither background, colour nor font, so these must
+  // be explicit or the control keeps the user agent's light default in dark
+  // mode — and its Arial.
+  font: inherit;
   background: transparent;
   color: var(--octans-text);
 

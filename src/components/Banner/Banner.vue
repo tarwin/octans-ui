@@ -114,13 +114,13 @@ export default defineComponent({
 
   & p {
     margin: 0;
-    font-family: $defaultFontFamily;
+    font-family: var(--octans-font);
   }
 }
 
 .title {
   font-weight: bold;
-  font-family: $defaultFontFamily;
+  font-family: var(--octans-font);
 }
 
 .close {

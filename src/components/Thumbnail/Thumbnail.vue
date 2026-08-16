@@ -123,7 +123,7 @@ watch(
   &__content {
     flex: 1 1 auto;
     margin-top: 0.2rem;
-    font-family: $defaultFontFamily;
+    font-family: var(--octans-font);
   }
 
   &__heading {

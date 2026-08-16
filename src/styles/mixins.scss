@@ -19,11 +19,13 @@
   border: 1px solid variables.$inputBorderColor;
   border-radius: variables.$inputBorderRadius;
   font-size: variables.$inputFontSize;
-  // Must be explicit: form controls do not inherit colour, so without these
-  // they fall back to the user agent's white-on-black and stay light in dark
-  // mode no matter what the surrounding theme says.
+  // Must be explicit: form controls do not inherit colour OR font, so without
+  // these they fall back to the user agent's own — white-on-black that stays
+  // light in dark mode whatever the surrounding theme says, set in Arial
+  // rather than the library's stack.
   background: variables.$inputBgColor;
   color: variables.$inputTextColor;
+  font-family: var(--octans-font);
 
   &::placeholder {
     color: variables.$textSubduedColor;

@@ -20,7 +20,12 @@
 @include meta.load-css('global.tooltip.scss');
 
 .UIElement {
-  font-family: variables.$defaultFontFamily;
+  // Reads the variable rather than repeating the stack, so `--ui-font` is a
+  // real knob. It was the literal before, which meant setting `--ui-font`
+  // moved only the handful of places that referenced it and left everything
+  // inheriting from here on the built-in stack. Same default either way; the
+  // difference only shows once a consumer overrides it.
+  font-family: var(--ui-font);
   color: var(--octans-text);
   -webkit-font-smoothing: antialiased;
   font-size: 14px;

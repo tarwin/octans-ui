@@ -469,9 +469,26 @@ export function relativeLuminance({ r, g, b }: Rgba): number {
 /**
  * Whether black text reads better than white on this colour. Used to keep a
  * swatch's own label legible whatever colour it is showing.
+ *
+ * A lightness rule of thumb, not a measurement — use `contrastRatio` when the
+ * answer has to hold up as a WCAG number rather than just look right.
  */
 export function prefersDarkText(c: Rgba): boolean {
   return relativeLuminance(c) > 0.4
+}
+
+/**
+ * WCAG contrast ratio between two colours, 1–21. Symmetric: the lighter of the
+ * pair goes on top whichever order they arrive in.
+ *
+ * Alpha is ignored, as in `relativeLuminance` — `flatten` a translucent colour
+ * over its backdrop first if you want the composited answer.
+ */
+export function contrastRatio(a: Rgba, b: Rgba): number {
+  const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort(
+    (x, y) => y - x
+  )
+  return (hi + 0.05) / (lo + 0.05)
 }
 
 /** Composites a colour over an opaque backdrop, so its alpha can be seen. */

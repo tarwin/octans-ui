@@ -4,6 +4,7 @@ import {
   detectFormat,
   flatten,
   formatColor,
+  contrastRatio,
   formatHex,
   hsvToRgb,
   parseColor,
@@ -165,6 +166,19 @@ describe('luminance', () => {
   it('picks the text colour that will actually read', () => {
     expect(prefersDarkText(parseColor('#ffe066')!)).toBe(true)
     expect(prefersDarkText(parseColor('#1e40af')!)).toBe(false)
+  })
+
+  it('measures contrast between the WCAG extremes', () => {
+    const white = parseColor('#fff')!
+    const black = parseColor('#000')!
+    expect(contrastRatio(white, black)).toBeCloseTo(21, 5)
+    expect(contrastRatio(white, white)).toBeCloseTo(1, 5)
+  })
+
+  it('measures the same either way round', () => {
+    const a = parseColor('#386657')!
+    const b = parseColor('#ffe066')!
+    expect(contrastRatio(a, b)).toBeCloseTo(contrastRatio(b, a), 10)
   })
 })
 

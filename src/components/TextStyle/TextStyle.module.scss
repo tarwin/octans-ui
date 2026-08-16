@@ -19,7 +19,9 @@
   background-color: var(--octans-surface-app);
   display: inline-block;
   color: var(--octans-text);
-  font-family: monospace;
+  // The token, not the bare keyword — otherwise `--ui-monospace-font` is set
+  // by a consumer and this one place ignores it.
+  font-family: var(--octans-font-mono);
   font-size: 1.15em;
   line-height: 20px;
   box-shadow: inset 0 0 0 1px var(--octans-border);

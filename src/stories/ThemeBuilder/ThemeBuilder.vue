@@ -28,12 +28,20 @@ import {
 } from '@/utils/customTheme'
 import {
   createTheme,
+  DEFAULT_DARK_TEXT,
+  labelForFill,
+  ROLE_FILL_STEP,
+  THEME_FILL_ROLES,
   THEME_SEED_ROLES,
+  type ThemeFillRoleType,
   type ThemeRadiusPresetType,
   type ThemeSeedRoleType
 } from '@/utils/createTheme'
+import { contrastRatio, parseColor } from '@/utils/color'
+import { CONTRAST_PAIRS, pairsForToken } from '@/utils/contrastPairs'
 import { setTheme, type ThemeType } from '@/utils/theme'
 import KitchenSink from './KitchenSink.vue'
+import ShellPreview from './ShellPreview.vue'
 
 /**
  * NOTE ON STYLING: the editor chrome uses Octans tokens like everything else,
@@ -135,11 +143,15 @@ function applyBase(next: ThemeType) {
   requestAnimationFrame(() => {
     captureDefaults()
     reapply()
+    // The base's own fills have just changed underneath any override, so the
+    // labels sitting on them are worth re-checking.
+    deriveLabels()
   })
 }
 
 function reapply() {
   applyCustomTheme(currentTheme(), preview.value)
+  refreshResolved()
 }
 
 function currentTheme(): CustomTheme {
@@ -157,17 +169,27 @@ function valueFor(name: string) {
 }
 
 function setToken(name: string, value: string) {
+  // Typing into a label's own field is the one thing that takes it off
+  // auto-derivation — see the note on `handSetLabels`.
+  if (isLabelToken(name)) handSetLabels.value[name] = true
   setTokens({ [name]: value })
 }
 
 /**
- * Applies several tokens as one edit.
+ * Applies several tokens as one edit, then re-derives any label the edit
+ * invalidated.
  *
  * A ramp writes a dozen tokens at once, and doing that through twelve separate
  * `setToken` calls would re-serialise the JSON and re-apply the theme twelve
  * times for one user action.
  */
 function setTokens(patch: Record<string, string>) {
+  writeTokens(patch)
+  deriveLabels()
+}
+
+/** The half of `setTokens` that only writes — `deriveLabels` reuses it. */
+function writeTokens(patch: Record<string, string>) {
   const next = { ...overrides.value }
   for (const [name, value] of Object.entries(patch)) {
     // Matching the base theme is not an override — dropping it here is what
@@ -178,6 +200,142 @@ function setTokens(patch: Record<string, string>) {
   overrides.value = next
   reapply()
   syncJson()
+}
+
+// --- label derivation --------------------------------------------------------
+// `text-on-<role>` has to stay legible on the fill it sits on, and a fill can
+// be changed from three directions here: a seed, a ramp gradient, or typing a
+// step directly. `createTheme` already picks the label for the seed path; this
+// is the same decision, re-run for the other two, so a hand-built theme and a
+// seeded one end up in the same place.
+//
+// The escape hatch is `handSetLabels`: type into a label's own field and it
+// stops being derived, because at that point you have said something the
+// measurement cannot know. Resetting the token hands it back to derivation.
+
+/** Labels the user has taken manual control of, by token name. */
+const handSetLabels = ref<Record<string, boolean>>({})
+
+function isLabelToken(name: string) {
+  return THEME_FILL_ROLES.some((role) => `text-on-${role}` === name)
+}
+
+/** Two colours as the browser would paint them, whatever notation they use. */
+function sameColor(a: string, b: string) {
+  const x = parseColor(a)
+  const y = parseColor(b)
+  // Unparseable means `var()` or `color-mix()` — compare as written, which is
+  // the only honest answer available.
+  if (!x || !y) return a.trim() === b.trim()
+  return x.r === y.r && x.g === y.g && x.b === y.b
+}
+
+/**
+ * Re-points every non-hand-set label at what its current fill wants.
+ *
+ * Nothing is written when the answer already matches what is there — compared
+ * as COLOUR, not as text, because `defaults` come back from the browser as
+ * `rgb(…)` while a derived label is a hex. String-comparing the two would
+ * write an override on every load that says nothing.
+ */
+function deriveLabels() {
+  const darkText = valueFor('neutral-950') || DEFAULT_DARK_TEXT
+  const patch: Record<string, string> = {}
+
+  for (const role of THEME_FILL_ROLES) {
+    const name = `text-on-${role}`
+    if (handSetLabels.value[name]) continue
+    const want = labelForFill(valueFor(fillTokenFor(role)), darkText)
+    if (!want || sameColor(want, valueFor(name))) continue
+    patch[name] = want
+  }
+
+  if (Object.keys(patch).length) writeTokens(patch)
+}
+
+function fillTokenFor(role: ThemeFillRoleType) {
+  return `${role}-${ROLE_FILL_STEP[role]}`
+}
+
+/**
+ * Rebuilds `handSetLabels` for a theme arriving from storage or JSON.
+ *
+ * A label the theme states explicitly AND that already clears 4.5:1 on its
+ * fill is treated as deliberate and left alone. One that fails is treated as
+ * the bug it is and handed back to derivation — which is the whole point of
+ * running this on load rather than only on new seeds.
+ */
+function adoptLabels(theme: CustomTheme) {
+  const next: Record<string, boolean> = {}
+  for (const role of THEME_FILL_ROLES) {
+    const name = `text-on-${role}`
+    const stated = theme.tokens[name]
+    if (!stated) continue
+    const fill = parseColor(
+      theme.tokens[fillTokenFor(role)] ?? valueFor(fillTokenFor(role))
+    )
+    const label = parseColor(stated)
+    if (fill && label && contrastRatio(label, fill) >= 4.5) next[name] = true
+  }
+  handSetLabels.value = next
+}
+
+// --- contrast badges ---------------------------------------------------------
+
+interface TokenContrast {
+  label: string
+  ratio: number
+  min: number
+  ok: boolean
+}
+
+/** Every token a badge has to measure, deduped. */
+const MEASURED_TOKENS = [
+  ...new Set(CONTRAST_PAIRS.flatMap((p) => [p.fg, p.bg]))
+]
+
+/**
+ * What the preview is actually painting for each measured token.
+ *
+ * Read off the preview element rather than taken from `overrides`/`defaults`,
+ * because most of these are defined THROUGH other tokens: `--octans-primary`
+ * is `var(--octans-primary-500)`, and `--octans-primary-active` is a
+ * `color-mix()` of it. Overriding the ramp step changes what they paint while
+ * their own entry in `defaults` — captured once, before the edit — still says
+ * the old colour. Letting the browser resolve them is also what makes the
+ * derived tokens measurable at all.
+ */
+const resolved = ref<Record<string, string>>({})
+
+function refreshResolved() {
+  const el = preview.value
+  if (!el) return
+  const next: Record<string, string> = {}
+  for (const name of MEASURED_TOKENS) {
+    next[name] = getResolvedTokenValue(name, el)
+  }
+  resolved.value = next
+}
+
+/**
+ * How every pair this token is the foreground of currently measures.
+ *
+ * The pairs come from the same table `pnpm run check:contrast` audits the
+ * built-in palette with, so a theme built here is held to the rules the
+ * library holds itself to. Pairs whose colours will not parse are skipped
+ * rather than reported as failures — an unreadable value is not a failing one.
+ */
+function contrastFor(name: string): TokenContrast[] {
+  const fg = parseColor(resolved.value[name] ?? '')
+  if (!fg) return []
+  const out: TokenContrast[] = []
+  for (const pair of pairsForToken(name)) {
+    const bg = parseColor(resolved.value[pair.bg] ?? '')
+    if (!bg) continue
+    const ratio = contrastRatio(fg, bg)
+    out.push({ label: pair.label, ratio, min: pair.min, ok: ratio >= pair.min })
+  }
+  return out
 }
 
 // --- seeds ------------------------------------------------------------------
@@ -325,20 +483,27 @@ function resetRamp(prefix: string) {
   rampGradient.value = rest
   reapply()
   syncJson()
+  // The fill went back to the base theme's colour; its label follows.
+  deriveLabels()
 }
 
 function resetToken(name: string) {
   delete overrides.value[name]
   overrides.value = { ...overrides.value }
   preview.value?.style.removeProperty(tokenVar(name))
+  // Resetting a label hands it back to derivation — the manual value that took
+  // it off auto is the thing being thrown away.
+  if (isLabelToken(name)) delete handSetLabels.value[name]
   reapply()
   syncJson()
+  deriveLabels()
 }
 
 function resetAll() {
   overrides.value = {}
   rampGradient.value = {}
   rampError.value = {}
+  handSetLabels.value = {}
   clearCustomTheme(preview.value)
   setTheme(base.value)
   syncJson()
@@ -393,7 +558,10 @@ function load(theme: CustomTheme) {
   requestAnimationFrame(() => {
     captureDefaults()
     applyCustomTheme(theme, preview.value)
+    refreshResolved()
     syncJson()
+    adoptLabels(theme)
+    deriveLabels()
   })
 }
 
@@ -432,6 +600,9 @@ function applyJson() {
     requestAnimationFrame(() => {
       captureDefaults()
       applyCustomTheme(theme, preview.value)
+      refreshResolved()
+      adoptLabels(theme)
+      deriveLabels()
     })
     jsonError.value = ''
   } catch (error) {
@@ -730,6 +901,28 @@ onBeforeUnmount(() => {
                 >
                   {{ token.description }}
                 </span>
+                <!--
+                  Measured live against the same pair table `check:contrast`
+                  audits the built-in palette with. Failures are spelled out;
+                  passes stay quiet, so a clean theme reads as a clean list.
+                -->
+                <span
+                  v-for="pair in contrastFor(token.name)"
+                  :key="pair.label"
+                  :class="[$style.Ratio, !pair.ok && $style.Ratio__fail]"
+                  :title="`${pair.label} — ${pair.ratio.toFixed(2)}:1, needs ${pair.min}:1`"
+                >
+                  <template v-if="!pair.ok">⚠ </template>
+                  {{ pair.ratio.toFixed(1) }}:1
+                  <span :class="$style.RatioWhat">{{ pair.label }}</span>
+                </span>
+                <span
+                  v-if="handSetLabels[token.name]"
+                  :class="$style.Manual"
+                  title="Set by hand, so it is no longer derived from the fill. Reset it to hand it back."
+                >
+                  manual
+                </span>
               </div>
 
               <div :class="$style.Controls">
@@ -826,6 +1019,7 @@ onBeforeUnmount(() => {
       :class="$style.Preview"
     >
       <KitchenSink />
+      <ShellPreview />
     </section>
   </div>
 </template>
@@ -1141,6 +1335,41 @@ onBeforeUnmount(() => {
 .TokenDesc {
   color: var(--octans-text-subdued);
   font-size: 11px;
+}
+
+// Contrast readouts. A pass is deliberately quiet — subdued, no icon — so the
+// eye lands on the failures rather than on a wall of green ticks.
+.Ratio {
+  display: flex;
+  gap: 5px;
+  align-items: baseline;
+  color: var(--octans-text-subdued);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.Ratio__fail {
+  color: var(--octans-text-error);
+  font-weight: 500;
+}
+.RatioWhat {
+  color: var(--octans-text-subdued);
+  font-weight: 400;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.Manual {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0 5px;
+  border-radius: var(--octans-radius-field);
+  background: var(--octans-surface-sunken);
+  color: var(--octans-text-subdued);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .Controls {

@@ -339,6 +339,40 @@ already, as `window.Vue`.
 Everything in the **Components** section of the sidebar has live examples and a
 props table on each page.
 
+## Working with an AI agent
+
+This page is a single-page app, so an agent that fetches a `?path=…` URL gets
+the shell rather than the content. Two things exist for that:
+
+- **[octans.dev/llms.txt](https://octans.dev/llms.txt)** — an
+  [llms.txt](https://llmstxt.org) index pointing at these same docs as plain
+  markdown, published alongside the site.
+- **[An Agent Skill](https://octans.dev/skill/SKILL.md)** — setup, the token
+  system, theming, and the inheritance traps that make components look broken
+  in dark mode.
+
+[Agent Skills](https://agentskills.io) is an open standard, so this one file
+works in Claude Code, Cursor, VS Code / GitHub Copilot, Codex, Gemini CLI,
+Goose, OpenCode, Roo Code and others — there is nothing tool-specific about it.
+
+The skill ships inside the package, so it arrives with the dependency. Link it
+into whichever directory your agent reads:
+
+```sh
+# Read by Claude Code, and by Cursor and VS Code for compatibility
+ln -s ../../node_modules/@octans/ui/skills/octans-ui .claude/skills/octans-ui
+
+# The vendor-neutral path, read by Cursor and VS Code
+ln -s ../../node_modules/@octans/ui/skills/octans-ui .agents/skills/octans-ui
+```
+
+Claude Code users can install it as a plugin instead:
+
+```sh
+/plugin marketplace add tarwin/octans-ui
+/plugin install octans-ui@octans
+```
+
 ## Contributing
 
 The source lives at

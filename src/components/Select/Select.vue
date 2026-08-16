@@ -1328,7 +1328,8 @@ $errorColor: var(--octans-error);
   font-weight: 500;
 }
 .DisplayText_desc {
-  color: rgba(0, 0, 0, 0.54);
+  // Was a hard-coded translucent black, which is invisible on a dark surface.
+  color: var(--octans-text-subdued);
   font-size: 12px;
   white-space: nowrap;
   text-overflow: ellipsis;
