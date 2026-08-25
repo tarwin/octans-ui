@@ -194,6 +194,7 @@ watch(
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
     <PreventAutoComplete :enabled="autocomplete === 'off'">
       <div
@@ -233,6 +234,7 @@ watch(
             :placeholder="placeholder"
             :disabled="disabled"
             :readonly="readonly"
+            :aria-required="required || undefined"
             :min="min"
             :max="max"
             :step="step"

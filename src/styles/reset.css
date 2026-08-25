@@ -1,0 +1,73 @@
+/**
+ * Octans page reset — OPT IN.
+ *
+ *   import '@octans/ui/style.css'
+ *   import '@octans/ui/reset.css'   // only when Octans owns the whole page
+ *
+ * The main stylesheet deliberately resets nothing outside `.UIElement`, so the
+ * library can be dropped into a page it doesn't own without moving anything.
+ * That is the right default, and it is the wrong one for an app where Octans
+ * IS the UI: everything the app renders itself — the shell, the layout
+ * wrappers, the nav — silently falls back to browser defaults. Serif text,
+ * the user agent's 8px body margin, `content-box` sizing, and a body with no
+ * height so it grows past the viewport and earns a second scrollbar.
+ *
+ * This file is that missing layer and nothing more. It is deliberately small:
+ * it states the four things the UA gets wrong for a full-page app, and leaves
+ * everything else — image display, list markers, heading sizes — alone.
+ *
+ * THIS FILE IS PLAIN CSS AND IS COPIED TO dist/ VERBATIM. It is not part of
+ * the JS graph, so it cannot use Sass, and every token it reads carries a
+ * literal fallback for the case where it is imported without `style.css`.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* `height` on the root so percentages below it resolve; `min-height` — not
+   `height` — on the body, so a document taller than the viewport still
+   scrolls normally instead of overflowing a fixed-height box. */
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--octans-surface-app, #eff1f5);
+  color: var(--octans-text, #2c333d);
+  font-family: var(
+    --octans-font,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Noto Sans',
+    'Liberation Sans',
+    Arial,
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji'
+  );
+  /* Matches `.UIElement`. Without it, app-authored markup renders at the UA's
+     16px directly beside 14px Octans components. */
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Form controls inherit neither font nor colour — the trap the skill
+   documents at component level, applied once at page level. `font: inherit`
+   rather than `font-family` alone, because size, weight and line-height are
+   all reset by the UA too. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font: inherit;
+  color: inherit;
+}

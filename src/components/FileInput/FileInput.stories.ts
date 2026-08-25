@@ -206,3 +206,42 @@ export const InACard: Story = {
     `
   })
 }
+
+/**
+  `dropOnPage` makes the WHOLE WINDOW a drop target, not just the zone.
+  Dropping a file anywhere on the page adds it here, and an overlay says so
+  while a drag is in progress. The zone stays where it is and keeps working.
+
+  Try it: drag a file from your desktop over anywhere in this frame.
+
+  There is only one page, so only one input can have it. If a second one sets
+  `dropOnPage`, the first to mount keeps the page and the second warns and
+  falls back to its own zone. The claim is also released while the input cannot
+  take another file — readonly, or full — because a page-wide target that
+  silently swallows what you give it is worse than no target at all.
+ */
+export const DropOnPage: Story = {
+  render: () => ({
+    components: { Card, CardSection, FileInput },
+    setup() {
+      const files = ref([])
+      return { files, debugFileObject }
+    },
+    template: `
+      <Card title="Attachments">
+        <CardSection>
+          <FileInput
+            label="Drop anywhere"
+            help-text="The zone below still works — so does the rest of the page."
+            v-model="files"
+            drop-on-page
+            multiple
+          />
+        </CardSection>
+        <CardSection>
+          <pre>files: {{debugFileObject(files)}}</pre>
+        </CardSection>
+      </Card>
+    `
+  })
+}

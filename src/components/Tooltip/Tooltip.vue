@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { PopperPlacementType } from '@/components/Popper'
+import type { PopoverPlacementType } from '@/components/Popover'
 import { getRadixPopperPlacement } from '@/utils/radix'
 import { hasTooltipProviderKey } from '@/components/UiProvider/UiProvider.vue'
 import {
@@ -12,7 +12,7 @@ import {
 import { computed, inject, type SetupContext } from 'vue'
 
 export interface TooltipProps {
-  placement?: PopperPlacementType
+  placement?: PopoverPlacementType
   content?: string
 }
 
@@ -37,7 +37,7 @@ const placementInfo = computed(() => {
 </script>
 
 <template>
-  <!-- Maybe could just use Popper for this instead? -->
+  <!-- Maybe could just use Popover for this instead? -->
   <component :is="wrapper">
     <TooltipRoot :delayDuration="100">
       <TooltipPortal>

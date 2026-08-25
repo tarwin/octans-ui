@@ -7,9 +7,9 @@ import {
   PopoverTrigger
 } from 'reka-ui'
 import { computed, inject, onBeforeUnmount, provide, ref, watch } from 'vue'
-import type { PopperProps } from './types'
+import type { PopoverProps } from './types'
 
-const props = withDefaults(defineProps<PopperProps>(), {
+const props = withDefaults(defineProps<PopoverProps>(), {
   placement: 'bottom',
   teleportTo: 'body',
   disabled: false,
@@ -173,7 +173,7 @@ defineExpose({
           serif, whatever the theme says. `asChild` merges this class onto the
           slot's own root element, which is why bring-your-own-content overlays
           get it without having to remember to. Components that build their own
-          content on top of Popper (ActionListMenu) already set it themselves;
+          content on top of Popover (ActionListMenu) already set it themselves;
           the class is idempotent, so both is fine.
         -->
         <PopoverContent

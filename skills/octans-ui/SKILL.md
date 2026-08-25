@@ -13,13 +13,16 @@ plus the application shell pieces (nav, frame, sheets, toasts). Docs live at
 
 ## Setup
 
-Two things are required — the stylesheet, and a `UiProvider` at the app root:
+Two things are required — the stylesheet, and a `UiProvider` at the app root.
+A full-page app needs a third: the reset.
 
 ```ts
 // main.ts
 import { createApp } from 'vue'
 import UI from '@octans/ui'
 import '@octans/ui/style.css'
+// Only when Octans owns the whole page — see below.
+import '@octans/ui/reset.css'
 import App from './App.vue'
 
 createApp(App).use(UI).mount('#app')
@@ -38,7 +41,7 @@ import { UiProvider } from '@octans/ui'
 </template>
 ```
 
-`UiProvider` supplies the context tooltips, poppers and the global overlays
+`UiProvider` supplies the context tooltips, popovers and the global overlays
 rely on. Without it, anything using `Tooltip` throws on mount.
 
 `.use(UI)` is optional — it registers every component globally, which pulls
@@ -54,6 +57,22 @@ The stylesheet and `UiProvider` are needed either way. The plugin also installs
 the `$ui` global; without it, import `toast`, `confirmModal`, `promptModal`,
 `loader`, `saveBar` and `progress` by name instead.
 
+### `reset.css` — when Octans owns the page
+
+`style.css` deliberately resets nothing outside `.UIElement`. That keeps the
+library safe to drop into a page it doesn't own, and it is the wrong default
+for an app where Octans IS the UI: everything the app renders itself — the
+shell, the layout wrappers, the nav — falls back to browser defaults. Serif
+text, the user agent's 8px body margin, `content-box` sizing, and a body with
+no height that grows past the viewport into a second scrollbar.
+
+`@octans/ui/reset.css` is that missing layer, and nothing more. Import it after
+`style.css` — it reads the tokens. **Symptoms it fixes**: app-authored markup
+in a serif face, a gap around the whole shell, a second scrollbar, and
+app-authored text at 16px beside 14px Octans components.
+
+Skip it when Octans is one widget on someone else's page.
+
 ## Design tokens
 
 Three tiers, described in full in `docs/color-system.md`:
@@ -68,12 +87,12 @@ Three tiers, described in full in `docs/color-system.md`:
 (primary, secondary, tertiary, info, success, warning, error) exposes the same
 four:
 
-| Token | Meaning |
-| --- | --- |
-| `--octans-<role>` | the solid fill |
-| `--octans-text-on-<role>` | content sitting on that fill |
-| `--octans-<role>-surface` | soft tinted background |
-| `--octans-text-<role>` | readable text in that hue, on a plain surface |
+| Token                     | Meaning                                       |
+| ------------------------- | --------------------------------------------- |
+| `--octans-<role>`         | the solid fill                                |
+| `--octans-text-on-<role>` | content sitting on that fill                  |
+| `--octans-<role>-surface` | soft tinted background                        |
+| `--octans-text-<role>`    | readable text in that hue, on a plain surface |
 
 Never hard-code a colour. A literal like `rgba(0, 0, 0, 0.54)` looks fine in
 light mode and is invisible in dark.
@@ -121,6 +140,24 @@ rewriting semantic tokens one by one:
 }
 ```
 
+Three knobs that are not colours:
+
+```css
+:root {
+  /* The font for everything, components and app markup alike. */
+  --octans-font: 'Inter', system-ui, sans-serif;
+  --octans-font-mono: 'JetBrains Mono', monospace;
+
+  /* Every `Icon`'s vertical alignment. `0` is the default. Set it to
+     `-0.125em` for icons that sit inline with running text. */
+  --octans-icon-valign: -0.125em;
+}
+```
+
+`--octans-font` is the one to set. `--ui-font` still exists and still works —
+`--octans-font` resolves through it — but every token in the public API is
+spelled `--octans-*`, and that is the name the baseline reads.
+
 ## Traps
 
 These are the mistakes that actually happen. Most produce black text on a dark
@@ -144,7 +181,7 @@ whatever the surrounding theme says. Any control you style needs both stated:
 ```
 
 **Teleported content inherits nothing.** Anything portalled to `<body>` — a
-popper, a modal, a sheet — lands outside the tree it was written in and picks
+popover, a modal, a sheet — lands outside the tree it was written in and picks
 up the host page's defaults. Put `UIElement` on the root of teleported content;
 that class carries the text colour, font and box-sizing baseline.
 
@@ -156,6 +193,30 @@ fight it with per-control CSS.
 **Icons are SVG via Iconify**, drawn in `currentColor`, so they follow whatever
 `color` resolves to — which is why a black icon usually means a control that
 never got told its colour.
+
+**Reaching through a wrapper a component rendered itself.** Neither `vue-tsc`
+nor the build catches this: the CSS just silently stops applying. Some
+components put an element of their own around your slot content — `Tooltip`
+wraps its trigger in a `<span>`, `Popover` (and so `ActionList`, `DatePicker`,
+`TimePicker`, `ColorSelector`) wraps everything in a `<div>`. That element
+belongs to the LIBRARY's template, so Vue never stamps your component's
+scoped-style attribute on it, and any selector that reached through it stops
+matching:
+
+```scss
+/* in your component, <style scoped> */
+.Nav {
+  & > span:first-of-type {
+    margin-right: 16px;
+  } /* never matches once that span is Tooltip's */
+  &.sDisabled > span {
+    display: none;
+  } /* same — the control stays visible */
+}
+```
+
+Style an element you render yourself. Put `gap` on the flex container rather
+than margins on its children, and reach for `:deep()` only deliberately.
 
 ## Global helpers
 
@@ -181,6 +242,21 @@ later:
 import { addTranslations, setTranslationLocale } from '@octans/ui'
 ```
 
+Dates have two knobs, both set once at start-up and both global:
+
+```ts
+import { setLocale, setTimezone } from '@octans/ui'
+
+setLocale('fr') // formats, month names, and the day the week starts on
+setTimezone('America/Los_Angeles') // what "now" is, and what zone dates render in
+```
+
+`setTimezone` is for an app that must show ONE zone to everybody — an
+operations console pinned to head-office time — rather than each viewer's own
+clock, which is the default. It affects display only; it never reinterprets a
+stored value. `Formatter`, `Calendar` and `DatePicker` each take a `timezone`
+prop to override it for one instance.
+
 ## Components
 
 Layout and shell: `AppFrame` `Page` `Layout` `Card` `Stack` `Divider`
@@ -201,13 +277,17 @@ Forms: `TextField` `Select` `Checkbox` `RadioButton` `ChoiceList` `Choice`
 Data display: `DataTable` `ResourceList` `List` `Badge` `Tag` `Thumbnail`
 `StatGroup` `CalendarHeatmap` `Formatter` `SyntaxHighlighter`
 
-Typography: `Heading` `TextStyle` `Caption` `LineClamper`
+Typography: `Heading` `TextStyle` `Caption` `LineClamper` `KeyboardKey`
 
 Feedback: `Banner` `Spinner` `ProgressBar` `LoadingBar` `LoaderOverlay`
-`SkeletonBodyText` `SkeletonCard` `SkeletonDisplayText` `SaveBar`
-`ToastManager`
+`SkeletonBodyText` `SkeletonCard` `SkeletonDisplayText` `SkeletonPage`
+`SaveBar` `ToastManager`
 
-Overlays: `Modal` `Sheet` `Popper` `Tooltip`
+Overlays: `Modal` `ModalSection` `Sheet` `Popover` `Tooltip`
+
+`Popover` was called `Popper` until 1.2. The old name still works as a
+deprecated alias — it wraps reka-ui's Popover primitives and never had
+anything to do with popper.js.
 
 Utilities: `Icon` `EventDelegator` `MaybeMountingPortal` `UiProvider`
 `SaveBarController`

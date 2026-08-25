@@ -90,6 +90,8 @@ const hasClickTitleListener = computed(() => !!props.onClickTitle)
 
 const themeStyle = computed(() => ({
   ...themes[props.theme],
+  // Both spellings — see the note in styles/global.scss.
+  '--octans-globalnav-height': '40px',
   '--ui-globalNav-height': '40px'
 }))
 
@@ -243,7 +245,7 @@ watch(
 .GlobalNav_bar {
   display: flex;
   align-items: center;
-  height: var(--ui-globalNav-height);
+  height: var(--octans-globalnav-height);
   padding: 0 10px;
   background: var(--ui-globalNav-bgColor);
   color: var(--ui-globalNav-color);

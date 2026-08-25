@@ -13,7 +13,7 @@
  */
 import { computed, ref, useCssModule, watch } from 'vue'
 import { Labelled } from '@/components/Labelled'
-import { Popper } from '@/components/Popper'
+import { Popover } from '@/components/Popover'
 import { Icon } from '@/components/Icon'
 import { ColorPicker } from '@/components/ColorPicker'
 import { GradientPicker } from '@/components/GradientPicker'
@@ -310,7 +310,7 @@ function rememberCurrent() {
       :class="[$style.ColorSelector, fullWidth && $style.ColorSelector__full]"
       :style="swatchStyleVars"
     >
-      <Popper
+      <Popover
         :placement="placement"
         :disabled="locked"
         :auto-trigger-toggle="!isEditable"
@@ -509,7 +509,7 @@ function rememberCurrent() {
             />
           </div>
         </template>
-      </Popper>
+      </Popover>
 
       <button
         v-if="clearable && hasValue"
@@ -538,7 +538,7 @@ function rememberCurrent() {
 .ColorSelector__full {
   width: 100%;
 
-  // The Popper wraps the trigger in a div of its own, so the width has to be
+  // The Popover wraps the trigger in a div of its own, so the width has to be
   // handed through that before it reaches the control. `:first-child` and not
   // `*`, because the clear button beside it must stay its own size.
   > :first-child {

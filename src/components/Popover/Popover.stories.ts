@@ -5,48 +5,48 @@ import { Select } from '@/components/Select'
 import { Stack } from '@/components/Stack'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { computed, ref } from 'vue'
-import Popper from './Popper.vue'
+import Popover from './Popover.vue'
 
 const meta = {
-  title: 'Components/Overlays/Popper',
-  component: Popper,
+  title: 'Components/Overlays/Popover',
+  component: Popover,
   tags: ['autodocs'],
   args: {}
-} satisfies Meta<typeof Popper>
+} satisfies Meta<typeof Popover>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 /**
- * By default any click on the trigger will toggle the popper to show or hide.
+ * By default any click on the trigger will toggle the popover to show or hide.
  */
-export const SimplePopper: Story = {
+export const SimplePopover: Story = {
   render: () => ({
-    components: { Popper, Button },
+    components: { Popover, Button },
     template: `
-      <Popper>
+      <Popover>
         <template #trigger>
           <Button>Toggle</Button>
         </template>
         <div style="background: #fff; border: 1px solid red; padding: 8px">
-          This is the content of the popper
+          This is the content of the popover
         </div>
-      </Popper>
+      </Popover>
     `
   })
 }
 
 /**
- * By default, clicking outside the popper or trigger will not cause it to hide.
+ * By default, clicking outside the popover or trigger will not cause it to hide.
  * To do this, use the `auto-hide` prop.
  *
  * This trigger drives visibility itself, so it opts out of the automatic
  * toggle with `:auto-trigger-toggle="false"` — otherwise both would fire on
  * the same click and cancel each other out.
  */
-export const SimplePopperWithAutoHide: Story = {
+export const SimplePopoverWithAutoHide: Story = {
   render: () => ({
-    components: { Popper, Button },
+    components: { Popover, Button },
     setup() {
       return {
         runToggle: (cb: () => void) => {
@@ -56,21 +56,21 @@ export const SimplePopperWithAutoHide: Story = {
       }
     },
     template: `
-      <Popper auto-hide :auto-trigger-toggle="false">
+      <Popover auto-hide :auto-trigger-toggle="false">
         <template #trigger="{toggle}">
           <Button @click="runToggle(toggle)">Toggle</Button>
         </template>
         <div style="background: #fff; border: 1px solid red; padding: 8px">
-          This is the content of the popper
+          This is the content of the popover
         </div>
-      </Popper>
+      </Popover>
     `
   })
 }
 
 export const JustDiv: Story = {
   render: () => ({
-    components: { Popper, Button, Stack },
+    components: { Popover, Button, Stack },
     setup() {
       return {
         runToggle: (cb: () => void) => {
@@ -80,7 +80,7 @@ export const JustDiv: Story = {
       }
     },
     template: `
-      <Popper auto-hide>
+      <Popover auto-hide>
         <template #trigger>
           <div style="border:1px solid var(--octans-border); padding: 8px;">
             <Stack
@@ -94,16 +94,16 @@ export const JustDiv: Story = {
           </div>
         </template>
         <div style="background: #fff; border: 1px solid red; padding: 8px">
-          This is the content of the popper
+          This is the content of the popover
         </div>
-      </Popper>
+      </Popover>
     `
   })
 }
 
 export const Disabled: Story = {
   render: () => ({
-    components: { Popper, Button, Checkbox },
+    components: { Popover, Button, Checkbox },
     setup() {
       const disabled = ref(false)
       return {
@@ -111,14 +111,14 @@ export const Disabled: Story = {
       }
     },
     template: `
-      <Popper :disabled="disabled">
+      <Popover :disabled="disabled">
         <template #trigger>
           <Button>Toggle</Button>
         </template>
         <div style="background: #fff; border: 1px solid red; padding: 8px">
-          This is the content of the popper
+          This is the content of the popover
         </div>
-      </Popper>
+      </Popover>
       <Checkbox
         label="Disabled"
         v-model="disabled"
@@ -129,36 +129,36 @@ export const Disabled: Story = {
 
 /**
  * A trigger that only ever *shows* must opt out of the automatic toggle,
- * otherwise the same click that runs `show` also toggles the popper back shut.
+ * otherwise the same click that runs `show` also toggles the popover back shut.
  */
 export const ShowAndHide: Story = {
   render: () => ({
-    components: { Popper, Button },
+    components: { Popover, Button },
     template: `
-      <Popper :auto-trigger-toggle="false">
+      <Popover :auto-trigger-toggle="false">
         <template #trigger="{show}">
           <Button @click="show">Show</Button>
         </template>
         <template #default="{hide}">
           <div style="background: #fff; border: 1px solid red; padding: 8px">
-            This is the content of the popper
+            This is the content of the popover
             <Button @click="hide">Hide</Button>
           </div>
         </template>
-      </Popper>
+      </Popover>
     `
   })
 }
 
 /**
  * Hover-driven triggers opt out too — a click would otherwise toggle the
- * popper independently of the pointer.
+ * popover independently of the pointer.
  */
 export const ShowAndHideOnHover: Story = {
   render: () => ({
-    components: { Popper, Button },
+    components: { Popover, Button },
     template: `
-      <Popper :auto-trigger-toggle="false">
+      <Popover :auto-trigger-toggle="false">
         <template #trigger="{show, hide}">
           <Button
             @mouseenter="show"
@@ -166,16 +166,16 @@ export const ShowAndHideOnHover: Story = {
           >Hover over me!</Button>
         </template>
         <div style="background: #fff; border: 1px solid red; padding: 8px">
-          This is the content of the popper
+          This is the content of the popover
         </div>
-      </Popper>
+      </Popover>
     `
   })
 }
 
 export const Playground: Story = {
   render: () => ({
-    components: { Popper, Button, Select, Checkbox, FormLayout },
+    components: { Popover, Button, Select, Checkbox, FormLayout },
     setup() {
       const autoHide = ref(false)
       const autoTriggerToggle = ref(true)
@@ -198,7 +198,7 @@ export const Playground: Story = {
       <div>
         <div style="width: 700px; height: 250px; overflow: scroll;">
           <div style="width: 2000px; height: 500px; padding: 100px 0 0 250px;">
-            <Popper
+            <Popover
               :auto-hide="autoHide"
               :auto-trigger-toggle="autoTriggerToggle"
               :placement="placement"
@@ -208,9 +208,9 @@ export const Playground: Story = {
                 <Button>Toggle</Button>
               </template>
               <div style="background: #fff; border: 1px solid red; padding: 8px">
-                This is the content of the popper
+                This is the content of the popover
               </div>
-            </Popper>
+            </Popover>
           </div>
         </div>
         <br>

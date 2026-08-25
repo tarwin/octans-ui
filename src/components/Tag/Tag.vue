@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { Icon } from '../Icon'
-import { type PopperPlacementType } from '@/components/Popper'
+import { type PopoverPlacementType } from '@/components/Popover'
 
 export interface TagProps {
   /**
@@ -8,7 +8,7 @@ export interface TagProps {
    */
   required?: boolean
   tooltip?: string | null
-  tooltipPosition?: PopperPlacementType
+  tooltipPosition?: PopoverPlacementType
 }
 
 withDefaults(defineProps<TagProps>(), {

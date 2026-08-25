@@ -26,9 +26,7 @@ export default defineComponent({
       sectionMarkup.push(
         h(CardSection, () => [
           h(SkeletonBodyText, {
-            props: {
-              lines: 3
-            }
+            lines: 3
           })
         ])
       )

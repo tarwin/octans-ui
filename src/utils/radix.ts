@@ -1,7 +1,7 @@
-import type { PopperPlacementType } from '@/components/Popper'
+import type { PopoverPlacementType } from '@/components/Popover'
 import type { PopoverContentProps } from 'reka-ui'
 
-export function getRadixPopperPlacement(placement: PopperPlacementType | ''): {
+export function getRadixPopperPlacement(placement: PopoverPlacementType | ''): {
   side: PopoverContentProps['side']
   align: PopoverContentProps['align']
 } {

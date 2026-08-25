@@ -126,7 +126,7 @@ export const Reactivity: Story = {
   })
 }
 
-// tooltipPosition takes a PopperPlacementType — "top", "top-start", "top-end"
+// tooltipPosition takes a PopoverPlacementType — "top", "top-start", "top-end"
 // and so on. Anything else silently falls back to the default placement.
 export const Tooltip: Story = {
   render: () => ({

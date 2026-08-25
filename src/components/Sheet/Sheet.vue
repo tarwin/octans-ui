@@ -309,6 +309,7 @@ onBeforeUnmount(() => {
                   :key="index"
                   :type="action.type"
                   :disabled="action.disabled"
+                  :loading="action.loading"
                   :url="action.url"
                   :external="action.external"
                   :icon="action.icon"

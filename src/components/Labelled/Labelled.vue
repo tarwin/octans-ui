@@ -25,6 +25,14 @@ export default defineComponent({
           ]
         )
 
+      // `aria-hidden`: the asterisk is a convention a sighted reader knows to
+      // read as "required". A screen reader gets the real thing instead —
+      // `aria-required` on the control, which the form components set when
+      // they forward `required` here.
+      const requiredMarkup =
+        props.required &&
+        h('span', { class: $style.requiredMark, 'aria-hidden': 'true' }, '*')
+
       let labelMarkup: any =
         props.label &&
         h(
@@ -32,7 +40,7 @@ export default defineComponent({
           {
             class: $style.label
           },
-          [props.label, helpLinkMarkup]
+          [props.label, requiredMarkup, helpLinkMarkup]
         )
 
       const labelScopedSlot = context.slots.label
@@ -40,6 +48,7 @@ export default defineComponent({
         labelMarkup = labelScopedSlot({
           label: props.label,
           helpLink: props.helpLink,
+          required: props.required,
           className: $style.label
         })
       }
@@ -71,7 +80,7 @@ export default defineComponent({
         'div',
         {
           ...context.attrs,
-          class: ['UIElement', props.required && $style.required]
+          class: 'UIElement'
         },
         [
           labelMarkup,
@@ -128,7 +137,15 @@ export default defineComponent({
       required: false
     },
     /**
-     * @deprecated Makes the label title bold.
+     * Marks the field as required, drawing an asterisk after the label.
+     *
+     * This is the VISUAL half only. The control that owns the field is
+     * responsible for the other half — `aria-required` on the input itself —
+     * which every form component in the library does when it forwards this.
+     *
+     * It used to bold the entire field instead, which was marked deprecated
+     * and did not survive: the bold inherited down into help text and the
+     * control, and said nothing about the field being required.
      */
     required: {
       type: Boolean,
@@ -164,7 +181,8 @@ export default defineComponent({
   font-size: 14px;
   line-height: 20px;
 }
-.required {
-  font-weight: bold;
+.requiredMark {
+  margin-left: 2px;
+  color: var(--octans-text-error);
 }
 </style>

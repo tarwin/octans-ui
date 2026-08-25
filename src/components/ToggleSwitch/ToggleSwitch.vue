@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { Icon } from '@/components/Icon'
+import { Labelled } from '@/components/Labelled'
 import { computed, useAttrs, type StyleValue } from 'vue'
 import type { ToggleSwitchProps } from './types'
 
@@ -16,6 +17,18 @@ const emit = defineEmits<{
  */
 defineOptions({ inheritAttrs: false })
 
+/**
+ * `Labelled` is the root, unconditionally — which is what makes this control
+ * behave like every other one in the library: `class` and `style` land on it,
+ * `label` / `error` / `helpText` mean the same thing here as they do on a
+ * `TextField`, and `required` has somewhere to draw itself. The switch keeps
+ * its own box inside, because `.slider` is positioned against it.
+ *
+ * Note this is why the template starts with the element and no comment: a
+ * comment ahead of the root makes the component a FRAGMENT, and then
+ * `wrapper.element` — and anything else that reaches for "the root" — finds
+ * the comment node instead of the div.
+ */
 const attrs = useAttrs()
 
 const rootClass = computed(() => attrs.class as string | undefined)
@@ -27,6 +40,12 @@ const controlAttrs = computed(() => {
 })
 
 const props = withDefaults(defineProps<ToggleSwitchProps>(), {
+  label: undefined,
+  error: undefined,
+  helpText: undefined,
+  helpTextHtml: undefined,
+  helpLink: undefined,
+  required: false,
   trueValue: true,
   falseValue: false,
   checked: false,
@@ -130,53 +149,60 @@ function toggle() {
 </script>
 
 <template>
-  <div
-    :class="[
-      'UIElement',
-      $style.ToggleSwitch,
-      disabled && $style.disabled,
-      rootClass
-    ]"
-    :style="[sizeVars, rootStyle]"
+  <Labelled
+    :label="label"
+    :error="error"
+    :help-text="helpText"
+    :help-text-html="helpTextHtml"
+    :help-link="helpLink"
+    :required="required"
+    :class="rootClass"
+    :style="rootStyle"
   >
-    <!--
+    <div
+      :class="['UIElement', $style.ToggleSwitch, disabled && $style.disabled]"
+      :style="sizeVars"
+    >
+      <!--
       A real <button> rather than a styled <span>: it brings keyboard focus,
       Space / Enter activation and the disabled semantics for free, none of
       which are worth reimplementing. `role="switch"` swaps the announced role
       from "button" to "switch", and `aria-checked` carries the state.
     -->
-    <button
-      v-bind="controlAttrs"
-      type="button"
-      role="switch"
-      :aria-checked="isChecked"
-      :disabled="disabled"
-      :class="[$style.slider, isChecked && $style.checked]"
-      :style="{ backgroundColor: trackColor }"
-      @click="toggle"
-    >
-      <!--
+      <button
+        v-bind="controlAttrs"
+        type="button"
+        role="switch"
+        :aria-checked="isChecked"
+        :aria-required="required || undefined"
+        :disabled="disabled"
+        :class="[$style.slider, isChecked && $style.checked]"
+        :style="{ backgroundColor: trackColor }"
+        @click="toggle"
+      >
+        <!--
         The knob is decorative — the tick / cross restates what `aria-checked`
         already says, so hiding it stops the state being announced twice.
       -->
-      <span
-        :class="$style.handle"
-        aria-hidden="true"
-      >
-        <slot
-          name="handle"
-          :checked="isChecked"
+        <span
+          :class="$style.handle"
+          aria-hidden="true"
         >
-          <Icon
-            v-if="icon"
-            :icon="icon"
-            :size="iconSize"
-            :style="{ color: resolvedIconColor }"
-          />
-        </slot>
-      </span>
-    </button>
-  </div>
+          <slot
+            name="handle"
+            :checked="isChecked"
+          >
+            <Icon
+              v-if="icon"
+              :icon="icon"
+              :size="iconSize"
+              :style="{ color: resolvedIconColor }"
+            />
+          </slot>
+        </span>
+      </button>
+    </div>
+  </Labelled>
 </template>
 
 <style lang="scss" module>

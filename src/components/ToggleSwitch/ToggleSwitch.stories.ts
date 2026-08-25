@@ -253,3 +253,41 @@ export const Disabled: Story = {
     `
   })
 }
+
+/**
+  A switch is a form control, so it takes the same labelling props as every
+  other one: `label`, `error`, `helpText`, `helpTextHtml`, `helpLink` and
+  `required`. It wraps `Labelled` to draw them, which is what makes a row of
+  mixed controls line up.
+
+  This is the visible half. The accessible NAME is a separate question — see
+  the Labelling story above.
+
+  `required` draws the asterisk and puts `aria-required` on the switch. It is
+  announced, not enforced — show a failure with `error`.
+ */
+export const FieldLabel: Story = {
+  render: () => ({
+    components: { ToggleSwitch },
+    setup() {
+      const marketing = ref(true)
+      const terms = ref(false)
+      return { marketing, terms }
+    },
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <ToggleSwitch
+          v-model="marketing"
+          label="Product updates"
+          help-text="Roughly one email a month. Never anything else."
+        />
+        <ToggleSwitch
+          v-model="terms"
+          label="Accept the terms"
+          required
+          :error="!terms && 'You have to accept the terms to continue.'"
+        />
+      </div>
+    `
+  })
+}

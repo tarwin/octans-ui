@@ -164,6 +164,38 @@ export default defineComponent({
     destructive: {
       type: Boolean,
       default: false
+    },
+    /**
+     * Swaps the label for a spinner while an action is in flight, and stops
+     * the button acting.
+     *
+     * The label stays in the layout and is only made invisible, so the button
+     * keeps its width — a toolbar that reflows the instant something is
+     * clicked is worse than a slow one.
+     *
+     * It sets `aria-disabled`, NOT `disabled`. A real `disabled` attribute on
+     * a focused button drops focus to `<body>`, which is precisely the moment
+     * a keyboard user is waiting for something to happen.
+     */
+    loading: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Marks a toggle button as on. The resting surface takes whatever
+     * treatment the type already uses for `:active`, and the button announces
+     * `aria-pressed`.
+     *
+     * `undefined` by default rather than `false`, so the attribute appears
+     * only on a button that IS a toggle: `:pressed="false"` announces a
+     * toggle that is off, while omitting it announces nothing at all.
+     *
+     * For a set of mutually exclusive options reach for `SegmentedControl`
+     * instead — this is for a toggle that stands on its own.
+     */
+    pressed: {
+      type: Boolean,
+      default: undefined
     }
   },
   setup(props, { slots }) {
@@ -254,11 +286,21 @@ export default defineComponent({
         const content = h(
           'div',
           {
-            class: style.content
+            class: [style.content, props.loading && style.content__loading]
           },
           contentChildren
         )
-        return badgeAsPill.value ? [content, renderBadgePill()] : [content]
+        const rendered: any[] = [content]
+        if (props.loading) {
+          // `aria-hidden` and no text: `aria-busy` on the button is what
+          // announces the state, so a screen reader gets one message rather
+          // than a decorative element it has to describe.
+          rendered.push(
+            h('span', { class: style.spinner, 'aria-hidden': 'true' })
+          )
+        }
+        if (badgeAsPill.value) rendered.push(renderBadgePill())
+        return rendered
       }
 
       const element: any =
@@ -283,14 +325,33 @@ export default defineComponent({
             ],
             color && [style['color-' + color], style.hasColor],
             style['size' + capitalize(props.size)],
-            props.fullWidth && style.fullWidth
+            props.fullWidth && style.fullWidth,
+            props.loading && style.loading,
+            props.pressed && style.pressed
           ],
           disabled: props.disabled,
+          // See the `loading` prop: busy is announced, but the element stays
+          // focusable and stays whatever element it was, so focus and the
+          // caret don't move out from under the user mid-action.
+          'aria-busy': props.loading || undefined,
+          'aria-disabled': props.loading || undefined,
+          'aria-pressed':
+            props.pressed === undefined ? undefined : String(props.pressed),
           href: props.url,
           target: props.external ? '_blank' : undefined,
           'data-ui-tooltip': props.tooltip,
           'data-ui-tooltip-position': props.tooltipPosition,
           onClick(event) {
+            if (props.loading) {
+              // `aria-disabled` does not stop a click the way `disabled`
+              // does, so it has to be stopped here. `stopImmediatePropagation`
+              // rather than `stopPropagation`: the consumer's own `@click` is
+              // a fallthrough listener on THIS element, merged after this one,
+              // and plain propagation stopping would not reach it.
+              event.preventDefault()
+              event.stopImmediatePropagation()
+              return
+            }
             if (
               event.currentTarget &&
               event.currentTarget instanceof HTMLElement
@@ -385,7 +446,16 @@ $shadowHover: var(--octans-shadow-sm);
     box-shadow: 0 0 0 1px tone($focusColor);
   }
 
-  &:active:not(:disabled) {
+  // `.pressed` shares every `:active` block in the file, so a toggle's ON
+  // state is whatever its own type already draws when held down — nothing
+  // per-structure to invent, and nothing to keep in sync.
+  //
+  // `:not(:disabled)` is carried on the `.pressed` half purely for
+  // SPECIFICITY: it matches the `:hover:not(:disabled)` rule above, so source
+  // order decides, and this block comes later. Without it, hovering a pressed
+  // toggle would lighten it back to the unpressed surface.
+  &:active:not(:disabled),
+  &.pressed:not(:disabled) {
     --octans-button-lift: 0px;
     background: color-mix(in srgb, tone($buttonColor) 85%, black);
     border-color: color-mix(in srgb, tone($buttonColor) 80%, black);
@@ -424,7 +494,8 @@ $shadowHover: var(--octans-shadow-sm);
     box-shadow: 0 0 0 1px color-mix(in srgb, tone($color) 80%, transparent);
   }
 
-  &:active {
+  &:active,
+  &.pressed:not(:disabled) {
     --octans-button-lift: 0px;
     background: color-mix(in srgb, tone($color) 14%, transparent);
     box-shadow: none;
@@ -454,7 +525,8 @@ $shadowHover: var(--octans-shadow-sm);
     box-shadow: 0 0 0 1px color-mix(in srgb, tone($color) 80%, transparent);
   }
 
-  &:active {
+  &:active,
+  &.pressed:not(:disabled) {
     background: color-mix(in srgb, tone($color) 14%, transparent);
     box-shadow: none;
   }
@@ -581,7 +653,8 @@ $shadowHover: var(--octans-shadow-sm);
   border-color: transparent;
   box-shadow: none;
 
-  &:active:not(:disabled) {
+  &:active:not(:disabled),
+  &.pressed:not(:disabled) {
     border-color: transparent;
   }
 
@@ -623,7 +696,8 @@ $shadowHover: var(--octans-shadow-sm);
     background: color-mix(in srgb, var(--octans-text-link) 8%, transparent);
     cursor: pointer;
   }
-  &:active:not(:disabled) {
+  &:active:not(:disabled),
+  &.pressed:not(:disabled) {
     background: color-mix(in srgb, var(--octans-text-link) 14%, transparent);
     box-shadow: none;
   }
@@ -710,7 +784,8 @@ $shadowHover: var(--octans-shadow-sm);
     color: var(--_role-ink);
     background: color-mix(in srgb, var(--_role-ink) 8%, transparent);
   }
-  &:active:not(:disabled) {
+  &:active:not(:disabled),
+  &.pressed:not(:disabled) {
     background: color-mix(in srgb, var(--_role-ink) 14%, transparent);
   }
   &:disabled {
@@ -761,5 +836,53 @@ $shadowHover: var(--octans-shadow-sm);
   align-items: center;
   justify-content: center;
   width: 100%;
+}
+
+// --- loading -----------------------------------------------------------------
+// LAST in the file on purpose: every `:hover` rule above carries
+// `:not(:disabled)`, and a busy button is not `:disabled`. Matching that
+// specificity and winning on source order is what keeps the cursor from
+// promising another click.
+
+// The label keeps its place in the layout and is only hidden, so the button
+// does not change width the moment it is clicked.
+.content__loading {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  margin: -0.5em 0 0 -0.5em;
+  // Drawn in `currentColor` rather than as the `Spinner` component, which is
+  // an <img> tinted by a filter and so has to be TOLD its colour. A border
+  // follows the label it replaced: white on a filled primary, the role ink on
+  // an outline, disabled grey on a disabled button — for free, across every
+  // type and colour combination.
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--octans-radius-full);
+  animation: buttonSpin 0.6s linear infinite;
+}
+
+// Slowed rather than stopped: a still spinner reads as a frozen app, which is
+// the opposite of what it is there to say.
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes buttonSpin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.Button.loading:hover:not(:disabled) {
+  cursor: default;
 }
 </style>

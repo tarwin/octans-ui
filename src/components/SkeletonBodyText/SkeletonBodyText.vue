@@ -15,7 +15,7 @@ export default defineComponent({
           })
         )
       }
-      return h('div', props, children)
+      return h('div', null, children)
     }
   },
   props: {

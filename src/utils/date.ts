@@ -124,6 +124,63 @@ function setLocale(locale: string) {
   dayjs.locale(locale)
 }
 
+/**
+ * The library-wide DISPLAY time zone: what "now" means, and what zone dates
+ * are rendered in. Unset by default, which means the viewer's own clock.
+ *
+ * This is the companion to `setLocale` and works the same way — one call at
+ * app start, and every `Formatter`, `Calendar` and `DatePicker` follows. An
+ * app that must show one fixed zone regardless of who is looking (an
+ * operations console pinned to head-office time) sets it once here instead of
+ * threading a zone through every call site.
+ *
+ * It affects DISPLAY only. It does not reinterpret a stored value: a wall
+ * clock string stays the wall clock it was.
+ */
+let displayTimezone: string | undefined
+
+function setTimezone(timezone?: string | null) {
+  if (!timezone) {
+    displayTimezone = undefined
+    return
+  }
+  // A bad IANA name makes `.tz()` THROW, from inside a formatter, long after
+  // the mistake — so it is caught here, where the name is.
+  try {
+    dayjs().tz(timezone)
+    displayTimezone = timezone
+  } catch {
+    console.warn(
+      `[octans] setTimezone: "${timezone}" is not a time zone this runtime ` +
+        "knows. Falling back to the viewer's own clock."
+    )
+    displayTimezone = undefined
+  }
+}
+
+function getTimezone(): string | undefined {
+  return displayTimezone
+}
+
+/**
+ * Reads a value in the display time zone, or the viewer's clock when there
+ * isn't one. `timezone` overrides the global for this one call.
+ *
+ * A zone the runtime rejects falls back rather than throwing: a date that
+ * renders in the wrong zone is a bug, and a component that throws while
+ * rendering is an outage.
+ */
+function inTimezone(value?: dayjs.ConfigType, timezone?: string) {
+  const zone = timezone ?? displayTimezone
+  const date = value === undefined ? dayjs() : dayjs(value)
+  if (!zone) return date
+  try {
+    return date.tz(zone)
+  } catch {
+    return date
+  }
+}
+
 const mysqlFormat = 'YYYY-MM-DD HH:mm:ss'
 
-export { dayjs, setLocale, mysqlFormat }
+export { dayjs, setLocale, setTimezone, getTimezone, inTimezone, mysqlFormat }

@@ -1,10 +1,12 @@
 <script lang="ts">
+import { Icon } from '@/components/Icon'
 import { Labelled } from '@/components/Labelled'
 import { Spinner } from '@/components/Spinner'
 import { format } from '@/utils/format'
 import { defineComponent, type PropType } from 'vue'
 import DropZone from './DropZone.vue'
 import ItemList from './ItemList.vue'
+import { claimPageDrop, releasePageDrop } from './pageDrop'
 import {
   createAcceptFileMatcher,
   getMimeTypeInfo,
@@ -17,6 +19,7 @@ export default defineComponent({
   name: 'FileInput',
   components: {
     DropZone,
+    Icon,
     ItemList,
     Labelled,
     Spinner
@@ -57,6 +60,18 @@ export default defineComponent({
       type: [String, Boolean] as PropType<string | false | null>
     },
     /**
+     * Marks the field as required, drawing an asterisk after the label.
+     *
+     * Unlike the other form controls this sets no `aria-required`: the
+     * `<input type="file">` is visually hidden and so is not in the
+     * accessibility tree, and the drop zone is a plain region rather than a
+     * control that could carry it.
+     */
+    required: {
+      type: Boolean,
+      default: false
+    },
+    /**
      * A string that defines the file types the file input should accept.
      *
      * This string is a comma-separated list of [unique file type specifiers](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#Unique_file_type_specifiers).
@@ -95,14 +110,51 @@ export default defineComponent({
     readonly: {
       type: Boolean,
       default: false
+    },
+    /**
+     * Makes the WHOLE PAGE a drop target, not just the zone — dropping a file
+     * anywhere on the window adds it here, and an overlay says so while a
+     * drag is in progress. The zone stays where it is and keeps working.
+     *
+     * There is only one page, so only one input can have it: if a second one
+     * sets this, the first to mount keeps the page and the second warns and
+     * falls back to its own zone.
+     */
+    dropOnPage: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      isValidating: false
+      isValidating: false,
+      isDraggingOnPage: false
+    }
+  },
+  mounted() {
+    this.syncPageDrop()
+  },
+  beforeUnmount() {
+    releasePageDrop(this)
+  },
+  watch: {
+    // Readonly and full both mean the input cannot take another file, and a
+    // page-wide target that silently drops what you give it is worse than no
+    // target at all — so the claim is released rather than held and ignored.
+    canAcceptFiles: {
+      handler() {
+        this.syncPageDrop()
+      }
     }
   },
   computed: {
+    canAcceptFiles(): boolean {
+      return (
+        this.dropOnPage &&
+        !this.readonly &&
+        (this.multiple || !this.modelValue.length)
+      )
+    },
     acceptFn() {
       return createAcceptFileMatcher(this.accept)
     },
@@ -190,6 +242,22 @@ export default defineComponent({
     },
     onDropZoneDrop(fileList: FileList) {
       this.appendFiles(fileList)
+    },
+    syncPageDrop() {
+      if (!this.canAcceptFiles) {
+        this.isDraggingOnPage = false
+        releasePageDrop(this)
+        return
+      }
+      const claimed = claimPageDrop(this, {
+        onDragChange: (dragging: boolean) => {
+          this.isDraggingOnPage = dragging
+        },
+        onDrop: (files: FileList) => {
+          this.appendFiles(files)
+        }
+      })
+      if (!claimed) this.isDraggingOnPage = false
     }
   }
 })
@@ -202,6 +270,7 @@ export default defineComponent({
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
     <div :class="['UIElement', $style.FileInput]">
       <input
@@ -234,6 +303,25 @@ export default defineComponent({
         @drop="onDropZoneDrop"
       />
     </div>
+    <!--
+      Teleported: the overlay covers the WINDOW, and a `position: fixed`
+      element is trapped inside the nearest ancestor with a transform, filter
+      or containment — of which an app shell has several.
+    -->
+    <Teleport to="body">
+      <div
+        v-if="isDraggingOnPage"
+        :class="['UIElement', $style.PageOverlay]"
+      >
+        <div :class="$style.PageOverlay_message">
+          <Icon
+            icon="mdi:file-upload-outline"
+            style="margin-right: 8px"
+          />
+          {{ $t('ui.fileInput.dropHere') }}
+        </div>
+      </div>
+    </Teleport>
   </Labelled>
 </template>
 
@@ -253,5 +341,32 @@ export default defineComponent({
   padding: 12px 12px;
   background: var(--octans-surface-app);
   border-radius: var(--octans-radius-field);
+}
+
+// `dropOnPage`, while a file is over the window.
+.PageOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--octans-surface) 82%, transparent);
+  // The overlay is a SIGN, not a target: the listeners are on `window`, so
+  // letting the pointer through means the drag events keep coming from the
+  // real elements underneath and the enter/leave counting stays honest.
+  pointer-events: none;
+}
+
+.PageOverlay_message {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+  border: 2px dashed var(--octans-primary);
+  border-radius: var(--octans-radius-box);
+  background: var(--octans-surface);
+  color: var(--octans-text-primary);
+  font-size: 18px;
 }
 </style>

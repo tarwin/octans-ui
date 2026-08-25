@@ -243,3 +243,82 @@ export const Badges: Story = {
     `
   })
 }
+
+/**
+ * `loading` swaps the label for a spinner while an action is in flight. The
+ * label stays in the layout and is only hidden, so the button keeps its width
+ * — click one and watch the row beside it hold still.
+ *
+ * The button also stops acting and announces `aria-busy`, but keeps its focus:
+ * it sets `aria-disabled` rather than the real `disabled` attribute, which
+ * would drop a keyboard user's focus to `<body>` at the worst moment.
+ */
+export const Loading: Story = {
+  render: () => ({
+    components: { Button, Stack },
+    template: `
+      <Stack vertical>
+        <Stack>
+          <div style="width: 130px">Loading</div>
+          <Button loading>Default</Button>
+          <Button type="primary" loading>Primary</Button>
+          <Button type="secondary" loading>Secondary</Button>
+          <Button type="outline" loading>Outline</Button>
+          <Button type="plain" loading>Plain</Button>
+        </Stack>
+        <Stack>
+          <div style="width: 130px">Beside its rest state</div>
+          <Button type="primary">Save changes</Button>
+          <Button type="primary" loading>Save changes</Button>
+        </Stack>
+        <Stack>
+          <div style="width: 130px">Sizes</div>
+          <Button size="small" loading>Small</Button>
+          <Button size="medium" loading>Medium</Button>
+          <Button size="large" loading>Large</Button>
+        </Stack>
+      </Stack>
+    `
+  })
+}
+
+/**
+ * `pressed` marks a toggle button as on. It takes whatever treatment the
+ * button's own type already draws for `:active`, so a pressed outline reads
+ * like a held outline rather than like some third thing, and it announces
+ * `aria-pressed`.
+ *
+ * Leave it off entirely for a button that is not a toggle — `:pressed="false"`
+ * announces a toggle that is OFF, which is a different statement from saying
+ * nothing.
+ *
+ * For a set of mutually exclusive options, reach for `SegmentedControl`.
+ */
+export const Pressed: Story = {
+  render: () => ({
+    components: { Button, Stack },
+    template: `
+      <Stack vertical>
+        <Stack>
+          <div style="width: 130px">Off / on</div>
+          <Button :pressed="false" icon="mdi:map">Map</Button>
+          <Button :pressed="true" icon="mdi:map">Map</Button>
+        </Stack>
+        <Stack>
+          <div style="width: 130px">Across types</div>
+          <Button type="default" pressed>Default</Button>
+          <Button type="primary" pressed>Primary</Button>
+          <Button type="secondary" pressed>Secondary</Button>
+          <Button type="outline" pressed>Outline</Button>
+          <Button type="plain" pressed>Plain</Button>
+        </Stack>
+        <Stack>
+          <div style="width: 130px">A toggle group</div>
+          <Button icon="mdi:map-outline" pressed>Streets</Button>
+          <Button icon="mdi:satellite-variant">Satellite</Button>
+          <Button icon="mdi:terrain">Terrain</Button>
+        </Stack>
+      </Stack>
+    `
+  })
+}

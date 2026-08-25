@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { type PopperPlacementType } from '../Popper'
+import { type PopoverPlacementType } from '../Popover'
 import { type ActionTooltipPositionType } from '../types'
-import Popper from '../Popper/Popper.vue'
+import Popover from '../Popover/Popover.vue'
 import ActionListMenu from './ActionListMenu.vue'
 
 export interface ActionListProps {
@@ -13,10 +13,10 @@ export interface ActionListProps {
    * Groups of actions to render.
    */
   sections?: ActionListSectionType[]
-  placement?: PopperPlacementType
+  placement?: PopoverPlacementType
   disabled?: boolean
   /**
-   * Custom z-index for the popper.
+   * Custom z-index for the popover.
    */
   zIndex?: number
   /**
@@ -69,14 +69,14 @@ const emit = defineEmits<{
   (e: 'hide'): void
   /**
    * An action was selected somewhere in this (sub) menu, so the whole chain
-   * should close. Distinct from `hide`, which only reflects this popper's own
+   * should close. Distinct from `hide`, which only reflects this popover's own
    * open/closed state and must NOT collapse parent menus.
    */
   (e: 'close'): void
 }>()
 
 function handleClose(hide: () => void) {
-  // Hide our own popper
+  // Hide our own popover
   hide()
   // Bubble up so ancestor menus close too (an action was selected)
   emit('close')
@@ -92,7 +92,7 @@ function onUpdateVisible(isVisible: boolean) {
 </script>
 
 <template>
-  <Popper
+  <Popover
     v-if="$slots.default"
     auto-hide
     :auto-trigger-toggle="!hoverTrigger"
@@ -112,7 +112,7 @@ function onUpdateVisible(isVisible: boolean) {
     <template #trigger>
       <slot></slot>
     </template>
-  </Popper>
+  </Popover>
   <ActionListMenu
     v-else
     :items="items"

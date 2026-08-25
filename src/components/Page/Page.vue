@@ -84,10 +84,13 @@ watch(
       v-if="loading"
       :class="$style.Page_loader"
     >
-      <Spinner
-        color="blue"
-        size="large"
-      />
+      <!-- @slot The page-level loading treatment. Only rendered while `loading`. -->
+      <slot name="loader">
+        <Spinner
+          color="blue"
+          size="large"
+        />
+      </slot>
     </div>
     <!--
       The query container for everything the page lays out. A separate wrapper
@@ -97,147 +100,211 @@ watch(
     -->
     <div :class="$style.Page_container">
       <div
-        v-if="breadcrumbs.length"
+        v-if="breadcrumbs.length || $slots.breadcrumbs"
         :class="$style.Page_breadcrumbs"
       >
-        <span
-          v-for="(item, index) in breadcrumbs"
-          :key="index"
-          :class="$style.Breadcrumb"
+        <!--
+          @slot The whole breadcrumb row.
+          @binding {BreadcrumbType[]} breadcrumbs The `breadcrumbs` prop.
+        -->
+        <slot
+          name="breadcrumbs"
+          :breadcrumbs="breadcrumbs"
         >
-          <Button
-            :class="$style.Breadcrumb_button"
-            :url="item.url"
-            :disabled="item.disabled || (!item.url && !item.onAction)"
-            type="link"
-            @click="() => item.onAction?.()"
-          >
-            {{ item.label }}
-          </Button>
-        </span>
-      </div>
-      <div :class="$style.Page_header">
-        <div :class="$style.Page_headerMain">
-          <div :class="$style.Page_titleWrapper">
-            <div :class="$style.Page_title">
-              {{ title }}
-              <Icon
-                v-if="includeHelp"
-                :class="$style.Page_helpIcon"
-                icon="mdi:information"
-                @click="$emit('clickHelp')"
-              />
-              <template v-if="$slots['badge']">
-                <div :class="$style.Page_badge">
-                  <slot name="badge"></slot>
-                </div>
-              </template>
-              <Badge
-                v-else-if="badge"
-                :class="$style.Page_badge"
-                :progress="badge.progress"
-                :size="badge.size"
-                :status="badge.status"
-              >
-                {{ badge.label }}
-              </Badge>
-            </div>
-            <div
-              v-if="subtitle"
-              :class="$style.Page_subtitle"
-            >
-              {{ subtitle }}
-            </div>
-          </div>
-          <div :class="$style.PageActions">
-            <div
-              v-for="(action, index) in secondaryActions"
-              :key="'secondary' + index"
-              :class="$style.PageAction"
-            >
-              <Button
-                :class="$style.PageAction_button"
-                :icon="action.icon"
-                :disabled="action.disabled"
-                :type="action.type || 'plain'"
-                :url="action.url"
-                :external="action.external"
-                :tooltip="action.tooltip"
-                :tooltipPosition="action.tooltipPosition"
-                @click="() => action.onAction?.()"
-              >
-                {{ action.label }}
-              </Button>
-            </div>
-            <div
-              v-for="(group, index) in actionGroups"
-              :key="'group' + index"
-              :class="$style.PageAction"
-            >
-              <ActionList :items="group.actions">
-                <Button
-                  :icon="group.icon"
-                  :class="$style.PageAction_button"
-                  type="plain"
-                  dropdown
-                >
-                  {{ group.title }}
-                </Button>
-              </ActionList>
-            </div>
-          </div>
-          <!-- .PageActions -->
-        </div>
-        <div
-          v-if="collapsedActionSections.length"
-          :class="$style.PageActions_collapsed"
-        >
-          <ActionList
-            placement="bottom-end"
-            :sections="collapsedActionSections"
+          <span
+            v-for="(item, index) in breadcrumbs"
+            :key="index"
+            :class="$style.Breadcrumb"
           >
             <Button
-              :class="$style.PageAction_button"
-              type="plain"
-              icon="mdi:dots-horizontal"
-            ></Button>
-          </ActionList>
-        </div>
-        <div
-          v-if="primaryAction || $slots['primaryAction']"
-          :class="$style.Page_headerPrimaryActionWrapper"
-        >
-          <slot name="primaryAction">
-            <template v-if="primaryAction">
-              <Button
-                v-if="primaryAction.label"
-                :type="primaryAction.type || 'primary'"
-                :icon="primaryAction.icon"
-                :disabled="primaryAction.disabled"
-                :url="primaryAction.url"
-                :tooltip="primaryAction.tooltip"
-                :tooltipPosition="primaryAction.tooltipPosition"
-                :external="primaryAction.external"
-                @click="() => primaryAction?.onAction?.()"
+              :class="$style.Breadcrumb_button"
+              :url="item.url"
+              :disabled="item.disabled || (!item.url && !item.onAction)"
+              type="link"
+              @click="() => item.onAction?.()"
+            >
+              {{ item.label }}
+            </Button>
+          </span>
+        </slot>
+      </div>
+      <div :class="$style.Page_header">
+        <!--
+          @slot The entire header — title, subtitle, badge and every action.
+          The escape hatch for a page whose header is nothing like this one;
+          for changing a single part, use the narrower slots inside it.
+        -->
+        <slot name="header">
+          <div :class="$style.Page_headerMain">
+            <div :class="$style.Page_titleWrapper">
+              <div :class="$style.Page_title">
+                <!--
+                  @slot The title text. The help icon and badge stay beside it.
+                  @binding {string} title The `title` prop.
+                -->
+                <slot
+                  name="title"
+                  :title="title"
+                  >{{ title }}</slot
+                >
+                <!--
+                  @slot The help affordance beside the title. Rendered in place
+                  of the `includeHelp` icon, which still emits `clickHelp`.
+                -->
+                <slot name="help">
+                  <Icon
+                    v-if="includeHelp"
+                    :class="$style.Page_helpIcon"
+                    icon="mdi:information"
+                    @click="$emit('clickHelp')"
+                  />
+                </slot>
+                <template v-if="$slots['badge']">
+                  <div :class="$style.Page_badge">
+                    <slot name="badge"></slot>
+                  </div>
+                </template>
+                <Badge
+                  v-else-if="badge"
+                  :class="$style.Page_badge"
+                  :progress="badge.progress"
+                  :size="badge.size"
+                  :status="badge.status"
+                >
+                  {{ badge.label }}
+                </Badge>
+              </div>
+              <div
+                v-if="subtitle || $slots.subtitle"
+                :class="$style.Page_subtitle"
               >
-                {{ primaryAction.label }}
-              </Button>
-              <Button
-                v-else
-                :type="primaryAction.type || 'primary'"
-                :icon="primaryAction.icon"
-                :disabled="primaryAction.disabled"
-                :url="primaryAction.url"
-                :tooltip="primaryAction.tooltip"
-                :tooltipPosition="primaryAction.tooltipPosition"
-                :external="primaryAction.external"
-                @click="() => primaryAction?.onAction?.()"
-              />
-            </template>
-          </slot>
-        </div>
+                <!--
+                  @slot The subtitle line under the title.
+                  @binding {string} subtitle The `subtitle` prop.
+                -->
+                <slot
+                  name="subtitle"
+                  :subtitle="subtitle"
+                  >{{ subtitle }}</slot
+                >
+              </div>
+            </div>
+            <div :class="$style.PageActions">
+              <!--
+                @slot The secondary actions and action groups, as drawn at full
+                width. The collapsed menu is a separate slot — override both,
+                or the narrow layout keeps showing the props.
+                @binding {ActionType[]} actions The `secondaryActions` prop.
+                @binding {ActionGroupType[]} groups The `actionGroups` prop.
+              -->
+              <slot
+                name="secondaryActions"
+                :actions="secondaryActions"
+                :groups="actionGroups"
+              >
+                <div
+                  v-for="(action, index) in secondaryActions"
+                  :key="'secondary' + index"
+                  :class="$style.PageAction"
+                >
+                  <Button
+                    :class="$style.PageAction_button"
+                    :icon="action.icon"
+                    :disabled="action.disabled"
+                    :loading="action.loading"
+                    :type="action.type || 'plain'"
+                    :url="action.url"
+                    :external="action.external"
+                    :tooltip="action.tooltip"
+                    :tooltipPosition="action.tooltipPosition"
+                    @click="() => action.onAction?.()"
+                  >
+                    {{ action.label }}
+                  </Button>
+                </div>
+                <div
+                  v-for="(group, index) in actionGroups"
+                  :key="'group' + index"
+                  :class="$style.PageAction"
+                >
+                  <ActionList :items="group.actions">
+                    <Button
+                      :icon="group.icon"
+                      :class="$style.PageAction_button"
+                      type="plain"
+                      dropdown
+                    >
+                      {{ group.title }}
+                    </Button>
+                  </ActionList>
+                </div>
+              </slot>
+            </div>
+            <!-- .PageActions -->
+          </div>
+          <div
+            v-if="collapsedActionSections.length || $slots.collapsedActions"
+            :class="$style.PageActions_collapsed"
+          >
+            <!--
+              @slot What the secondary actions become below 960px of PAGE
+              width. Hidden until then, so it is easy to forget: override it
+              alongside `secondaryActions`.
+              @binding {object[]} sections The actions grouped for `ActionList`.
+            -->
+            <slot
+              name="collapsedActions"
+              :sections="collapsedActionSections"
+            >
+              <ActionList
+                placement="bottom-end"
+                :sections="collapsedActionSections"
+              >
+                <Button
+                  :class="$style.PageAction_button"
+                  type="plain"
+                  icon="mdi:dots-horizontal"
+                ></Button>
+              </ActionList>
+            </slot>
+          </div>
+          <div
+            v-if="primaryAction || $slots['primaryAction']"
+            :class="$style.Page_headerPrimaryActionWrapper"
+          >
+            <slot name="primaryAction">
+              <template v-if="primaryAction">
+                <Button
+                  v-if="primaryAction.label"
+                  :type="primaryAction.type || 'primary'"
+                  :icon="primaryAction.icon"
+                  :disabled="primaryAction.disabled"
+                  :url="primaryAction.url"
+                  :tooltip="primaryAction.tooltip"
+                  :tooltipPosition="primaryAction.tooltipPosition"
+                  :external="primaryAction.external"
+                  @click="() => primaryAction?.onAction?.()"
+                >
+                  {{ primaryAction.label }}
+                </Button>
+                <Button
+                  v-else
+                  :type="primaryAction.type || 'primary'"
+                  :icon="primaryAction.icon"
+                  :disabled="primaryAction.disabled"
+                  :url="primaryAction.url"
+                  :tooltip="primaryAction.tooltip"
+                  :tooltipPosition="primaryAction.tooltipPosition"
+                  :external="primaryAction.external"
+                  @click="() => primaryAction?.onAction?.()"
+                />
+              </template>
+            </slot>
+          </div>
+        </slot>
       </div>
       <div :class="$style.Page_content">
+        <!-- @slot The page's content. -->
         <slot />
       </div>
     </div>
@@ -251,7 +318,7 @@ watch(
 
 .Page {
   max-width: var(--octans-page-width);
-  margin-top: 20px;
+  margin-top: var(--octans-page-margin-top);
   margin-left: auto;
   margin-right: auto;
   padding: var(--octans-page-padding-y) var(--octans-page-padding-x);
@@ -282,7 +349,7 @@ watch(
   z-index: 10;
   display: flex;
   justify-content: center;
-  padding-top: 100px;
+  padding-top: var(--octans-page-loader-offset);
   background: var(--octans-scrim);
 }
 
@@ -303,17 +370,22 @@ watch(
   flex: 1;
 }
 
+.Page_breadcrumbs {
+  margin-bottom: var(--octans-page-breadcrumb-gap);
+}
+
 .Page_titleWrapper {
-  margin-bottom: 8px;
+  margin-bottom: var(--octans-page-title-gap);
 }
 .Page_title {
   display: flex;
   align-items: center;
-  font-size: 30px;
+  font-size: var(--octans-page-title-size);
+  font-weight: var(--octans-page-title-weight);
 }
 .Page_subtitle {
   color: var(--octans-text);
-  font-size: 14px;
+  font-size: var(--octans-page-subtitle-size);
 }
 
 .Page_helpIcon {
@@ -328,7 +400,7 @@ watch(
 }
 
 .Page_badge {
-  margin-left: 16px;
+  margin-left: var(--octans-page-badge-gap);
 }
 
 .PageActions {
@@ -337,7 +409,7 @@ watch(
 // Tight: plain buttons carry their own padding now, so most of the visual
 // gap comes from inside the buttons themselves.
 .PageAction + .PageAction {
-  margin-left: 4px;
+  margin-left: var(--octans-page-action-gap);
 }
 
 .PageAction_button {
@@ -367,7 +439,7 @@ watch(
 }
 
 .Page_content {
-  margin-top: 20px;
+  margin-top: var(--octans-page-content-gap);
 }
 
 // Queries the PAGE's width, not the viewport's — a page inside an AppFrame

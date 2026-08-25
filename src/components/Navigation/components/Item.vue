@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Icon } from '@/components/Icon'
 import { MaybeRouterLink } from '@/components/MaybeRouterLink'
-import { Popper } from '@/components/Popper'
+import { Popover } from '@/components/Popover'
 import { Tooltip } from '@/components/Tooltip'
 import { computed, ref } from 'vue'
 import type { NavigationItemProps, NavigationSecondaryItemType } from '../types'
@@ -150,7 +150,7 @@ function mouseLeaveSub(hide: () => void) {
           />
         </a>
 
-        <Popper
+        <Popover
           v-else-if="min && item.items && item.items.length"
           placement="right"
           :auto-trigger-toggle="false"
@@ -194,7 +194,7 @@ function mouseLeaveSub(hide: () => void) {
               />
             </div>
           </template>
-        </Popper>
+        </Popover>
 
         <div
           v-if="!isSubItem && (isActive || simpleMatch.isActive) && !min"

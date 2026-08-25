@@ -52,6 +52,20 @@ import App from './App.vue'
 createApp(App).use(Octans).mount('#app')
 ```
 
+### `reset.css`
+
+`style.css` resets nothing outside `.UIElement`, so the library can be dropped
+into a page it doesn't own without moving anything on it. If Octans is the
+whole UI, add the opt-in page reset as well — otherwise the markup your app
+renders itself keeps the browser's defaults: serif text, the 8px body margin,
+`content-box` sizing, and a body with no height that grows into a second
+scrollbar.
+
+```ts
+import '@octans/ui/style.css'
+import '@octans/ui/reset.css' // only when Octans owns the page
+```
+
 Components can also be imported individually without installing the plugin:
 
 ```vue

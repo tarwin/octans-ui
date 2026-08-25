@@ -24,6 +24,19 @@ export default defineComponent({
       type: [String, Boolean] as PropType<string | false | null>
     },
     /**
+     * Marks the field as required: an asterisk after the label, and
+     * `aria-required` on the control.
+     *
+     * Announced, not enforced — it deliberately does NOT set the native
+     * `required` attribute, so the browser's own validation bubble stays out
+     * of the way of whatever the app does about errors. Use `error` to show a
+     * failure.
+     */
+    required: {
+      type: Boolean,
+      default: false
+    },
+    /**
      * Help text to show below the control.
      */
     helpText: {
@@ -149,6 +162,7 @@ export default defineComponent({
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
     <div :class="$style.InputGroup">
       <div
@@ -167,6 +181,7 @@ export default defineComponent({
           :max="max"
           :value="localValue"
           :disabled="disabled || readonly"
+          :aria-required="required || undefined"
           @input="onInput"
           @change="onChange"
         />

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { PopperPlacementType } from '@/components/Popper'
+import type { PopoverPlacementType } from '@/components/Popover'
 import { Tooltip } from '@/components/Tooltip'
 import {
   defineComponent,
@@ -67,7 +67,7 @@ export default defineComponent({
      * Placement of the tooltip if rendered
      */
     tooltipPosition: {
-      type: String as PropType<PopperPlacementType>
+      type: String as PropType<PopoverPlacementType>
     },
     /**
      * An optional radius value for the badge edges

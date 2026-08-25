@@ -34,10 +34,10 @@ export interface PanelPosition {
  * Positions a floating panel against a reference element and keeps it there
  * while the page scrolls or either element resizes.
  *
- * This is the only imperative positioning in the library. `<Popper>` — and so
+ * This is the only imperative positioning in the library. `<Popover>` — and so
  * `ActionList`, `DatePicker`, `TimePicker` and `ColorSelector` — goes through
  * reka-ui, which does its own on the same floating-ui underneath. This exists
- * for `Select`, whose dropdown is hand-rolled rather than a `<Popper>`.
+ * for `Select`, whose dropdown is hand-rolled rather than a `<Popover>`.
  */
 export function positionPanel(
   reference: HTMLElement,
@@ -66,8 +66,9 @@ export function positionPanel(
       })
       if (used !== lastPlacement) {
         lastPlacement = used
-        // Popper wrote this attribute itself and stylesheets key off it.
-        // floating-ui only computes coordinates, so we write it.
+        // popper.js — the library this replaced — wrote this attribute itself
+        // and stylesheets key off it. floating-ui only computes coordinates,
+        // so we write it.
         panel.setAttribute('data-placement', used)
         onPlacement?.(used)
       }

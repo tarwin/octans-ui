@@ -1,4 +1,4 @@
-export type PopperPlacementType =
+export type PopoverPlacementType =
   | 'top'
   | 'top-start'
   | 'top-end'
@@ -12,9 +12,9 @@ export type PopperPlacementType =
   | 'left-start'
   | 'left-end'
 
-export interface PopperProps {
+export interface PopoverProps {
   visible?: boolean
-  placement?: PopperPlacementType
+  placement?: PopoverPlacementType
   teleportTo?: string
   disabled?: boolean
   // collisionBoundary?:string

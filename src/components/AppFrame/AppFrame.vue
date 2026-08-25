@@ -279,19 +279,41 @@ const attrs = computed(() => {
   overflow: hidden;
   background: var(--octans-surface-app);
 
+  // The frame OWNS the viewport — the `1fr` row and every `overflow: auto`
+  // beneath it are measured against this. It had no height at all before,
+  // which meant the host page had to know to supply one: every story in this
+  // file says `style="height:100vh"`, and an app that didn't ended up with a
+  // second scrollbar. Declared here so nobody has to know.
+  //
+  // `dvh` over `vh` because mobile browsers' collapsing address bar makes
+  // `100vh` taller than the visible viewport. A frame that genuinely isn't
+  // full-page overrides this with an inline `style`, which always wins — a
+  // consumer CLASS is the same specificity as this one, so it would be
+  // deciding on source order.
+  height: 100vh;
+  height: 100dvh;
+
+  // Both spellings are written: `--octans-sidenav-width` is what the library
+  // reads, `--ui-sideNav-width` is the historical name kept for consumers who
+  // already read it. A `var()` alias on `:root` cannot do this job — see the
+  // note in styles/global.scss.
   &.HasSidebar {
+    --octans-sidenav-width: 240px;
     --ui-sideNav-width: 240px;
   }
   &.Min {
+    --octans-sidenav-width: 64px;
     --ui-sideNav-width: 64px;
   }
   // The column collapses; the sidebar renders as a drawer instead.
   &.Narrow {
+    --octans-sidenav-width: 0px;
     --ui-sideNav-width: 0px;
   }
   // `sidebarCollapse: 'hide'` + collapsed: the sidebar is gone entirely,
   // available as a hover-peek overlay from the GlobalNav toggle.
   &.Hidden {
+    --octans-sidenav-width: 0px;
     --ui-sideNav-width: 0px;
   }
 }
@@ -343,7 +365,7 @@ const attrs = computed(() => {
   border-right: 1px solid var(--octans-border);
   overflow-x: hidden;
   overflow-y: auto;
-  width: var(--ui-sideNav-width);
+  width: var(--octans-sidenav-width);
   transition: width 0.2s ease-in-out;
 
   ::-webkit-scrollbar {
@@ -379,7 +401,7 @@ const attrs = computed(() => {
   bottom: 0;
   left: 0;
   z-index: 1200;
-  width: var(--ui-sideNav-maxWidth, 240px);
+  width: var(--octans-sidenav-max-width, 240px);
   background: var(--octans-surface-app);
   border-right: 1px solid var(--octans-border);
   transform: translateX(-100%);
@@ -429,7 +451,7 @@ const attrs = computed(() => {
 }
 .Main_content {
   flex: 1;
-  max-width: calc(100vw - var(--ui-sideNav-width));
+  max-width: calc(100vw - var(--octans-sidenav-width));
 }
 
 .Footer {

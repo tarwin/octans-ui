@@ -28,6 +28,11 @@ export interface ActionType {
   // See Icon component.
   icon?: string
   disabled?: boolean
+  /**
+   * Swaps the button's label for a spinner while the action is in flight.
+   * `disabled` already stops a second submit; this is what SAYS so.
+   */
+  loading?: boolean
   url?: string
   tooltip?: string
   tooltipPosition?: ActionTooltipPositionType
