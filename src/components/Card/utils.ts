@@ -26,8 +26,7 @@ export function renderHeader(
             ActionList,
             {
               items: visibleActions,
-              placement: 'bottom-end',
-              popperOffset: -10
+              placement: 'bottom-end'
             },
             [
               h(Button, {
@@ -52,6 +51,7 @@ export function renderHeader(
               type: 'link',
               icon: d.icon,
               disabled: d.disabled,
+              loading: d.loading,
               tooltip: d.tooltip,
               tooltipPosition: d.tooltipPosition,
               url: d.url,

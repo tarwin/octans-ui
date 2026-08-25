@@ -6,7 +6,7 @@ import { loader } from './components/LoaderOverlay'
 import { saveBar } from './components/SaveBar'
 import { toast } from './components/ToastManager'
 import { format } from './utils/format'
-import { setLocale } from './utils/date'
+import { setLocale, setTimezone, getTimezone } from './utils/date'
 import {
   setTheme,
   toggleTheme,
@@ -90,6 +90,7 @@ export * from './components/all'
 // So consumers can bundle their own Iconify collections offline instead of
 // letting them resolve through api.iconify.design at runtime.
 export { addCollection, addIcon } from '@iconify/vue'
+export { setTimezone, getTimezone } from './utils/date'
 export {
   translate,
   $t,
@@ -211,6 +212,8 @@ const UI = {
   setLocale,
   translate,
   t: translate,
+  setTimezone,
+  getTimezone,
   setTranslations,
   addTranslations,
   setTranslationLocale,

@@ -1,5 +1,5 @@
 import memoize from 'lodash-es/memoize'
-import { dayjs } from '@/utils'
+import { dayjs, getTimezone, inTimezone } from '@/utils'
 import { isEmptyValue } from './'
 import { $t, getTranslationLocale } from './translate'
 import type plugin from 'dayjs/plugin/duration'
@@ -7,6 +7,14 @@ import type plugin from 'dayjs/plugin/duration'
 export interface FormatContextInterface {
   locale?: string
   currency?: string
+  /**
+   * IANA time zone the date formatters render in (`'America/Los_Angeles'`).
+   *
+   * Defaults to the library-wide display zone set with `setTimezone`, and
+   * failing that the viewer's own clock — which is what every date here used
+   * to be, unconditionally.
+   */
+  timezone?: string
 }
 
 export const emptyValuePlaceholder = '—'
@@ -46,8 +54,11 @@ const getPercentFormatter = memoize(({ locale }) => {
 })
 
 function createDateFormatter(fn: (d: dayjs.Dayjs) => string) {
-  return function (value: string) {
-    return fn(dayjs(value))
+  // `format()` hands every formatter the context; the date ones used to
+  // ignore it and read the viewer's clock, which is fine until the app has to
+  // show one fixed zone to everybody.
+  return function (value: string, context?: FormatContextInterface) {
+    return fn(inTimezone(value, context?.timezone))
   }
 }
 
@@ -227,6 +238,9 @@ export function format(
   }
   if (!context.currency) {
     context.currency = 'USD'
+  }
+  if (!context.timezone) {
+    context.timezone = getTimezone()
   }
   const formatFn = formatters[format]
   if (!formatFn) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@/components/Icon'
 import { Labelled } from '@/components/Labelled'
-import { Popper } from '@/components/Popper'
+import { Popover } from '@/components/Popover'
 import { dayjs, pad } from '@/utils'
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import type { TimePickerProps } from './types'
@@ -465,6 +465,7 @@ const handleMobileInput = (event: Event) => {
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
     <div
       v-if="isMobile"
@@ -485,6 +486,7 @@ const handleMobileInput = (event: Event) => {
         :value="nativeTimeValue"
         :disabled="disabled"
         :readonly="readonly"
+        :aria-required="required || undefined"
         :class="[$style.TimeInput, $style.NativeTimeInput]"
         @input="handleMobileInput"
         @blur="handleBlur"
@@ -505,7 +507,7 @@ const handleMobileInput = (event: Event) => {
         errorMessage && $style.hasError
       ]"
     >
-      <Popper
+      <Popover
         v-if="prefixIcon"
         placement="bottom-start"
         auto-trigger-toggle
@@ -562,7 +564,7 @@ const handleMobileInput = (event: Event) => {
             <option value="pm">PM</option>
           </select>
         </div>
-      </Popper>
+      </Popover>
       <input
         ref="timeInput"
         type="text"
@@ -570,6 +572,7 @@ const handleMobileInput = (event: Event) => {
         :placeholder="placeholder || localizedPlaceholder"
         :disabled="disabled"
         :readonly="readonly"
+        :aria-required="required || undefined"
         :class="$style.TimeInput"
         @input="handleInput"
         @keydown.up.prevent="handleArrow($event, 'up')"

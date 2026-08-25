@@ -70,3 +70,43 @@ export const Duration: Story = {
     `
   })
 }
+
+/**
+  Dates render in the viewer's own clock by default. An app that has to show
+  ONE zone to everybody — an operations console pinned to head-office time —
+  calls `setTimezone('America/Los_Angeles')` once at start-up, and every
+  `Formatter`, `Calendar` and `DatePicker` follows. It is the companion to
+  `setLocale` and works the same way.
+
+  The `timezone` prop is the per-instance override, shown below. Note the
+  fixture is late in a UTC day, so the zones disagree about the DATE, not just
+  the time.
+ */
+export const Timezone: Story = {
+  render: () => ({
+    setup() {
+      return { value: '2024-03-15T02:00:00Z' }
+    },
+    components: { Formatter },
+    template: `
+      <table style="border-spacing: 16px 4px">
+        <tr>
+          <td>Viewer's clock</td>
+          <td><Formatter type="dateTimeShort" :value="value"/></td>
+        </tr>
+        <tr>
+          <td>UTC</td>
+          <td><Formatter type="dateTimeShort" :value="value" timezone="UTC"/></td>
+        </tr>
+        <tr>
+          <td>America/Los_Angeles</td>
+          <td><Formatter type="dateTimeShort" :value="value" timezone="America/Los_Angeles"/></td>
+        </tr>
+        <tr>
+          <td>Australia/Sydney</td>
+          <td><Formatter type="dateTimeShort" :value="value" timezone="Australia/Sydney"/></td>
+        </tr>
+      </table>
+    `
+  })
+}

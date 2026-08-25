@@ -2,7 +2,7 @@
 import { Calendar } from '@/components/Calendar'
 import { Icon } from '@/components/Icon'
 import { Labelled } from '@/components/Labelled'
-import { Popper } from '@/components/Popper'
+import { Popover } from '@/components/Popover'
 import { dayjs } from '@/utils'
 import { computed, ref, watch } from 'vue'
 import type { DatePickerProps } from './types'
@@ -119,8 +119,9 @@ watch(
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
-    <Popper
+    <Popover
       placement="bottom-start"
       ref="popper"
       auto-hide
@@ -155,6 +156,7 @@ watch(
             :placeholder="placeholder"
             :disabled="disabled"
             :readonly="readonly"
+            :aria-required="required || undefined"
             @input="inputValue = ($event?.target as HTMLInputElement)?.value"
             @change="
               setFromInput(($event?.target as HTMLInputElement).value, hide)
@@ -178,12 +180,17 @@ watch(
             :disable-date="disableDate"
             :min-time="minTime"
             :max-time="maxTime"
+            :min-date="minDate"
+            :max-date="maxDate"
+            :week-starts-on="weekStartsOn"
+            :markers="markers"
+            :timezone="timezone"
             @update:modelValue="setFromCalendar($event, hide)"
             @close="hide"
           />
         </div>
       </template>
-    </Popper>
+    </Popover>
   </Labelled>
 </template>
 

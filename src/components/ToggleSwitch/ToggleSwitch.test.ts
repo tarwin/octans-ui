@@ -11,6 +11,11 @@ function iconStyle(wrapper: ReturnType<typeof mountSwitch>) {
   return wrapper.find('svg').attributes('style') ?? ''
 }
 
+/** The switch's own box, inside the `Labelled` root. */
+function switchBox(wrapper: ReturnType<typeof mountSwitch>) {
+  return wrapper.find('button').element.parentElement as HTMLElement
+}
+
 /** The track is the interactive element — a <button role="switch">. */
 function track(wrapper: ReturnType<typeof mountSwitch>) {
   return wrapper.find('button')
@@ -44,7 +49,9 @@ describe('ToggleSwitch', () => {
   it('does not emit while disabled', async () => {
     const wrapper = mountSwitch({ modelValue: false, disabled: true })
     expect(track(wrapper).attributes('disabled')).toBeDefined()
-    expect(wrapper.classes().join(' ')).toMatch(/disabled/)
+    // The dimming class sits on the switch box, not the root — the root is
+    // `Labelled`, which owns the label, error and help text around it.
+    expect(switchBox(wrapper).className).toMatch(/disabled/)
   })
 
   // Accessibility. The control is a real button so that focus, Space / Enter

@@ -139,12 +139,22 @@ export default defineComponent({
 
     const render = (extra?: Record<string, any>) => {
       const size = props.size ? normalizeSize(props.size) : undefined
+      const { class: extraClass, ...rest } = extra || {}
       return h(IconifyIcon, {
         icon: details.value.icon,
+        // Iconify's own `inline` hard-codes `vertical-align: -0.125em`. Left
+        // off so the alignment is OURS: `.icon` reads `--octans-icon-valign`,
+        // which an app sets once instead of per call site. The default is `0`
+        // — the alignment every existing Octans app was already drawn at, so
+        // the knob cannot silently shift every icon in a page.
         inline: false,
         width: size,
         height: size,
-        ...extra
+        ...rest,
+        // A CLASS, not an inline `style`: Iconify's component builds its own
+        // style object from `rotate`/`flip` and drops what was passed in — the
+        // same trap the `faded` overlay below already hit.
+        class: [style.icon, extraClass]
       })
     }
 
@@ -196,6 +206,10 @@ export default defineComponent({
 </script>
 
 <style lang="scss" module>
+.icon {
+  vertical-align: var(--octans-icon-valign, 0);
+}
+
 .wrapper {
   position: relative;
   display: inline-block;

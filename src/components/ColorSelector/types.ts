@@ -1,5 +1,5 @@
 import type { ColorPickerProps } from '@/components/ColorPicker'
-import type { PopperPlacementType } from '@/components/Popper'
+import type { PopoverPlacementType } from '@/components/Popover'
 import type { Gradient, GradientType } from '@/utils/gradient'
 
 /**
@@ -65,7 +65,7 @@ export interface ColorSelectorProps extends Omit<
   /**
    * Where the picker opens relative to the trigger.
    */
-  placement?: PopperPlacementType
+  placement?: PopoverPlacementType
   /**
    * What you click to open the picker. `swatch` strips the control back to the
    * colour itself; `input` lets the value be typed.

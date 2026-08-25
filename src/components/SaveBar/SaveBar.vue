@@ -122,7 +122,7 @@ function discardChanges() {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--ui-globalNav-height, 40px);
+  height: var(--octans-globalnav-height, 40px);
   background: var(--bgColor);
   color: var(--textColor);
 }
@@ -135,7 +135,7 @@ function discardChanges() {
   flex: 1;
   display: flex;
   align-items: center;
-  margin-left: var(--ui-sideNav-width, 0px);
+  margin-left: var(--octans-sidenav-width, 0px);
   max-width: var(--octans-page-current-width);
   padding: 0 var(--octans-page-padding-x);
 }

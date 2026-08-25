@@ -36,7 +36,7 @@ import { Navigation } from '@/components/Navigation'
 import { OtpInput } from '@/components/OtpInput'
 import { PageActions } from '@/components/PageActions'
 import { Pagination } from '@/components/Pagination'
-import { Popper } from '@/components/Popper'
+import { Popover } from '@/components/Popover'
 import { ProgressBar } from '@/components/ProgressBar'
 import { RadioButton } from '@/components/RadioButton'
 import { RangeSlider } from '@/components/RangeSlider'
@@ -164,7 +164,7 @@ export const AllComponents: Story = {
       OtpInput,
       PageActions,
       Pagination,
-      Popper,
+      Popover,
       ProgressBar,
       RadioButton,
       RangeSlider,
@@ -748,13 +748,13 @@ export const AllComponents: Story = {
               <p>Slides in from the edge of the screen.</p>
             </Sheet>
           </Tile>
-          <Tile name="Popper">
-            <Popper auto-hide>
+          <Tile name="Popover">
+            <Popover auto-hide>
               <template #trigger><Button dropdown>Toggle popper</Button></template>
               <div style="background: var(--octans-surface-raised); border: 1px solid var(--octans-border); border-radius: var(--octans-radius-box); box-shadow: var(--octans-shadow-md); padding: 12px">
                 Bring-your-own-content overlay.
               </div>
-            </Popper>
+            </Popover>
           </Tile>
           <Tile name="Tooltip">
             <div>

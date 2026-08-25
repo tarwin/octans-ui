@@ -83,6 +83,16 @@ export interface TimePickerProps {
    */
   minuteStepStrict?: boolean
   /**
+   * Marks the field as required: an asterisk after the label, and
+   * `aria-required` on the control.
+   *
+   * Announced, not enforced — it deliberately does NOT set the native
+   * `required` attribute, so the browser's own validation bubble stays out of
+   * the way of whatever the app does about errors. Use `error` to show a
+   * failure.
+   */
+  required?: boolean
+  /**
    * @deprecated No longer used. The picker is now an inline input and does not
    * open a popper. Kept for backwards compatibility.
    */

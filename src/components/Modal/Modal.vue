@@ -204,6 +204,7 @@ function updateBodyMaxHeight() {
                       :icon="action.icon"
                       :type="action.type"
                       :disabled="action.disabled"
+                      :loading="action.loading"
                       :url="action.url"
                       :external="action.external"
                       :tooltip="action.tooltip"
@@ -222,6 +223,7 @@ function updateBodyMaxHeight() {
                       :icon="action.icon"
                       :type="action.type"
                       :disabled="action.disabled"
+                      :loading="action.loading"
                       :url="action.url"
                       :external="action.external"
                       :tooltip="action.tooltip"
@@ -304,6 +306,17 @@ function updateBodyMaxHeight() {
 .body {
   padding: 20px;
   overflow: auto;
+
+  // A sectioned modal is padded by its SECTIONS, so the body stops padding —
+  // otherwise every band is inset twice and the dividers stop short of the
+  // dialog's edges, which is the whole point of a divider.
+  //
+  // `:has()` rather than a `sectioned` prop on Modal: the sections are already
+  // in the slot, so the markup already says it. A prop would be a second
+  // source of truth to keep in sync with the children.
+  &:has(> [data-modal-section]) {
+    padding: 0;
+  }
 
   .overflowVisible & {
     overflow: visible;

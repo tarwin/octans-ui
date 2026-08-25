@@ -1,6 +1,6 @@
 {
   "name": "@octans/ui",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A Vue 3 component library \u2014 accessible, themeable UI primitives and application shell components.",
   "keywords": [
     "vue",
@@ -39,6 +39,7 @@
       "default": "./dist/ui.js"
     },
     "./style.css": "./dist/style.css",
+    "./reset.css": "./dist/reset.css",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
   },

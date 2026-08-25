@@ -1,5 +1,34 @@
 export interface ToggleSwitchProps {
   /**
+   * The title of the field, drawn above the switch.
+   *
+   * A switch with any of `label` / `error` / `helpText` / `helpTextHtml` /
+   * `helpLink` set is wrapped in `Labelled`, like every other form control in
+   * the library. Without them the markup is the bare switch, as it always was.
+   */
+  label?: string | false | null
+  /**
+   * Displays the value as an error message below the switch.
+   */
+  error?: string | false | null
+  /**
+   * Displays the value as help text below the switch.
+   */
+  helpText?: string | false | null
+  /**
+   * Renders help text as raw HTML. Use with caution.
+   */
+  helpTextHtml?: string | false | null
+  /**
+   * Renders a help icon next to the label which links to an external page.
+   */
+  helpLink?: string | false | null
+  /**
+   * Marks the field as required: an asterisk after the label, and
+   * `aria-required` on the switch.
+   */
+  required?: boolean
+  /**
    * The bound value / v-model.
    */
   modelValue?: any

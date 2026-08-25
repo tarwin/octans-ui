@@ -1,4 +1,5 @@
 import type { Dayjs } from 'dayjs'
+import type { CalendarMarkerType } from '@/components/Calendar'
 
 export interface DatePickerProps {
   label?: string | false
@@ -55,4 +56,36 @@ export interface DatePickerProps {
    * If set to `false` will not automatically display the picker.
    */
   autoOpen?: boolean
+  /**
+   * The earliest selectable date, inclusive. Anything DayJS can parse.
+   */
+  minDate?: string | number | Date | Dayjs
+  /**
+   * The latest selectable date, inclusive.
+   */
+  maxDate?: string | number | Date | Dayjs
+  /**
+   * The day the week starts on, `0` Sunday through `6` Saturday. Comes from
+   * the active locale unless set — see `Calendar`.
+   */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  /**
+   * Days to mark with a dot in the calendar.
+   */
+  markers?: CalendarMarkerType[]
+  /**
+   * IANA time zone deciding what "today" is. Defaults to the library-wide
+   * display zone — see `setTimezone`. It does not convert `modelValue`.
+   */
+  timezone?: string
+  /**
+   * Marks the field as required: an asterisk after the label, and
+   * `aria-required` on the control.
+   *
+   * Announced, not enforced — it deliberately does NOT set the native
+   * `required` attribute, so the browser's own validation bubble stays out of
+   * the way of whatever the app does about errors. Use `error` to show a
+   * failure.
+   */
+  required?: boolean
 }

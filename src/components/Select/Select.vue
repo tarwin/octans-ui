@@ -107,6 +107,19 @@ export default defineComponent({
       type: [String, Boolean] as PropType<string | false | null>
     },
     /**
+     * Marks the field as required: an asterisk after the label, and
+     * `aria-required` on the control.
+     *
+     * Announced, not enforced — it deliberately does NOT set the native
+     * `required` attribute, so the browser's own validation bubble stays out
+     * of the way of whatever the app does about errors. Use `error` to show a
+     * failure.
+     */
+    required: {
+      type: Boolean,
+      default: false
+    },
+    /**
      * A array of values when using the `multiple` mode, otherwise a single
      * value of any type.
      */
@@ -1007,6 +1020,7 @@ function isSearchableKey(char: string) {
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :required="required"
   >
     <div
       class="UIElement"
@@ -1026,6 +1040,7 @@ function isSearchableKey(char: string) {
         ref="control"
         :class="$style.control"
         :tabindex="disabled ? -1 : 0"
+        :aria-required="required || undefined"
         @mousedown="onControlMousedown"
         @click="onControlClick"
         @blur="onBlur"

@@ -1,9 +1,13 @@
 <script lang="ts" setup>
 import { Button } from '@/components/Button'
-import { dayjs, pad } from '@/utils'
+import { dayjs, inTimezone, pad } from '@/utils'
 import type { Dayjs } from 'dayjs'
 import { computed, ref, watch } from 'vue'
-import type { CalendarCellType, CalendarProps } from './types'
+import type {
+  CalendarCellType,
+  CalendarMarkerType,
+  CalendarProps
+} from './types'
 import { $t } from '@/utils/translate'
 
 const props = withDefaults(defineProps<CalendarProps>(), {
@@ -18,7 +22,62 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const viewDate = ref<Dayjs>(dayjs())
+/** Today, in whatever zone the calendar has been told to think in. */
+const today = computed(() => inTimezone(undefined, props.timezone))
+
+/**
+ * The week start, as a day number. The LOCALE decides it — `setLocale('fr')`
+ * already moves the grid to Monday — and `weekStartsOn` is the per-instance
+ * override for a calendar that has to disagree with the viewer.
+ */
+const weekStart = computed(
+  () => props.weekStartsOn ?? dayjs.localeData().firstDayOfWeek()
+)
+
+const minDate = computed(() =>
+  props.minDate == null ? null : dayjs(props.minDate as never).startOf('day')
+)
+const maxDate = computed(() =>
+  props.maxDate == null ? null : dayjs(props.maxDate as never).endOf('day')
+)
+
+/**
+ * Markers bucketed by the day they fall on, so a cell is one lookup rather
+ * than a scan of the whole list per cell — 42 cells × every marker adds up on
+ * a calendar of bookings.
+ */
+const markersByDay = computed(() => {
+  const map = new Map<string, CalendarMarkerType[]>()
+  for (const marker of props.markers ?? []) {
+    const key = dayjs(marker.date as never).format('YYYY-MM-DD')
+    const list = map.get(key)
+    if (list) list.push(marker)
+    else map.set(key, [marker])
+  }
+  return map
+})
+
+/**
+ * `disableDate` and the range both apply — the range is the common case
+ * expressed directly, not a replacement for the predicate.
+ */
+function isOutOfRange(date: Dayjs, unit: 'day' | 'month' | 'year' = 'day') {
+  const min = minDate.value
+  const max = maxDate.value
+  // Compared at the cell's own granularity: a March cell is reachable if ANY
+  // of March is, otherwise a `minDate` mid-month would hide the month you
+  // have to click through to get to the days after it.
+  if (min && date.endOf(unit).isBefore(min)) return true
+  if (max && date.startOf(unit).isAfter(max)) return true
+  return false
+}
+
+function isDisabled(date: Dayjs, unit: 'day' | 'month' | 'year' = 'day') {
+  if (isOutOfRange(date, unit)) return true
+  return !!props.disableDate && props.disableDate(date)
+}
+
+const viewDate = ref<Dayjs>(today.value)
 const selectedDate = ref<Dayjs>()
 const view = ref(props.type)
 
@@ -40,10 +99,17 @@ const viewData = computed<{
 
 const dateData = computed(() => {
   const cells: CalendarCellType[] = []
-  let date = viewDate.value.clone().startOf('month').startOf('week')
-  const today = dayjs()
+  // Wound back to `weekStart` by hand rather than with `startOf('week')`,
+  // which reads the locale and so cannot honour the `weekStartsOn` override.
+  const monthStart = viewDate.value.clone().startOf('month')
+  let date = monthStart.subtract(
+    (monthStart.day() - weekStart.value + 7) % 7,
+    'day'
+  )
+  const now = today.value
   for (let i = 0; i < 42; i++) {
     const isSamePeriod = date.isSame(viewDate.value, 'month')
+    const markers = markersByDay.value.get(date.format('YYYY-MM-DD'))
     cells.push({
       value: date.format('YYYY-MM-DD'),
       label: date.format('D'),
@@ -51,15 +117,19 @@ const dateData = computed(() => {
         isSamePeriod &&
         selectedDate.value &&
         date.isSame(selectedDate.value, 'day'),
-      isCurrent: isSamePeriod && date.isSame(today, 'day'),
+      isCurrent: isSamePeriod && date.isSame(now, 'day'),
       isOtherPeriod: !isSamePeriod,
-      isDisabled: props.disableDate && props.disableDate(date)
+      isDisabled: isDisabled(date),
+      markers: isSamePeriod ? markers : undefined
     })
     date = date.add(1, 'day')
   }
+  // Built off a known Sunday rather than `dayjs().weekday(i)`, which is itself
+  // locale-relative and would fight the override.
+  const sunday = dayjs('2024-01-07')
   const headers: string[] = []
   for (let i = 0; i < 7; i++) {
-    headers.push(dayjs().weekday(i).format('ddd'))
+    headers.push(sunday.add((weekStart.value + i) % 7, 'day').format('ddd'))
   }
   return {
     cells,
@@ -79,7 +149,7 @@ const monthData = computed(() => {
       label: date.format('MMM'),
       isSelected:
         selectedDate.value && date.isSame(selectedDate.value, 'month'),
-      isDisabled: props.disableDate && props.disableDate(date)
+      isDisabled: isDisabled(date, 'month')
     })
   }
   return {
@@ -99,7 +169,7 @@ const yearData = computed(() => {
       value: date.format('YYYY-MM-DD'),
       label: date.format('YYYY'),
       isSelected: selectedDate.value && date.isSame(selectedDate.value, 'year'),
-      isDisabled: props.disableDate && props.disableDate(date)
+      isDisabled: isDisabled(date, 'year')
     })
   }
   const startDate = startYear + '-01-01'
@@ -242,6 +312,18 @@ function updateValue(date: Dayjs) {
   emit('update:modelValue', value.format(props.modelFormat))
 }
 
+/**
+ * The markers' tooltips, joined. `aria-hidden` on the dots plus a real `title`
+ * here means the day is announced once, with its reason, rather than as a
+ * number followed by three anonymous decorations.
+ */
+function markerTitle(cell: CalendarCellType) {
+  const tooltips = (cell.markers ?? [])
+    .map((marker) => marker.tooltip)
+    .filter(Boolean)
+  return tooltips.length ? tooltips.join(', ') : undefined
+}
+
 function close() {
   /**
    * Emitted when the user clicks the "close" button near the time picker.
@@ -255,7 +337,7 @@ watch(
     // TODO: not sure if this line is right...
     let date = dayjs(value).isValid() && dayjs(value, props.modelFormat, true)
     if (!date || !date.isValid()) {
-      date = dayjs().startOf('day')
+      date = today.value.startOf('day')
     }
     const clamped = clampDate(date)
     viewDate.value = clamped.clone()
@@ -332,9 +414,22 @@ watch(
           cell.isOtherPeriod && $style.Cell__otherPeriod,
           cell.isDisabled && $style.Cell__disabled
         ]"
+        :title="markerTitle(cell)"
         @click="select(cell)"
       >
         {{ cell.label }}
+        <span
+          v-if="cell.markers?.length"
+          :class="$style.Markers"
+          aria-hidden="true"
+        >
+          <span
+            v-for="(marker, index) in cell.markers.slice(0, 3)"
+            :key="index"
+            :class="$style.Marker"
+            :style="{ background: marker.color || 'var(--octans-primary)' }"
+          ></span>
+        </span>
       </div>
     </div>
     <div
@@ -388,6 +483,27 @@ $hoverBgColor: var(--octans-surface-hover);
 
 .Calendar {
   width: 280px;
+}
+
+// Dots sit UNDER the number, inside the cell's own box, so a marked day is
+// the same size as an unmarked one and the grid stays a grid.
+.Markers {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  // Capped at three in the template — past that they stop being countable and
+  // start being a smear.
+  pointer-events: none;
+}
+
+.Marker {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--octans-radius-full);
 }
 
 .Nav {

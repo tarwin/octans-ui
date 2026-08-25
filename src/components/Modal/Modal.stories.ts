@@ -7,6 +7,7 @@ import { h, ref } from 'vue'
 import { toast } from '@/components/ToastManager'
 import {
   Modal,
+  ModalSection,
   alertModal,
   confirmModal,
   genericModal,
@@ -743,6 +744,52 @@ export const StackedModals: Story = {
         <Button @click="open">Open a modal</Button>
         <Button @click="openThree">Open three at once</Button>
       </Stack>
+    `
+  })
+}
+
+/**
+  `ModalSection` divides a modal's body into bands separated by a rule — the
+  same relationship `CardSection` has with `Card`, and deliberately the same
+  shape, so knowing one is knowing the other.
+
+  Modal's body is a plain slot, so sections are simply the children you put in
+  it. Nothing on `Modal` has to be told they are there: the body's own padding
+  steps aside when it sees one, so a sectioned modal is not inset twice and the
+  rules reach the dialog's edges.
+
+  `subdued` tints a band that should read as secondary, and `:padded="false"`
+  lets content run to the section's edges — a table, a full-bleed image.
+ */
+export const Sections: Story = {
+  render: () => ({
+    components: { Button, Modal, ModalSection, Stack },
+    setup() {
+      const visible = ref(false)
+      return { visible }
+    },
+    template: `
+      <div>
+        <Button @click="visible = true">Open a sectioned modal</Button>
+        <Modal
+          :visible="visible"
+          title="Notification settings"
+          :primary-action="{ label: 'Save', onAction: () => (visible = false) }"
+          :secondary-actions="[{ label: 'Cancel', onAction: () => (visible = false) }]"
+          @close="visible = false"
+        >
+          <ModalSection title="Account">
+            Where notifications are sent, and who they are addressed to.
+          </ModalSection>
+          <ModalSection title="Delivery">
+            How often they go out, and by which channel.
+          </ModalSection>
+          <ModalSection subdued>
+            A subdued band, for something that supports the sections above
+            rather than standing beside them.
+          </ModalSection>
+        </Modal>
+      </div>
     `
   })
 }

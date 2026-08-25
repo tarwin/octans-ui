@@ -4,6 +4,80 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.2.0
+
+Added
+
+- `@octans/ui/reset.css` — an opt-in page reset for apps where Octans owns the
+  whole page. See the README.
+- `ModalSection`, for dividing a modal's body into bands. `Modal` needed no new
+  API: the body is a plain slot, so sections are just its children.
+- `KeyboardKey`, a styled `<kbd>` for documenting shortcuts.
+- `SkeletonPage`, the page-shaped placeholder for before a page's data
+  arrives. It renders a real `Page`, so passing the same `size` means the
+  content does not move sideways when it swaps in.
+- `Page` is slotted throughout — `header`, `title`, `subtitle`, `help`,
+  `breadcrumbs`, `secondaryActions`, `collapsedActions` and `loader`, each
+  falling back to the markup it replaced. `title` and `subtitle` are scoped so
+  a slot that only decorates the prop can still read it.
+- `Page`'s measurements are tokens: `--octans-page-margin-top`,
+  `-breadcrumb-gap`, `-title-gap`, `-content-gap`, `-title-size`,
+  `-title-weight`, `-subtitle-size`, `-badge-gap`, `-action-gap` and
+  `-loader-offset`.
+- `Button` gained `loading` and `pressed`. `loading` keeps the button's width
+  and its focus — it announces `aria-busy` rather than setting `disabled`.
+  `ActionType` gained `loading` to match, so `PageActions`, `Modal`, `Sheet`,
+  `Page` and `Card` actions all take it.
+- `FileInput` gained `dropOnPage`, making the whole window a drop target.
+- `Calendar` and `DatePicker` gained `minDate`, `maxDate`, `weekStartsOn`,
+  `markers` and `timezone`.
+- `setTimezone` sets a library-wide display time zone — the companion to
+  `setLocale`. `Formatter` gained a `timezone` prop, and its date output
+  follows the display zone rather than always the viewer's clock.
+- `ToggleSwitch` gained `label`, `error`, `helpText`, `helpTextHtml`,
+  `helpLink` and `required`, wrapping `Labelled` like every other control.
+- `--octans-icon-valign` sets every icon's vertical alignment in one place.
+  Defaults to `0`, which is what icons have always been drawn at.
+
+Changed
+
+- **`Popper` is now `Popover`.** It wraps reka-ui's Popover primitives and
+  never had anything to do with popper.js. `Popper`, `PopperProps` and
+  `PopperPlacementType` remain as deprecated aliases.
+- The `.UIElement` baseline reads `--octans-font` rather than `--ui-font`, so
+  the token the docs point at is the one that moves the font. `--octans-font`
+  still resolves through `--ui-font`, so overriding either works.
+- `--ui-sideNav-width`, `--ui-sideNav-maxWidth` and `--ui-globalNav-height` are
+  now `--octans-sidenav-width`, `--octans-sidenav-max-width` and
+  `--octans-globalnav-height`. The old names still work.
+- `AppFrame` sets its own `height: 100dvh`. It had none, so the host page had
+  to know to supply one — the stories all did, quietly.
+- `Labelled`'s `required` draws an asterisk after the label instead of bolding
+  the whole field, and is no longer deprecated. `TextField`, `Select`,
+  `DatePicker`, `TimePicker`, `RangeSlider` and `FileInput` now forward it,
+  along with `aria-required` on the control.
+- `ToggleSwitch`'s root is now `Labelled`, so `class` and `style` land there.
+
+Fixed
+
+- `SkeletonCard` passed `{ props: { lines } }` to `SkeletonBodyText`, which is
+  Vue 2 syntax — the prop never arrived (it only looked right because 3 is also
+  the default) and the object came out as a DOM attribute.
+
+Upgrading
+
+Everything above is additive or aliased, with two exceptions that can move an
+app that changed no code. Both are small, and both are worth a look before you
+take the version:
+
+- **`ToggleSwitch` renders a wrapper.** A `class` or `style` you pass now lands
+  on the `Labelled` root rather than on the switch box, which is what makes it
+  behave like every other form control. If you position a switch with your own
+  class, check it — the class is one element further out than it was.
+- **`AppFrame` sets `height: 100dvh`.** It declared no height before and took
+  one from the host page. An AppFrame that is deliberately not full-page needs
+  an inline `style` to override it; a class will not win the specificity tie.
+
 ## 1.1.0
 
 Fixed

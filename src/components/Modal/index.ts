@@ -1,6 +1,7 @@
 import { nextTick, type Component } from 'vue'
 import Modal from './Modal.vue'
 import ModalHost from './ModalHost.vue'
+import ModalSection from './ModalSection.vue'
 import AlertModal from './api/AlertModal.vue'
 import ConfirmModal from './api/ConfirmModal.vue'
 import GenericModal from './api/GenericModal.vue'
@@ -32,7 +33,7 @@ export const promptModal = createApi<Api.PromptModalOptions, string>(
   PromptModal
 )
 
-export { Modal, ModalHost }
+export { Modal, ModalHost, ModalSection }
 export type { ModalProps } from './types'
 // The four `Api.*ModalProps`, `BaseProps` and `ModalEmits` stay internal —
 // they describe the api components in `./api`, which are rendered by the host

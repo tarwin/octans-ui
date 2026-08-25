@@ -20,12 +20,15 @@
 @include meta.load-css('global.tooltip.scss');
 
 .UIElement {
-  // Reads the variable rather than repeating the stack, so `--ui-font` is a
-  // real knob. It was the literal before, which meant setting `--ui-font`
-  // moved only the handful of places that referenced it and left everything
-  // inheriting from here on the built-in stack. Same default either way; the
-  // difference only shows once a consumer overrides it.
-  font-family: var(--ui-font);
+  // `--octans-font`, NOT `--ui-font`. This is the baseline nearly all text
+  // gets its font from, and `--octans-font` is the name a consumer reaches
+  // for — it is what the token registry publishes and what every other token
+  // is spelled like. Pointing the baseline at `--ui-font` meant setting
+  // `--octans-font` moved the eight component stylesheets that read it
+  // directly and left everything else here, which is a partial, confusing
+  // font change. `--octans-font` still resolves through `--ui-font`, so
+  // overriding either one works.
+  font-family: var(--octans-font);
   color: var(--octans-text);
   -webkit-font-smoothing: antialiased;
   font-size: 14px;
@@ -67,12 +70,64 @@
   --octans-page-padding-y: 20px;
   /** What `--octans-page-padding-x` becomes inside an AppFrame. */
   --octans-appframe-page-padding-x: 40px;
+
+  // The rest of `Page`'s measurements. These were literals in the component's
+  // own stylesheet, which meant an application that wanted a tighter page or a
+  // smaller page title had to reach in with `:deep()` and fight specificity.
+  //
+  // NOT here: the width at which the header collapses its actions into a
+  // menu. That is a `@container` query, and a container query condition
+  // cannot read a custom property — the browser resolves it before custom
+  // properties exist. It stays a literal in Page.vue.
+
+  /** The space above the page, between it and whatever chrome is above. */
+  --octans-page-margin-top: 20px;
+  /** Between the breadcrumb row and the header. `0` — they sit together. */
+  --octans-page-breadcrumb-gap: 0px;
+  /** Between the title block and the secondary actions under it. */
+  --octans-page-title-gap: 8px;
+  /** Between the header and the page's content. */
+  --octans-page-content-gap: 20px;
+  --octans-page-title-size: 30px;
+  --octans-page-title-weight: normal;
+  --octans-page-subtitle-size: 14px;
+  /** Between the title and the badge that follows it. */
+  --octans-page-badge-gap: 16px;
+  /** Between two secondary actions in the header. */
+  --octans-page-action-gap: 4px;
+  /** How far down the viewport `<Page loading>` hangs its spinner. */
+  --octans-page-loader-offset: 100px;
   /** The gap between `Layout` sections. */
   --octans-layout-gutter: 20px;
   /** The default `Stack` gap — the `spacing` presets override per-instance. */
   --octans-stack-gap: 16px;
 
+  // --- app chrome -----------------------------------------------------------
+  // The `--ui-*` spellings are the historical names, kept as the source so a
+  // consumer who already overrides one keeps working. Everything in the
+  // library READS the `--octans-*` name; nothing should read `--ui-*` again.
+  //
+  // NOTE the aliasing only flows for values declared HERE. `--octans-sidenav-
+  // width` and `--octans-globalnav-height` are written at runtime by AppFrame
+  // and GlobalNav, which set both spellings themselves — a `var()` alias
+  // substitutes at the point it is DECLARED, so an alias on `:root` cannot
+  // see a value a descendant sets later.
   --ui-sideNav-maxWidth: 240px;
+  --octans-sidenav-max-width: var(--ui-sideNav-maxWidth);
   --ui-sideNav-width: 0px;
+  --octans-sidenav-width: var(--ui-sideNav-width);
   --ui-globalNav-height: 40px;
+  --octans-globalnav-height: var(--ui-globalNav-height);
+
+  // --- icons ----------------------------------------------------------------
+  /**
+   * The vertical alignment applied to every `Icon`. `0` is the baseline the
+   * library has always drawn at, and it is the default so that setting this
+   * cannot silently move every icon in an existing app.
+   *
+   * An app that sets icons inline with running text usually wants
+   * `-0.125em` — the value Iconify's own `inline` mode applies. Set it once
+   * here rather than per call site.
+   */
+  --octans-icon-valign: 0;
 }
