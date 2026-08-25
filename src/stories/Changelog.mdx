@@ -4,6 +4,71 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.3.0
+
+Added
+
+- `--octans-surface-neutral`, the background for a neutral chip sitting on a
+  surface — `Badge` and `Tag` read it. Deliberately not `--octans-surface-sunken`:
+  a well only has to read as _recessed_, whereas a chip has to read as an object
+  of its own against the card it sits on, which at neutral-50 on white it did
+  not. It is a registered token, so the Theme Builder offers it and a saved
+  theme carries it.
+- `Tabs` draws its selected mark from four theme tokens:
+  `--octans-tabs-indicator-height`, `--octans-tabs-indicator-radius`,
+  `--octans-tabs-indicator-offset` and `--octans-tabs-label-gap`. The app-wide
+  choice of indicator belongs to the theme rather than to every call site; the
+  `indicator` prop is a named shortcut that overrides them on one instance.
+- `ActionList` items gained `content`, a render function that replaces the row's
+  body for items that are more than text. `label` is still required — it stays
+  the item's accessible, readable-back name.
+
+Changed
+
+- **`Tabs`' `theme` prop is gone, replaced by `indicator`.** `blue` and `purple`
+  became `underline` and `bar`. Neither old value ever set a colour: both drew
+  from the theme's own tokens, and the only difference between them was the
+  shape of the mark, so the name described nothing it did. No alias is kept.
+- The selected tab's mark is `--octans-primary`, not `--octans-focus-ring`. A
+  selection is not a focus ring, and a theme that tuned its focus colour for
+  visibility was moving tab selection with it.
+- The mark is its own element rather than a `border-bottom` on the label, so it
+  can be rounded and can sit off the label's box — which is what lets `bar` drop
+  onto the container's divider. Default geometry is unchanged: same 52px tab,
+  same 13px gap, same 3px rule.
+- The `Select` caret is 20px, and rotates to point up while the menu is open. A
+  rotation rather than a second icon: it costs nothing to fetch or bundle.
+
+Fixed
+
+- A tab that overflowed into the `…` menu lost its badge and its custom `tab`
+  slot content — the menu row was the bare label. Both paths now render from the
+  same function, so they cannot drift apart again. This is the moment a count
+  usually matters most.
+- `Select` ignored every fallthrough attribute. It set `inheritAttrs: false` and
+  then never placed `$attrs`, so a `style`, `id`, `data-*` or native listener
+  passed to a `Select` went nowhere at all. They now land on the field wrapper,
+  so `style="flex: 1"` sizes the label and help text along with the control.
+- Press-and-drag on a searchable `Select`: releasing the mouse over the search
+  box closed the menu the drag had just opened. The release landed on neither
+  the control nor an option, and the trailing click reached the document
+  handler. It now keeps the menu open and hands the caret to the search, the way
+  releasing over an option picks that option.
+
+Upgrading
+
+- **`<Tabs theme="…">` no longer does anything.** Replace `theme="purple"` with
+  `indicator="bar"`; `theme="blue"` was the default underline, so it can simply
+  be dropped. Better still, drop the prop entirely and set the
+  `--octans-tabs-*` tokens in your theme, which is where an app-wide choice
+  belongs.
+- **Badge and Tag are a step darker.** If you were compensating for the old,
+  too-light chip with your own CSS, remove it — or set
+  `--octans-surface-neutral` to whatever you were compensating _to_, and nothing
+  else moves.
+- **A `style` you pass to `Select` now applies.** It was silently dropped
+  before, so a stylesheet written around that will now be competing with it.
+
 ## 1.2.0
 
 Added

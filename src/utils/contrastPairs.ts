@@ -51,6 +51,12 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     min: 4.5
   },
   {
+    fg: 'text',
+    bg: 'surface-neutral',
+    label: 'body text on a neutral chip',
+    min: 4.5
+  },
+  {
     fg: 'text-subdued',
     bg: 'surface',
     label: 'subdued text on surface',

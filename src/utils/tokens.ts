@@ -9,7 +9,7 @@
  * and this registry drift apart, so it cannot rot silently.
  */
 
-export type TokenKind = 'color' | 'shadow' | 'radius' | 'font'
+export type TokenKind = 'color' | 'shadow' | 'radius' | 'font' | 'length'
 
 export interface TokenDefinition {
   /** Token name without the `--octans-` prefix. */
@@ -162,6 +162,7 @@ export const TOKEN_GROUPS: TokenGroup[] = [
       color('surface', 'Cards, panels, the default background'),
       derived('surface-raised', 'Menus, popovers, modals — above the surface'),
       color('surface-sunken', 'Table headers, wells, code blocks'),
+      color('surface-neutral', 'Neutral chips on a surface — Badge, Tag'),
       color('surface-app', 'The application background behind cards'),
       derived('surface-hover', 'Hover wash over a surface'),
       derived(
@@ -314,6 +315,38 @@ export const TOKEN_GROUPS: TokenGroup[] = [
         name: 'radius-full',
         kind: 'radius',
         description: 'Pills and round buttons'
+      }
+    ]
+  },
+  {
+    title: 'Tabs',
+    tier: 'semantic',
+    description:
+      'The mark under the selected tab — the one part of a component that ' +
+      'lives in the theme, so a product can carry the choice rather than set ' +
+      'it in code. The defaults draw an underline; a rounded bar sitting on ' +
+      'the divider is the same mark with different numbers (5px / rounded / ' +
+      'offset -2px / gap 8px).',
+    tokens: [
+      {
+        name: 'tabs-indicator-height',
+        kind: 'length',
+        description: 'Thickness of the mark'
+      },
+      {
+        name: 'tabs-indicator-radius',
+        kind: 'radius',
+        description: 'Rounding of the mark — 0 is a square rule'
+      },
+      {
+        name: 'tabs-indicator-offset',
+        kind: 'length',
+        description: 'Vertical shift; negative drops it onto the divider'
+      },
+      {
+        name: 'tabs-label-gap',
+        kind: 'length',
+        description: 'Space between the label and the mark'
       }
     ]
   },

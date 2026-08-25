@@ -4,7 +4,8 @@ import {
   h,
   useCssModule,
   type PropType,
-  type VNode
+  type VNode,
+  type VNodeChild
 } from 'vue'
 import { Icon } from '../Icon'
 import { TextStyle } from '../TextStyle'
@@ -17,6 +18,12 @@ export default defineComponent({
     },
     helpText: {
       type: String
+    },
+    /**
+     * Renders the row's body in place of `label` and `helpText`.
+     */
+    content: {
+      type: Function as PropType<() => VNodeChild>
     },
     disabled: {
       type: Boolean,
@@ -64,7 +71,9 @@ export default defineComponent({
           )
         }
 
-        if (props.helpText) {
+        if (props.content) {
+          children.push(h('div', [props.content()]))
+        } else if (props.helpText) {
           children.push(
             h('div', [
               h('div', props.label),

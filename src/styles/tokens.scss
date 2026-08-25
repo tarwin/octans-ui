@@ -128,6 +128,9 @@
   --octans-surface: var(--octans-neutral-900);
   --octans-surface-raised: var(--octans-neutral-800);
   --octans-surface-sunken: var(--octans-neutral-950);
+  // Lighter than the surface, not darker — a chip lifts off a dark card
+  // the same way it settles onto a light one.
+  --octans-surface-neutral: var(--octans-neutral-700);
   --octans-surface-app: var(--octans-neutral-950);
   --octans-surface-hover: var(--octans-neutral-800);
   --octans-surface-disabled: var(--octans-neutral-800);
@@ -321,6 +324,23 @@
    */
   --octans-state-mix: #000000;
 
+  // --- semantic: Tabs indicator --------------------------------------------
+  /**
+   * The mark under the selected tab. Component-scoped rather than global,
+   * because it is the one piece of Tabs a theme is expected to restyle: these
+   * live here, not in `Tabs.vue`, so the Theme Builder can offer them and a
+   * saved theme can carry them.
+   *
+   * The defaults draw the underline. A bar sitting on the divider is the same
+   * mark with different numbers — see the recipe in Tokens.mdx.
+   */
+  --octans-tabs-indicator-height: 3px;
+  --octans-tabs-indicator-radius: 0;
+  /** Vertical shift. Negative drops the mark onto the container's divider. */
+  --octans-tabs-indicator-offset: 0px;
+  /** Space between the label and the mark. */
+  --octans-tabs-label-gap: 16px;
+
   // --- semantic: surfaces --------------------------------------------------
   /** The page/card background. */
   --octans-surface: var(--octans-neutral-0);
@@ -328,6 +348,13 @@
   --octans-surface-raised: var(--octans-surface);
   /** Recessed — table headers, wells, code blocks. */
   --octans-surface-sunken: var(--octans-neutral-50);
+  /**
+   * A neutral chip on top of a surface — Badge, Tag. Deliberately not
+   * `--octans-surface-sunken`: a well only has to read as *recessed*, whereas
+   * a badge has to read as an object of its own against the card it sits on,
+   * which at neutral-50 on white it does not.
+   */
+  --octans-surface-neutral: var(--octans-neutral-200);
   /** The application background behind cards. */
   --octans-surface-app: var(--octans-neutral-100);
   /** Hover wash over a surface. Derived: a breath of text over surface. */

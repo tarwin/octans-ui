@@ -47,7 +47,28 @@ export const VModel: Story = {
   })
 }
 
-export const Purple: Story = {
+/**
+ * `indicator="bar"` marks the selected tab with a rounded bar sitting on the
+ * divider, instead of the default rule under the label. Both draw from
+ * `--octans-primary` — this is a shape choice, not a colour one.
+ *
+ * The prop is a shortcut. The mark is drawn from four tokens, so the app-wide
+ * choice belongs in the theme — set them in the Theme Builder, or in your own
+ * stylesheet, and every `Tabs` follows without a line of JavaScript:
+ *
+ * ```css
+ * :root {
+ *   --octans-tabs-indicator-height: 5px;
+ *   --octans-tabs-indicator-radius: var(--octans-radius-field);
+ *   --octans-tabs-indicator-offset: -2px;
+ *   --octans-tabs-label-gap: 8px;
+ * }
+ * ```
+ *
+ * A `Tabs` that sets `indicator` itself still wins, in both directions:
+ * `indicator="underline"` opts back out of a themed bar.
+ */
+export const BarIndicator: Story = {
   render: () => ({
     components: { Tabs, Card, CardSection },
     setup() {
@@ -73,7 +94,7 @@ export const Purple: Story = {
       <Tabs
         :tabs="tabs"
         v-model:selected="selected"
-        theme="purple"
+        indicator="bar"
       />
       <CardSection>Do something with selected tab: {{ selected }}</CardSection>
     </Card>
@@ -142,7 +163,7 @@ export const WithBadges: Story = {
       <Card>
         <Tabs
           :tabs="tabs"
-          v-model="selected"
+          v-model:selected="selected"
         />
       </Card>
     `

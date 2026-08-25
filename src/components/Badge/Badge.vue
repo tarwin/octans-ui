@@ -136,7 +136,7 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   padding: 0 8px;
-  background-color: var(--octans-surface-sunken);
+  background-color: var(--octans-surface-neutral);
   border: 2px solid var(--octans-surface);
   font-size: 13px;
   line-height: 20px;
@@ -187,7 +187,7 @@ export default defineComponent({
   }
 }
 .statusNew {
-  background-color: var(--octans-surface-sunken);
+  background-color: var(--octans-surface-neutral);
   color: var(--octans-text);
   font-weight: 500;
   border: none;

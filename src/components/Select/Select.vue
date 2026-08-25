@@ -682,6 +682,17 @@ export default defineComponent({
       this.endDragTracking()
       if (!wasArmed || !this.isOpen) return
 
+      // Releasing over the search box is not a pick — it is the start of
+      // typing. Keep the menu open and hand the caret over, the way releasing
+      // over an option picks that option. Without this the release lands on
+      // neither the control nor the dropdown, so the trailing click reaches
+      // the document handler and shuts the menu the drag just opened.
+      if (this.searchAtPoint(event.clientX, event.clientY)) {
+        this.ignoreNextDocClick = true
+        ;(this.$refs.searchInput as HTMLInputElement | undefined)?.focus()
+        return
+      }
+
       const option = this.optionAtPoint(event.clientX, event.clientY)
       if (!option || option.disabled) return
 
@@ -699,6 +710,15 @@ export default defineComponent({
       document.removeEventListener('mouseup', this.onDragEnd)
       this.dragOrigin = null
       this.isDragArmed = false
+    },
+
+    /**
+     * Whether the release landed on the search row — the input, its magnifier
+     * or the padding around them, all of which read as "I am going to type".
+     */
+    searchAtPoint(x: number, y: number) {
+      const el = document.elementFromPoint?.(x, y)
+      return !!(el && (el as HTMLElement).closest('[data-select-search]'))
     },
 
     /** The option under the pointer, if the release landed on one. */
@@ -1014,7 +1034,14 @@ function isSearchableKey(char: string) {
 </script>
 
 <template>
+  <!--
+    `inheritAttrs` is off, so fallthrough attrs have to be placed by hand —
+    without this line a `style`, `id` or `data-*` passed to a Select went
+    nowhere at all. They land on the field wrapper rather than the control,
+    so `style="flex: 1"` sizes the label and help text with it.
+  -->
   <Labelled
+    v-bind="$attrs"
     :label="label"
     :error="error"
     :help-text="helpText"
@@ -1069,6 +1096,7 @@ function isSearchableKey(char: string) {
           v-if="!loading"
           :class="$style.caret"
           icon="mdi:menu-down"
+          size="20px"
         />
       </div>
       <div
@@ -1109,6 +1137,7 @@ function isSearchableKey(char: string) {
           <div
             v-if="showSearch"
             :class="$style.Dropdown_search"
+            data-select-search
           >
             <Icon
               :class="$style.Dropdown_searchIcon"
@@ -1322,9 +1351,20 @@ $errorColor: var(--octans-error);
 
 .caret {
   color: var(--octans-text-subdued);
+  // Points up while the menu is down. A rotation rather than a second icon
+  // (`mdi:menu-up`): it costs nothing to fetch or bundle, and it can move.
+  transition: transform 120ms ease;
+
+  .isOpen & {
+    transform: rotate(180deg);
+  }
 
   .isDisabled & {
     color: var(--octans-text-disabled);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 

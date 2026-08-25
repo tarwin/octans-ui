@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { type VNodeChild } from 'vue'
 import { type PopoverPlacementType } from '../Popover'
 import { type ActionTooltipPositionType } from '../types'
 import Popover from '../Popover/Popover.vue'
@@ -38,6 +39,13 @@ export interface ActionListItemType {
    * Secondary text shown beneath the label.
    */
   helpText?: string
+  /**
+   * Renders the row's body in place of `label` (and `helpText`), for items
+   * that are more than text — a label with a Badge beside it, say. `label` is
+   * still required: it stays the item's accessible, sortable name, and is what
+   * a consumer reading the items back gets.
+   */
+  content?: () => VNodeChild
   disabled?: boolean
   url?: string
   external?: boolean

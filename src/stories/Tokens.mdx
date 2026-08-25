@@ -196,6 +196,7 @@ layer pick it up (or let `createTheme` generate the ramp from one seed):
 | `--octans-surface`          | Cards, panels, the default background       |
 | `--octans-surface-raised`   | Menus, popovers, modals — above the surface |
 | `--octans-surface-sunken`   | Table headers, wells, code blocks           |
+| `--octans-surface-neutral`  | Neutral chips on a surface — Badge, Tag     |
 | `--octans-surface-app`      | The application background behind cards     |
 | `--octans-surface-hover`    | Hover wash over a surface                   |
 | `--octans-surface-selected` | Selected rows and items                     |
@@ -260,6 +261,35 @@ rather than the theme, since they are geometry, not colour):
 querying its own width rather than the viewport — so pages inside an `AppFrame`
 collapse when they are actually cramped. `Layout` wraps by flex-basis, which
 responds to the space it is in by nature.
+
+### Tabs indicator
+
+The mark under the selected tab. Unlike the layout dimensions above, these are
+part of the theme — they appear in the Theme Builder and a saved theme carries
+them, because which mark a product uses is a brand decision rather than a
+measurement:
+
+| Token                            | Default | Use                                                |
+| -------------------------------- | ------- | -------------------------------------------------- |
+| `--octans-tabs-indicator-height` | 3px     | Thickness of the mark                              |
+| `--octans-tabs-indicator-radius` | 0       | Rounding — `0` is a square rule                    |
+| `--octans-tabs-indicator-offset` | 0px     | Vertical shift; negative drops it onto the divider |
+| `--octans-tabs-label-gap`        | 16px    | Space between the label and the mark               |
+
+The defaults draw an underline. For a rounded bar sitting on the divider:
+
+```css
+:root {
+  --octans-tabs-indicator-height: 5px;
+  --octans-tabs-indicator-radius: var(--octans-radius-field);
+  --octans-tabs-indicator-offset: -2px;
+  --octans-tabs-label-gap: 8px;
+}
+```
+
+`<Tabs indicator="bar">` and `indicator="underline"` are shortcuts for those
+two sets, scoped to one instance. Setting the prop wins over the theme in both
+directions, so a single `Tabs` can opt back out of a themed bar.
 
 ## Writing themeable component styles
 

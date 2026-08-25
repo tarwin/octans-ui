@@ -113,6 +113,27 @@ describe('Select — press and drag', () => {
     wrapper.unmount()
   })
 
+  it('releasing over the search box types rather than picks', async () => {
+    // Dragging past the list onto the search field means "I am going to type",
+    // not "choose whatever is here". The release lands on neither the control
+    // nor an option, so without this the trailing click reached the document
+    // handler and shut the menu the drag had just opened.
+    const wrapper = mountSelect({ searchable: true })
+    await press(wrapper)
+    const search = wrapper.find('[data-select-search]')
+    expect(search.exists()).toBe(true)
+
+    await moveTo(ORIGIN.x, ORIGIN.y + 20)
+    await release(ORIGIN.x, ORIGIN.y + 20, search.element)
+
+    expect(selection(wrapper)).toBeUndefined()
+    expect(dropdown(wrapper).exists()).toBe(true)
+    expect(document.activeElement).toBe(
+      wrapper.find('[data-select-search] input').element
+    )
+    wrapper.unmount()
+  })
+
   describe('a click is not a drag', () => {
     it('leaves the menu open when the pointer has not moved', async () => {
       const wrapper = mountSelect()

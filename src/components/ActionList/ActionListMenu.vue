@@ -79,6 +79,7 @@ function handleClose() {
               :tooltip="item.tooltip"
               :tooltip-position="item.tooltipPosition"
               :helpText="item.helpText"
+              :content="item.content"
               dropdown
             />
           </ActionList>
@@ -93,6 +94,7 @@ function handleClose() {
           :tooltip="item.tooltip"
           :tooltip-position="item.tooltipPosition"
           :helpText="item.helpText"
+          :content="item.content"
           :url="item.url"
           :external="item.external"
           @click="handleClick(item)"

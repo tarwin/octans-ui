@@ -51,7 +51,7 @@ $size: 28px;
   align-items: center;
   min-height: $size;
   padding-left: 8px;
-  background: var(--octans-surface-sunken);
+  background: var(--octans-surface-neutral);
   border-radius: $radius;
   color: var(--octans-text);
   cursor: default;
