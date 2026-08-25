@@ -66,7 +66,7 @@
     "build-lib": "vp build --config vite.config-lib.ts && vp build --config vite.config-umd.ts",
     "verify": "pnpm run lint && pnpm run type-check && pnpm run test && pnpm run check:contrast && pnpm run check:icons && pnpm run build-lib",
     "prepublishOnly": "pnpm run verify",
-    "tag": "package-version-git-tag --push"
+    "tag": "node scripts/tag-release.mjs"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
@@ -104,7 +104,6 @@
     "eslint-plugin-vue": "^10.10.0",
     "jsdom": "^30.0.1",
     "npm-run-all2": "^9.0.3",
-    "package-version-git-tag": "^3.0.0",
     "prettier": "^3.9.6",
     "sass": "^1.102.0",
     "storybook": "^10.5.7",
