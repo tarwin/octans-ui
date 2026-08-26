@@ -129,12 +129,25 @@ function resolveMix(map, space, argString, seen) {
   if (args.length !== 2) return null
 
   const parts = args.map((arg) => {
-    const m = arg.match(/^(.+?)(?:\s+([\d.]+)%)?$/)
+    // The percentage may itself be a token — the Badge and Banner surfaces are
+    // derived from a strength dial, so their mix reads
+    // `var(--octans-info) var(--octans-badge-surface-strength)`.
+    const m = arg.match(
+      /^(.+?)(?:\s+(?:([\d.]+)%|var\(--octans-([a-z0-9-]+)\)))?$/
+    )
     if (!m) return null
+    let pct = m[2] === undefined ? null : Number(m[2])
+    if (m[3] !== undefined) {
+      const literal = (map[m[3]] || '').trim().match(/^([\d.]+)%$/)
+      // A percentage token that does not resolve is a broken derivation, not a
+      // colour the audit should quietly skip.
+      if (!literal) return null
+      pct = Number(literal[1])
+    }
     // Each colour resolves with its own `seen` copy — two arguments may
     // legitimately traverse the same token without being circular.
     const rgb = resolveValue(map, m[1], new Set(seen))
-    return rgb ? { rgb, pct: m[2] === undefined ? null : Number(m[2]) } : null
+    return rgb ? { rgb, pct } : null
   })
   if (parts.some((p) => !p)) return null
 

@@ -160,6 +160,58 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     label: 'label on tertiary fill',
     min: 4.5
   },
+  // Badge and Banner tint themselves from their own dials, so the shared
+  // `<role>-surface` pairs above no longer speak for them. A badge runs the
+  // hotter dial and is the one at risk: it is the pairing that fails first if
+  // the strength is pushed up without moving the ink.
+  {
+    fg: 'text-info',
+    bg: 'badge-info-surface',
+    label: 'info badge label',
+    min: 4.5
+  },
+  {
+    fg: 'text-success',
+    bg: 'badge-success-surface',
+    label: 'success badge label',
+    min: 4.5
+  },
+  {
+    fg: 'text-warning',
+    bg: 'badge-warning-surface',
+    label: 'warning badge label',
+    min: 4.5
+  },
+  {
+    fg: 'text-error',
+    bg: 'badge-error-surface',
+    label: 'error badge label',
+    min: 4.5
+  },
+  {
+    fg: 'text-info',
+    bg: 'banner-info-surface',
+    label: 'info banner text',
+    min: 4.5
+  },
+  {
+    fg: 'text-success',
+    bg: 'banner-success-surface',
+    label: 'success banner text',
+    min: 4.5
+  },
+  {
+    fg: 'text-warning',
+    bg: 'banner-warning-surface',
+    label: 'warning banner text',
+    min: 4.5
+  },
+  {
+    fg: 'text-error',
+    bg: 'banner-error-surface',
+    label: 'error banner text',
+    min: 4.5
+  },
   { fg: 'text-on-info', bg: 'info', label: 'label on info fill', min: 4.5 },
   {
     fg: 'text-on-success',

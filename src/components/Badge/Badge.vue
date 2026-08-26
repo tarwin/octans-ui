@@ -155,36 +155,38 @@ export default defineComponent({
   border-radius: 50%;
 }
 
-.statusInfo {
-  background-color: var(--octans-info-surface);
-  color: var(--octans-text-info);
+/**
+ * A status badge, drawn from its own surface token rather than the shared
+ * `--octans-<role>-surface` — that one is read by seven components, so tuning
+ * a badge through it moved Banner and five form controls with it.
+ *
+ * `--octans-badge-ink` is normally UNSET, and an unset custom property makes
+ * `var()` take its fallback: each status wears its own `--octans-text-<role>`.
+ * A theme that sets it to black or white takes every status at once, for a
+ * flatter chip where the background carries the meaning.
+ */
+@mixin badgeStatus($surface, $ink) {
+  background-color: var(#{$surface});
+  color: var(--octans-badge-ink, var(#{$ink}));
   .pip {
-    color: var(--octans-text-info);
+    color: var(--octans-badge-ink, var(#{$ink}));
   }
 }
+
+.statusInfo {
+  @include badgeStatus(--octans-badge-info-surface, --octans-text-info);
+}
 .statusSuccess {
-  background-color: var(--octans-success-surface);
-  color: var(--octans-text-success);
-  .pip {
-    color: var(--octans-text-success);
-  }
+  @include badgeStatus(--octans-badge-success-surface, --octans-text-success);
 }
 // `attention` is the pre-rename word for the amber state — kept as an alias so
 // old call sites keep meaning what they meant.
 .statusWarning,
 .statusAttention {
-  background-color: var(--octans-warning-surface);
-  color: var(--octans-text-warning);
-  .pip {
-    color: var(--octans-text-warning);
-  }
+  @include badgeStatus(--octans-badge-warning-surface, --octans-text-warning);
 }
 .statusError {
-  background-color: var(--octans-error-surface);
-  color: var(--octans-text-error);
-  .pip {
-    color: var(--octans-text-error);
-  }
+  @include badgeStatus(--octans-badge-error-surface, --octans-text-error);
 }
 .statusNew {
   background-color: var(--octans-surface-neutral);

@@ -137,10 +137,22 @@ export default defineComponent({
 // Then functionality
 //
 
+/**
+ * `$surface` is the banner's OWN tint, not the shared
+ * `--octans-<role>-surface`: seven components read that token, so tuning a
+ * banner through it moved Badge and five form controls too. The two now run
+ * off separate strength dials, because a panel wants far less tint than a
+ * chip does.
+ *
+ * The border stays keyed to `$fontColor` — the role's own text colour — rather
+ * than to `--octans-banner-ink`. Overriding the ink to black or white is a
+ * choice about the LABEL; letting it drag the border along would erase the
+ * one remaining edge that says which status this is.
+ */
 @mixin bannerColor($fontColor, $surface) {
   background-color: var(#{$surface});
   border: 1px solid color-mix(in srgb, var(#{$fontColor}) 25%, transparent);
-  color: var(#{$fontColor});
+  color: var(--octans-banner-ink, var(#{$fontColor}));
 }
 
 .status-default {
@@ -148,22 +160,22 @@ export default defineComponent({
 }
 
 .status-info {
-  @include bannerColor(--octans-text-info, --octans-info-surface);
+  @include bannerColor(--octans-text-info, --octans-banner-info-surface);
 }
 
 .status-success {
-  @include bannerColor(--octans-text-success, --octans-success-surface);
+  @include bannerColor(--octans-text-success, --octans-banner-success-surface);
 }
 
 // `attention` is the pre-rename word for the amber state — kept as an alias so
 // old call sites keep meaning what they meant.
 .status-warning,
 .status-attention {
-  @include bannerColor(--octans-text-warning, --octans-warning-surface);
+  @include bannerColor(--octans-text-warning, --octans-banner-warning-surface);
 }
 
 .status-error {
-  @include bannerColor(--octans-text-error, --octans-error-surface);
+  @include bannerColor(--octans-text-error, --octans-banner-error-surface);
 }
 
 .status-new {

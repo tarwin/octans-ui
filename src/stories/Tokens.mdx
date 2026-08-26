@@ -291,6 +291,48 @@ The defaults draw an underline. For a rounded bar sitting on the divider:
 two sets, scoped to one instance. Setting the prop wins over the theme in both
 directions, so a single `Tabs` can opt back out of a themed bar.
 
+### Badge and Banner saturation
+
+How strongly a status Badge or Banner tints itself with its role colour. One
+dial each, because the two want different answers: a badge is a small object
+that has to hold its own against the card it sits on, and a banner is a large
+panel where the same strength stops being a background and starts being a
+colour field.
+
+| Token                              | Light | Dark | Use                                     |
+| ---------------------------------- | ----- | ---- | --------------------------------------- |
+| `--octans-badge-surface-strength`  | 18%   | 40%  | Role colour mixed into a status Badge   |
+| `--octans-banner-surface-strength` | 10%   | 18%  | Role colour mixed into a status Banner  |
+| `--octans-badge-ink`               | unset | —    | Forces one label colour on every Badge  |
+| `--octans-banner-ink`              | unset | —    | Forces one label colour on every Banner |
+
+Both dials feed eight derived surfaces —
+`--octans-badge-{info,success,warning,error}-surface` and the banner set. Move
+the dial and all four follow; set one of those directly only when a single
+status should sit apart from the rest.
+
+Why these are not the shared `--octans-<role>-surface`: that token is read by
+**seven** components, so nudging it to make a badge read as an object also
+moved Banner, Checkbox, FileInput, ProgressBar, RadioButton and Select.
+
+**The ink is the ceiling on the dial.** Left unset, each status wears its own
+`--octans-text-<role>` — green on green — and 18% is as far as light mode goes
+before the warning and error badges drop to 4.47:1. Give the label a flat
+colour instead and the same badge carries 50% at better than 5.5:1:
+
+```css
+:root {
+  /* A chip: the background carries the meaning, the label is just legible. */
+  --octans-badge-ink: var(--octans-text);
+  --octans-badge-surface-strength: 44%;
+}
+```
+
+`unset` is spelled `initial` in the stylesheet. On a custom property that is
+the guaranteed-invalid value, which is what makes `var(--octans-badge-ink, …)`
+fall through to the role's own text token — the only way to spell "no
+override" in a token that still has to be declared.
+
 ## Writing themeable component styles
 
 Inside a component, use the semantic tokens directly:

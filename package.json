@@ -1,6 +1,6 @@
 {
   "name": "@octans/ui",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "A Vue 3 component library \u2014 accessible, themeable UI primitives and application shell components.",
   "keywords": [
     "vue",
@@ -62,9 +62,11 @@
     "format:check": "prettier --check src/ .storybook/ scripts/ *.ts *.js",
     "icons:bundle": "node scripts/build-icon-bundle.mjs",
     "check:icons": "node scripts/check-icon-bundle.mjs",
+    "tokens:usage": "node scripts/build-token-usage.mjs",
+    "check:tokens": "node scripts/build-token-usage.mjs --check",
     "build": "pnpm run build-lib",
     "build-lib": "vp build --config vite.config-lib.ts && vp build --config vite.config-umd.ts",
-    "verify": "pnpm run lint && pnpm run type-check && pnpm run test && pnpm run check:contrast && pnpm run check:icons && pnpm run build-lib",
+    "verify": "pnpm run lint && pnpm run type-check && pnpm run test && pnpm run check:contrast && pnpm run check:icons && pnpm run check:tokens && pnpm run build-lib",
     "prepublishOnly": "pnpm run verify",
     "tag": "package-version-git-tag --push"
   },

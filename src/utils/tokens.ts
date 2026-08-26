@@ -9,7 +9,8 @@
  * and this registry drift apart, so it cannot rot silently.
  */
 
-export type TokenKind = 'color' | 'shadow' | 'radius' | 'font' | 'length'
+export type TokenKind =
+  'color' | 'shadow' | 'radius' | 'font' | 'length' | 'percent'
 
 export interface TokenDefinition {
   /** Token name without the `--octans-` prefix. */
@@ -315,6 +316,84 @@ export const TOKEN_GROUPS: TokenGroup[] = [
         name: 'radius-full',
         kind: 'radius',
         description: 'Pills and round buttons'
+      }
+    ]
+  },
+  {
+    title: 'Badge & Banner',
+    tier: 'semantic',
+    description:
+      'How strongly a status Badge or Banner tints itself with its role ' +
+      'colour. Two dials rather than one, because a badge is a small object ' +
+      'that has to hold its own against the card it sits on and a banner is a ' +
+      'large panel where the same strength stops being a background. The four ' +
+      'surfaces under each are DERIVED from that component\u2019s dial \u2014 move the ' +
+      'dial and all four follow; set one directly only to make a single ' +
+      'status sit apart.',
+    tokens: [
+      {
+        name: 'badge-surface-strength',
+        kind: 'percent',
+        description: 'How much role colour a status Badge mixes in'
+      },
+      {
+        name: 'banner-surface-strength',
+        kind: 'percent',
+        description: 'How much role colour a status Banner mixes in'
+      },
+      {
+        name: 'badge-ink',
+        kind: 'color',
+        description:
+          'Forces one label colour on every status Badge. Unset = each ' +
+          'status keeps its own text colour'
+      },
+      {
+        name: 'banner-ink',
+        kind: 'color',
+        description:
+          'Forces one label colour on every status Banner. Unset = each ' +
+          'status keeps its own text colour'
+      },
+      {
+        name: 'badge-info-surface',
+        kind: 'color',
+        description: 'Derived from the Badge dial'
+      },
+      {
+        name: 'badge-success-surface',
+        kind: 'color',
+        description: 'Derived from the Badge dial'
+      },
+      {
+        name: 'badge-warning-surface',
+        kind: 'color',
+        description: 'Derived from the Badge dial'
+      },
+      {
+        name: 'badge-error-surface',
+        kind: 'color',
+        description: 'Derived from the Badge dial'
+      },
+      {
+        name: 'banner-info-surface',
+        kind: 'color',
+        description: 'Derived from the Banner dial'
+      },
+      {
+        name: 'banner-success-surface',
+        kind: 'color',
+        description: 'Derived from the Banner dial'
+      },
+      {
+        name: 'banner-warning-surface',
+        kind: 'color',
+        description: 'Derived from the Banner dial'
+      },
+      {
+        name: 'banner-error-surface',
+        kind: 'color',
+        description: 'Derived from the Banner dial'
       }
     ]
   },

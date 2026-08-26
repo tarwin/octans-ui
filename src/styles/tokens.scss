@@ -111,6 +111,63 @@
     var(--octans-scrollbar-thumb) 82%,
     var(--octans-text)
   );
+
+  // --- derived: Badge and Banner surfaces ----------------------------------
+  /**
+   * Badge and Banner tint their own background from the role colour instead of
+   * sharing `--octans-<role>-surface`, which seven components read: nudging
+   * that token to make a badge read as an object also moved Banner, Checkbox,
+   * FileInput, ProgressBar, RadioButton and Select.
+   *
+   * Each is derived from its component's strength dial, so the normal way to
+   * retune them is to move the dial and let all four follow. Setting one of
+   * these directly is the escape hatch for a single status that wants to sit
+   * apart — an error badge that should shout louder than the rest.
+   *
+   * Written out longhand rather than looped: the token registry and the
+   * contrast audit both parse this file with a regex, and neither can see
+   * through Sass interpolation.
+   */
+  --octans-badge-info-surface: color-mix(
+    in oklab,
+    var(--octans-info) var(--octans-badge-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-badge-success-surface: color-mix(
+    in oklab,
+    var(--octans-success) var(--octans-badge-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-badge-warning-surface: color-mix(
+    in oklab,
+    var(--octans-warning) var(--octans-badge-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-badge-error-surface: color-mix(
+    in oklab,
+    var(--octans-error) var(--octans-badge-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-banner-info-surface: color-mix(
+    in oklab,
+    var(--octans-info) var(--octans-banner-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-banner-success-surface: color-mix(
+    in oklab,
+    var(--octans-success) var(--octans-banner-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-banner-warning-surface: color-mix(
+    in oklab,
+    var(--octans-warning) var(--octans-banner-surface-strength),
+    var(--octans-surface)
+  );
+  --octans-banner-error-surface: color-mix(
+    in oklab,
+    var(--octans-error) var(--octans-banner-surface-strength),
+    var(--octans-surface)
+  );
 }
 
 // Dark overrides. Only the SEMANTIC tier is redefined — the primitive ramps are
@@ -209,6 +266,13 @@
     var(--octans-error-700) 35%,
     var(--octans-neutral-900)
   );
+
+  // Both dials run hotter in dark. The role colours do not lighten for dark —
+  // they carry white text in both themes — so the same percentage of a fill
+  // that is already dark, mixed into a dark surface, barely separates from it.
+  // Tinting is simply worth less contrast here than it is against white.
+  --octans-badge-surface-strength: 40%;
+  --octans-banner-surface-strength: 18%;
 
   --octans-scrollbar-thumb: var(--octans-neutral-600);
 
@@ -485,6 +549,40 @@
   --octans-text-on-error: #ffffff;
   --octans-error-surface: var(--octans-error-50);
   --octans-text-error: var(--octans-error-600);
+
+  // --- semantic: Badge and Banner ------------------------------------------
+  /**
+   * How much of the role colour is mixed into the surface behind a status
+   * Badge or Banner.
+   *
+   * One dial each, because the two want different answers. A badge is a small
+   * object that has to hold its own against the card it sits on, so it wants a
+   * real tint; a banner is a large panel, where the same strength stops being
+   * a background and starts being a colour field. Sharing one number meant
+   * whichever you tuned, the other went wrong.
+   */
+  // 18%, not more: this is the most tint the role-coloured label can sit on
+  // and still clear 4.5:1 — at 20% the warning and error badges fall to 4.47.
+  // It is still close to double the old `<role>-surface`, which worked out at
+  // roughly 10%. To go further, set `--octans-badge-ink` to a flat dark or
+  // light colour and the dial will carry 50% at better than 5.5:1.
+  --octans-badge-surface-strength: 18%;
+  --octans-banner-surface-strength: 10%;
+  /**
+   * Forces one label colour on every status Badge / Banner.
+   *
+   * Unset — the default — leaves each status wearing its own
+   * `--octans-text-<role>`, so a success badge is green on green. Set it to a
+   * colour (black, white, `var(--octans-text)`) for a flatter chip, where the
+   * background carries the meaning and the label just has to be read.
+   *
+   * `initial` is not a colour: on a custom property it is the guaranteed-
+   * invalid value, which is what makes `var(--octans-badge-ink, …)` fall
+   * through to the role's own text token. It is the only way to spell
+   * "no override" in a token that must still be declared here.
+   */
+  --octans-badge-ink: initial;
+  --octans-banner-ink: initial;
 
   // --- semantic: misc ------------------------------------------------------
   // The toggle knob stays light in BOTH themes — a switch reads as a pale knob
