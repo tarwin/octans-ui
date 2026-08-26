@@ -22,10 +22,15 @@ const global = read('src/styles/global.scss')
  */
 describe('reset.css', () => {
   it('matches the `.UIElement` font size', () => {
+    // `:where(.UIElement)`, not `.UIElement` — see the zero-specificity test
+    // below for why the baseline is wrapped.
     const baseline = global.match(
-      /\.UIElement\s*\{[\s\S]*?font-size:\s*(\S+?);/
+      /:where\(\.UIElement\)\s*\{[\s\S]*?font-size:\s*(\S+?);/
     )
-    expect(baseline, 'no font-size found on .UIElement').toBeTruthy()
+    expect(
+      baseline,
+      'no font-size found on the .UIElement baseline'
+    ).toBeTruthy()
     expect(reset).toContain(`font-size: ${baseline![1]};`)
   })
 
@@ -39,6 +44,28 @@ describe('reset.css', () => {
     for (const [, name, rest] of vars) {
       expect(rest.trim().startsWith(','), `${name} has no fallback`).toBe(true)
     }
+  })
+
+  it('keeps the inherited-text baseline at zero specificity', () => {
+    // Every component root carries `.UIElement` AND its own module class, so a
+    // bare `.UIElement { color }` ties with the module at (0,1,0) and the tie
+    // falls to source order. Order is not something a component can rely on:
+    // code-split chunk CSS loads BEFORE the entry CSS holding this rule, so
+    // the baseline lands last and outranks every one-class component rule.
+    //
+    // That shipped. On the built docs site `.UIElement` was sheet 48 of 50 and
+    // `<Button type="primary">` drew `--octans-text` on its dark fill at about
+    // 1.9:1. `:where()` contributes no specificity, so there is no tie to lose.
+    for (const prop of ['color', 'font-family', 'font-size', 'line-height']) {
+      const inWhere = new RegExp(
+        `:where\\(\\.UIElement\\)\\s*\\{[^}]*?\\b${prop}:`
+      )
+      expect(global, `${prop} must stay inside :where(.UIElement)`).toMatch(
+        inWhere
+      )
+    }
+    // The structural block may keep its specificity — nothing competes with it.
+    expect(global).not.toMatch(/(^|[^(])\.UIElement\s*\{[^}]*?\bcolor:/m)
   })
 
   it('states the four things the user agent gets wrong for a full-page app', () => {

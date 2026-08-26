@@ -19,7 +19,31 @@
 @include meta.load-css('tokens.scss');
 @include meta.load-css('global.tooltip.scss');
 
-.UIElement {
+/**
+ * The text baseline, at ZERO specificity.
+ *
+ * `:where()` rather than a bare `.UIElement`, because every component root
+ * carries this class AND its own module class, and a module setting `color` on
+ * its root ties with `.UIElement` at (0,1,0). A tie is broken by source order,
+ * and source order is not something a component can rely on: when the CSS is
+ * code-split, chunk stylesheets load BEFORE the entry stylesheet that holds
+ * this rule, so the baseline lands last and silently outranks every one-class
+ * component rule. That is not hypothetical — it shipped. On the built docs
+ * site `.UIElement` was sheet 48 of 50, so `<Button type="primary">` drew
+ * `--octans-text` on its dark fill instead of the white `--_role-on-fill`, at
+ * about 1.9:1. The buttons that still looked right were exactly the ones whose
+ * rule happened to carry two classes (`.hasColor.typeOutline`) and so won the
+ * specificity comparison outright.
+ *
+ * At zero specificity there is no tie to lose: anything that matches wins,
+ * whenever it loads. Note this stays immune to a host page's `body { color }`,
+ * since an INHERITED value loses to any matched declaration, `:where()`
+ * included — only a rule matching the root element itself can take it.
+ *
+ * Keep declarations that components legitimately override here. Structural
+ * resets stay in the `.UIElement` block below, where nothing competes.
+ */
+:where(.UIElement) {
   // `--octans-font`, NOT `--ui-font`. This is the baseline nearly all text
   // gets its font from, and `--octans-font` is the name a consumer reaches
   // for — it is what the token registry publishes and what every other token
@@ -35,7 +59,9 @@
   line-height: normal;
   text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+}
 
+.UIElement {
   &,
   &:before,
   &:after,

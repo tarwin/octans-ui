@@ -4,6 +4,39 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.3.1
+
+Fixed
+
+- The `.UIElement` text baseline is wrapped in `:where()`, so it no longer
+  competes with the components standing on it. Every component root carries
+  `.UIElement` _and_ its own CSS-module class, so a module setting `color` on
+  its root tied with the baseline at (0,1,0) — and a tie falls to source order,
+  which a component cannot rely on. Where the CSS is code-split, chunk
+  stylesheets load _before_ the entry stylesheet holding the baseline, so it
+  landed last and quietly outranked every one-class component rule.
+
+  That is not hypothetical: it is what the built docs site was doing.
+  `.UIElement` was sheet 48 of 50, so `<Button type="primary">` drew
+  `--octans-text` on its dark fill at about 1.9:1 instead of the white
+  `--_role-on-fill`. The buttons that still looked right were exactly the ones
+  whose rule happened to carry two classes — `.hasColor.typeOutline` and
+  friends — and so won the comparison outright rather than by luck.
+
+  `:where()` contributes no specificity, so there is no tie left to lose:
+  anything that matches beats the baseline, whenever it loads. It stays immune
+  to a host page's `body { color }`, since an inherited value loses to any
+  matched declaration.
+
+Upgrading
+
+- **Nothing changes for an app using the packaged CSS.** In `dist/style.css`
+  the baseline already happened to come first, so component rules were already
+  winning; this makes that guaranteed rather than a property of bundle order.
+  The one thing that does change: a rule of your own that matches an Octans
+  root element directly — `.my-card { color: … }` on a component — now beats
+  the baseline where before it was a coin toss decided by load order.
+
 ## 1.3.0
 
 Added
