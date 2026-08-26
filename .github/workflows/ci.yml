@@ -49,6 +49,11 @@ jobs:
       - name: Icon bundle check
         run: pnpm run check:icons
 
+      # Fails if src/utils/tokenUsage.ts has drifted from what the component
+      # sources actually name. Generated, so nothing else would catch it.
+      - name: Token usage check
+        run: pnpm run check:tokens
+
       - name: Build library
         run: pnpm run build-lib
 
