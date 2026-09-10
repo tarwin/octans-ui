@@ -124,48 +124,54 @@
    * these directly is the escape hatch for a single status that wants to sit
    * apart — an error badge that should shout louder than the rest.
    *
+   * They mix from `--octans-tint-<role>` rather than the role's fill. For
+   * three of the four those are the same colour; `warning`'s fill is
+   * deliberately the deep 700 step so white LABEL text clears 4.5:1 on it, and
+   * a 700 brown diluted into a surface gives beige rather than the amber a
+   * warning panel wants. See the tint block in `:root`.
+   *
    * Written out longhand rather than looped: the token registry and the
    * contrast audit both parse this file with a regex, and neither can see
    * through Sass interpolation.
    */
   --octans-badge-info-surface: color-mix(
     in oklab,
-    var(--octans-info) var(--octans-badge-surface-strength),
+    var(--octans-tint-info) var(--octans-badge-surface-strength),
     var(--octans-surface)
   );
   --octans-badge-success-surface: color-mix(
     in oklab,
-    var(--octans-success) var(--octans-badge-surface-strength),
+    var(--octans-tint-success) var(--octans-badge-surface-strength),
     var(--octans-surface)
   );
   --octans-badge-warning-surface: color-mix(
     in oklab,
-    var(--octans-warning) var(--octans-badge-surface-strength),
+    var(--octans-tint-warning) var(--octans-badge-surface-strength),
     var(--octans-surface)
   );
   --octans-badge-error-surface: color-mix(
     in oklab,
-    var(--octans-error) var(--octans-badge-surface-strength),
+    var(--octans-tint-error) var(--octans-badge-surface-strength),
     var(--octans-surface)
   );
   --octans-banner-info-surface: color-mix(
     in oklab,
-    var(--octans-info) var(--octans-banner-surface-strength),
+    var(--octans-tint-info) var(--octans-banner-surface-strength),
     var(--octans-surface)
   );
   --octans-banner-success-surface: color-mix(
     in oklab,
-    var(--octans-success) var(--octans-banner-surface-strength),
+    var(--octans-tint-success) var(--octans-banner-surface-strength),
     var(--octans-surface)
   );
   --octans-banner-warning-surface: color-mix(
     in oklab,
-    var(--octans-warning) var(--octans-banner-surface-strength),
+    var(--octans-tint-warning) var(--octans-banner-surface-strength),
     var(--octans-surface)
   );
   --octans-banner-error-surface: color-mix(
     in oklab,
-    var(--octans-error) var(--octans-banner-surface-strength),
+    var(--octans-tint-error) var(--octans-banner-surface-strength),
     var(--octans-surface)
   );
 }
@@ -492,6 +498,14 @@
     var(--octans-neutral-400)
   );
   --octans-border-input: var(--octans-neutral-400);
+  /**
+   * The rule under a DataTable or ResourceList header. `--octans-border`, the
+   * same weight as the rules between rows: `border-strong` sits at 1.85:1
+   * against a white surface where a row rule sits at 1.25, so the header was
+   * reading as a heavy bar rather than a divider. A theme that wants the
+   * heavier rule back sets this to `var(--octans-border-strong)`.
+   */
+  --octans-table-header-border: var(--octans-border);
   --octans-border-error: var(--octans-error-500);
   --octans-border-focus: var(--octans-primary-500);
 
@@ -550,6 +564,25 @@
   --octans-error-surface: var(--octans-error-50);
   --octans-text-error: var(--octans-error-600);
 
+  // --- semantic: status tints ----------------------------------------------
+  /**
+   * What a status TINT mixes from — the wash behind a Badge or a Banner.
+   *
+   * Three of the four are just the role's fill, so re-seeding a role still
+   * moves its badges and banners. `warning` is the exception, and the reason
+   * this indirection exists at all: its fill is the deep 700 step, chosen so
+   * white label text clears 4.5:1 on it, and diluting that brown into a
+   * surface gives a muddy beige instead of amber. The tint takes the hue's
+   * true mid step instead — the same reasoning as `--octans-rating`.
+   *
+   * A theme that wants its banners keyed to the fill again sets
+   * `--octans-tint-warning: var(--octans-warning);` and nothing else.
+   */
+  --octans-tint-info: var(--octans-info);
+  --octans-tint-success: var(--octans-success);
+  --octans-tint-warning: var(--octans-warning-500);
+  --octans-tint-error: var(--octans-error);
+
   // --- semantic: Badge and Banner ------------------------------------------
   /**
    * How much of the role colour is mixed into the surface behind a status
@@ -567,7 +600,11 @@
   // roughly 10%. To go further, set `--octans-badge-ink` to a flat dark or
   // light colour and the dial will carry 50% at better than 5.5:1.
   --octans-badge-surface-strength: 18%;
-  --octans-banner-surface-strength: 10%;
+  // 14%, up from 10%: at 10% a banner read as a slightly off-white panel
+  // rather than a coloured one. The label no longer has to survive the tint —
+  // banner BODY text is `--octans-text` — so the ceiling here is the title,
+  // which still clears 4.5:1 in its role colour.
+  --octans-banner-surface-strength: 14%;
   /**
    * Forces one label colour on every status Badge / Banner.
    *
@@ -641,6 +678,58 @@
   // oval ends. A huge length clamps to half the shorter side instead: true
   // stadium ends on pills, and still a perfect circle on square elements.
   --octans-radius-full: 9999px;
+
+  // --- sheets ---------------------------------------------------------------
+  /**
+   * The default `Sheet` size along the axis it slides on — its width for a
+   * left/right sheet, its height for a top/bottom one. The `size` prop still
+   * wins per instance; this is what an app sets once so every sheet in it is
+   * the same width.
+   *
+   * Read by `Sheet` from the computed style rather than resolved in CSS: the
+   * slide is a `transform` computed in JavaScript, so the number has to reach
+   * the component as a number. It is re-read each time a sheet opens, so a
+   * theme applied at runtime takes effect on the next open.
+   */
+  --octans-sheet-size: 700px;
+  /**
+   * The gutter `<Sheet padded>` puts around its content, inside the scrolling
+   * area. Padding only — it neither caps nor centres the content.
+   */
+  --octans-sheet-padding: 30px;
+  /** Default open (slide-in) duration. `0ms` opens with no animation. */
+  --octans-sheet-in-duration: 700ms;
+  /** Default close (slide-out) duration. `0ms` closes with no animation. */
+  --octans-sheet-out-duration: 700ms;
+  /**
+   * How a `Sheet`'s `footer` slot lays its row out — any `justify-content`
+   * value. `space-between` pushes a cancel and a commit to opposite ends.
+   */
+  --octans-sheet-footer-align: flex-end;
+  /** Space between items in a `Sheet` footer. */
+  --octans-sheet-footer-gap: 8px;
+
+  // --- icons ----------------------------------------------------------------
+  /**
+   * The vertical alignment applied to every `Icon`. `0` is the baseline the
+   * library has always drawn at, and it is the default so that setting this
+   * cannot silently move every icon in an existing app.
+   *
+   * An app that sets icons inline with running text usually wants
+   * `-0.125em` — the value Iconify's own `inline` mode applies. Set it once
+   * here rather than per call site.
+   */
+  --octans-icon-valign: 0;
+  /**
+   * The size every `Icon` without an explicit `size` prop is drawn at.
+   *
+   * `1em` — the icon follows the surrounding font size, which is what lets a
+   * component scale its own icons by setting `font-size` on the container, and
+   * is the size the library has always drawn at. An app that wants roomier
+   * icons throughout sets this once (`1.25em` reads well against 14px text)
+   * rather than passing `size` at every call site.
+   */
+  --octans-icon-size: 1em;
 
   // --- typography ----------------------------------------------------------
   --octans-font: var(--ui-font);

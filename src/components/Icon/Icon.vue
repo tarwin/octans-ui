@@ -154,7 +154,12 @@ export default defineComponent({
         // A CLASS, not an inline `style`: Iconify's component builds its own
         // style object from `rotate`/`flip` and drops what was passed in — the
         // same trap the `faded` overlay below already hit.
-        class: [style.icon, extraClass]
+        //
+        // `.themeSized` only when there is no `size` prop. Iconify writes its
+        // own `width`/`height` ATTRIBUTES on the svg, and a stylesheet beats a
+        // presentation attribute — so applying it unconditionally would make
+        // the token silently outrank every explicit size the caller passed.
+        class: [style.icon, !props.size && style.themeSized, extraClass]
       })
     }
 
@@ -208,6 +213,20 @@ export default defineComponent({
 <style lang="scss" module>
 .icon {
   vertical-align: var(--octans-icon-valign, 0);
+}
+
+/**
+ * The size an icon takes when the caller did not ask for one.
+ *
+ * `1em` is what Iconify itself defaults to, so the shipped behaviour is
+ * unchanged — icons scale with the surrounding font size, which is how several
+ * components in this library size their own icons (see `Sheet`'s close button,
+ * which sets `font-size` rather than passing `size`). The token exists so an
+ * app that wants roomier icons everywhere can say so once.
+ */
+.themeSized {
+  width: var(--octans-icon-size, 1em);
+  height: var(--octans-icon-size, 1em);
 }
 
 .wrapper {

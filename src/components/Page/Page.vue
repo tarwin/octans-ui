@@ -447,16 +447,25 @@ watch(
 // the actions too late. 960px is where the old 1000px viewport breakpoint fired
 // for a standalone page, so the bare-page behaviour is unchanged.
 @container octans-page (max-width: 960px) {
-  .Page_headerPrimaryActionWrapper {
-    width: 100%;
-  }
-
   .PageActions {
     display: none;
   }
 
   .PageActions_collapsed {
     display: block;
+  }
+}
+
+// Full width — and so, because the header wraps, a row of its own.
+//
+// This used to fire at 960px alongside the collapse above, which is nowhere
+// near narrow enough to need it: a 900px-wide page has ample room for a title
+// and a button on one line, and dropping the button below the title made the
+// header look broken long before anything was actually cramped. 600px is
+// where a title of any length and a primary action genuinely stop fitting.
+@container octans-page (max-width: 600px) {
+  .Page_headerPrimaryActionWrapper {
+    width: 100%;
   }
 }
 </style>

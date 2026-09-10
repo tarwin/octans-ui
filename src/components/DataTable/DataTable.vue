@@ -695,7 +695,7 @@ $padding: 16px;
 
   th {
     font-weight: 500;
-    border-bottom: 1px solid var(--octans-border-strong);
+    border-bottom: 1px solid var(--octans-table-header-border);
   }
 
   tbody tr:not(:last-child) td {
@@ -704,13 +704,6 @@ $padding: 16px;
 
   tbody tr:hover td {
     background: $rowHoverColor;
-  }
-
-  [data-card-section] > & {
-    margin: -16px;
-  }
-  [data-card-section] > [data-card-header] + & {
-    margin-top: 0;
   }
 }
 
@@ -730,8 +723,6 @@ $padding: 16px;
   border-spacing: 0px;
   table-layout: fixed;
   background: var(--octans-surface);
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
   border-collapse: separate;
 }
 
@@ -742,11 +733,6 @@ $padding: 16px;
       line-height: normal;
     }
   }
-}
-
-.Row:last-child td {
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
 }
 
 .Cell {

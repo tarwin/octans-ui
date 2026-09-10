@@ -39,10 +39,7 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'badge-success-surface',
     'badge-surface-strength',
     'badge-warning-surface',
-    'error',
-    'info',
     'radius-full',
-    'success',
     'surface',
     'surface-neutral',
     'text',
@@ -51,7 +48,10 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'text-info',
     'text-success',
     'text-warning',
-    'warning'
+    'tint-error',
+    'tint-info',
+    'tint-success',
+    'tint-warning'
   ],
   Banner: [
     'banner-error-surface',
@@ -60,11 +60,8 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'banner-success-surface',
     'banner-surface-strength',
     'banner-warning-surface',
-    'error',
     'font',
-    'info',
     'radius-box',
-    'success',
     'surface',
     'surface-sunken',
     'text',
@@ -72,7 +69,10 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'text-info',
     'text-success',
     'text-warning',
-    'warning'
+    'tint-error',
+    'tint-info',
+    'tint-success',
+    'tint-warning'
   ],
   Button: [
     'border-input',
@@ -174,7 +174,6 @@ export const TOKEN_USAGE: Record<string, string[]> = {
   ],
   DataTable: [
     'border',
-    'border-strong',
     'focus-ring',
     'primary',
     'radius-box',
@@ -184,6 +183,7 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'surface-app',
     'surface-hover',
     'surface-sunken',
+    'table-header-border',
     'text',
     'text-subdued'
   ],
@@ -251,6 +251,8 @@ export const TOKEN_USAGE: Record<string, string[]> = {
   ],
   Icon: [
     'error',
+    'icon-size',
+    'icon-valign',
     'info',
     'success',
     'surface',
@@ -383,8 +385,9 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'text'
   ],
   ResourceList: [
-    'border-strong',
-    'radius-box'
+    'border',
+    'radius-box',
+    'table-header-border'
   ],
   SaveBar: [
     'primary',
@@ -424,6 +427,12 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'border',
     'scrim',
     'shadow-lg',
+    'sheet-footer-align',
+    'sheet-footer-gap',
+    'sheet-in-duration',
+    'sheet-out-duration',
+    'sheet-padding',
+    'sheet-size',
     'surface',
     'surface-sunken',
     'text',

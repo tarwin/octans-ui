@@ -219,6 +219,13 @@ layer pick it up (or let `createTheme` generate the ramp from one seed):
 `--octans-border`, `--octans-border-strong`, `--octans-border-input`,
 `--octans-border-error`, `--octans-border-focus`
 
+`--octans-table-header-border` is the rule under a `DataTable` or
+`ResourceList` header, and defaults to `--octans-border` — the same weight as
+the rules between rows. It has its own token because `border-strong` sits at
+1.85:1 against a white surface where a row rule sits at 1.25, which read as a
+heavy bar rather than a divider; set it to `var(--octans-border-strong)` for
+the heavier header.
+
 ### Roles
 
 `--octans-primary`, `--octans-secondary`, `--octans-tertiary`,
@@ -262,6 +269,9 @@ querying its own width rather than the viewport — so pages inside an `AppFrame
 collapse when they are actually cramped. `Layout` wraps by flex-basis, which
 responds to the space it is in by nature.
 
+`Sheet` and `Icon` used to be measured here too. They are part of the THEME
+now — see below.
+
 ### Tabs indicator
 
 The mark under the selected tab. Unlike the layout dimensions above, these are
@@ -291,6 +301,44 @@ The defaults draw an underline. For a rounded bar sitting on the divider:
 two sets, scoped to one instance. Setting the prop wins over the theme in both
 directions, so a single `Tabs` can opt back out of a themed bar.
 
+### Sheet
+
+How big a sheet is and how fast it moves. In the theme for the same reason as
+the Tabs indicator: how wide a product's sheets are, and whether they glide or
+snap, is a decision worth carrying rather than repeating at every call site.
+
+| Token                         | Default  | Use                                                     |
+| ----------------------------- | -------- | ------------------------------------------------------- |
+| `--octans-sheet-size`         | 700px    | Width of a left/right sheet, height of a top/bottom one |
+| `--octans-sheet-padding`      | 30px     | Gutter `<Sheet padded>` puts around its content         |
+| `--octans-sheet-in-duration`  | 700ms    | Open animation; `0ms` opens instantly                   |
+| `--octans-sheet-out-duration` | 700ms    | Close animation; `0ms` closes instantly                 |
+| `--octans-sheet-footer-align` | flex-end | How the `footer` slot lays its row out                  |
+| `--octans-sheet-footer-gap`   | 8px      | Space between items in a footer                         |
+
+The `size` and the two durations are the only tokens in the library read from
+the **computed style** rather than resolved in CSS: a sheet slides by a
+`transform` it computes itself, so those numbers have to reach the component as
+numbers. They are re-read each time a sheet opens, so a theme applied
+mid-session takes effect on the next open. The `size`, `animateInDuration` and
+`animateOutDuration` props still win per instance.
+
+`--octans-sheet-padding` reaches the sheet as an inline style, which is why its
+declaration carries a fallback: an undefined custom property with no fallback
+computes to no padding at all.
+
+### Icons
+
+| Token                  | Default | Use                                                                       |
+| ---------------------- | ------- | ------------------------------------------------------------------------- |
+| `--octans-icon-size`   | 1em     | Size of an icon with no `size` prop — it follows the surrounding font     |
+| `--octans-icon-valign` | 0       | Vertical alignment; `-0.125em` for icons sitting inline with running text |
+
+Both defaults are what the library has always drawn, so setting either is
+opt-in and cannot silently move the icons in an existing app. `1.25em` reads
+well against 14px body text if the default feels tight; an explicit `size` on
+an `Icon` always wins over the token.
+
 ### Badge and Banner saturation
 
 How strongly a status Badge or Banner tints itself with its role colour. One
@@ -302,7 +350,7 @@ colour field.
 | Token                              | Light | Dark | Use                                     |
 | ---------------------------------- | ----- | ---- | --------------------------------------- |
 | `--octans-badge-surface-strength`  | 18%   | 40%  | Role colour mixed into a status Badge   |
-| `--octans-banner-surface-strength` | 10%   | 18%  | Role colour mixed into a status Banner  |
+| `--octans-banner-surface-strength` | 14%   | 18%  | Role colour mixed into a status Banner  |
 | `--octans-badge-ink`               | unset | —    | Forces one label colour on every Badge  |
 | `--octans-banner-ink`              | unset | —    | Forces one label colour on every Banner |
 
@@ -310,6 +358,21 @@ Both dials feed eight derived surfaces —
 `--octans-badge-{info,success,warning,error}-surface` and the banner set. Move
 the dial and all four follow; set one of those directly only when a single
 status should sit apart from the rest.
+
+What they mix FROM is `--octans-tint-{info,success,warning,error}`. Three of
+those are just the role's fill, so re-seeding a role still moves its badges and
+banners. `warning` is the exception, and the reason the indirection exists: its
+fill is the deep `warning-700` step, chosen so white label text clears 4.5:1 on
+it, and diluting that brown into a surface gives a muddy beige rather than
+amber — so `--octans-tint-warning` takes the hue's true mid step instead. Same
+reasoning as `--octans-rating`. A theme that wants banners keyed back to the
+fill sets `--octans-tint-warning: var(--octans-warning);` and nothing else.
+
+A Banner's **body copy** is `--octans-text`, not the status colour — only the
+icon and the title wear the hue. That is what lets the dial go as far as it
+does: the sentence a reader actually spends time on sits at about 11:1 rather
+than the 5.2:1 a role-coloured one managed. `--octans-banner-ink` still
+overrides both.
 
 Why these are not the shared `--octans-<role>-surface`: that token is read by
 **seven** components, so nudging it to make a badge read as an object also

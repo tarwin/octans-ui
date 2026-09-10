@@ -88,7 +88,7 @@ $cellPadding: 16px;
 
 .ResourceList_header {
   display: flex;
-  border-bottom: 1px solid var(--octans-border-strong);
+  border-bottom: 1px solid var(--octans-table-header-border);
 }
 
 .ResourceList_headerCell {

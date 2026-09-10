@@ -162,6 +162,15 @@ export const FunctionFormatters: Story = {
   })
 }
 
+/**
+ * A table sits INSIDE its section's padding, like any other content. It used
+ * to reach back out through that padding with a negative margin so it met the
+ * card's edges, which was never in the design — it just happened to be what
+ * the stylesheet did.
+ *
+ * For a table that runs to the card's edges, say so: `<CardSection flush>`.
+ * See the story below.
+ */
 export const InsideCardSection: Story = {
   render: () => ({
     components: { DataTable, Card, CardSection },
@@ -174,6 +183,43 @@ export const InsideCardSection: Story = {
             {label: 'Action 2'}
           ]"
         >
+          <DataTable
+            :columns="[
+              {key: 'id', label: 'ID'},
+              {key: 'artist', label: 'Artist', sortable: true},
+              {key: 'works', label: 'Works', format: 'integer', sortable: true}
+            ]"
+            :rows="[
+              {id: 1, artist: 'Claude Monet', works: 2500},
+              {id: 2, artist: 'Katsushika Hokusai', works: 3000}
+            ]"
+          />
+        </CardSection>
+      </Card>
+    `
+  })
+}
+
+/**
+ * `flush` removes a section's padding entirely, so the table meets the card's
+ * edges — and, because it is the last section, its bottom corners are clipped
+ * to the card's radius.
+ *
+ * If you want a table to cancel some OTHER padding itself, `CardSection`
+ * publishes what it is using:
+ *
+ * ```css
+ * margin: calc(var(--octans-card-section-padding-y) * -1)
+ *         calc(var(--octans-card-section-padding-x) * -1);
+ * ```
+ */
+export const InsideFlushCardSection: Story = {
+  render: () => ({
+    components: { DataTable, Card, CardSection },
+    template: `
+      <Card>
+        <CardSection title="Card section header" />
+        <CardSection flush>
           <DataTable
             :columns="[
               {key: 'id', label: 'ID'},

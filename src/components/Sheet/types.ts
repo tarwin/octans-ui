@@ -27,7 +27,10 @@ export interface SheetProps {
    * left or right sheet, its height for a top or bottom one. Clamped to the
    * screen when the sheet becomes the active (foreground) sheet.
    *
-   * @default 700
+   * Left unset, it comes from `--octans-sheet-size`, so an app can set the
+   * width of every sheet in one place.
+   *
+   * @default '--octans-sheet-size' (700px)
    */
   size?: number
   /**
@@ -38,22 +41,29 @@ export interface SheetProps {
    */
   peek?: number
   /**
-   * Adds padding around the sheet content and constrains it to a comfortable
-   * reading width.
+   * Adds a gutter around the sheet content, inside the scrolling area.
+   *
+   * Padding and nothing else — it does not cap or centre the content. A sheet
+   * is only as wide as its `size` says, and anything that wants a reading
+   * measure can set one on its own content.
    */
   padded?: boolean
   /**
    * Duration of the open (slide/fade-in) animation in milliseconds.
    * Set to `0` to open instantly with no animation.
    *
-   * @default 700
+   * Left unset, it comes from `--octans-sheet-in-duration`.
+   *
+   * @default '--octans-sheet-in-duration' (700ms)
    */
   animateInDuration?: number
   /**
    * Duration of the close (slide/fade-out) animation in milliseconds.
    * Set to `0` to close instantly with no animation.
    *
-   * @default 700
+   * Left unset, it comes from `--octans-sheet-out-duration`.
+   *
+   * @default '--octans-sheet-out-duration' (700ms)
    */
   animateOutDuration?: number
   /**
@@ -75,6 +85,15 @@ export interface SheetProps {
    * Classes to add to the sheet content element.
    */
   contentClass?: Record<string, string> | string
+  /**
+   * Classes to add to the element wrapping the `footer` slot. The footer bar
+   * itself is only rendered when that slot is filled.
+   *
+   * For alignment alone, reach for `--octans-sheet-footer-align` and
+   * `--octans-sheet-footer-gap` first — the wrapper's own layout rules sit at
+   * zero specificity, so a class here wins either way.
+   */
+  footerClass?: Record<string, string> | string
   /**
    * Shows a spinner over the whole sheet and prevents closing.
    *

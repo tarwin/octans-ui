@@ -73,10 +73,25 @@ describe('inTimezone', () => {
   })
 
   it('reads "now" in the zone when given no value', () => {
-    const sydney = inTimezone(undefined, 'Australia/Sydney')
-    const la = inTimezone(undefined, 'America/Los_Angeles')
-    // Same instant, different wall clocks.
-    expect(sydney.valueOf()).toBe(la.valueOf())
-    expect(sydney.format('Z')).not.toBe(la.format('Z'))
+    // The clock is frozen because each call reads it ITSELF (see date.ts:
+    // `value === undefined ? dayjs() : dayjs(value)`). Left running, the two
+    // instants below are a fraction of a millisecond apart, and `.tz()` goes
+    // through `Intl.DateTimeFormat`, which is slow enough that a millisecond
+    // boundary lands between them often enough to redden CI.
+    //
+    // Freezing rather than asserting approximate equality, or passing a fixed
+    // date: both of those would give up the thing under test, which is that
+    // no value means now.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-03-14T09:00:00Z'))
+    try {
+      const sydney = inTimezone(undefined, 'Australia/Sydney')
+      const la = inTimezone(undefined, 'America/Los_Angeles')
+      // Same instant, different wall clocks.
+      expect(sydney.valueOf()).toBe(la.valueOf())
+      expect(sydney.format('Z')).not.toBe(la.format('Z'))
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -4,6 +4,132 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.5.0
+
+Added
+
+- **`Sheet` has a `footer` slot.** A bar pinned below the scrolling content,
+  for the save/cancel pair on a sheet long enough that the header actions have
+  scrolled out of reach. It spans the sheet, and lines its contents up with the
+  content above when `padded` is set; `footerClass` styles the inner wrapper.
+
+  The footer lays its contents out as a row aligned to the end, and both halves
+  of that are `--octans-sheet-footer-align` and `--octans-sheet-footer-gap`, so
+  moving the actions to the other end is one declaration. Those defaults sit at
+  zero specificity (`:where()`), so a class passed as `footerClass` wins
+  outright instead of tying with them and being settled by stylesheet order.
+
+- **`Sheet`'s size and animation speed come from the theme.**
+  `--octans-sheet-size` (700px), `--octans-sheet-in-duration` and
+  `--octans-sheet-out-duration` (700ms) are the defaults every sheet in an app
+  now shares, instead of three literals repeated at every call site. The
+  `size`, `animateInDuration` and `animateOutDuration` props still win per
+  instance.
+
+  `Sheet` slides by a `transform` it computes itself, so it reads these from
+  the computed style rather than resolving them in CSS. They are re-read each
+  time a sheet opens, so a theme applied mid-session takes effect on the next
+  open.
+
+- **`--octans-sheet-padding`** (30px) is the gutter `<Sheet padded>` puts
+  around its content. It reaches the sheet as an inline style, so the
+  declaration carries its own fallback — an undefined custom property with no
+  fallback computes to no padding at all rather than to the old literal.
+- **`--octans-icon-size`** sets the size of every `Icon` drawn without an
+  explicit `size`. The default is `1em`, which is what Iconify already drew, so
+  nothing moves; an app that wants roomier icons throughout sets it once
+  (`1.25em` reads well against 14px text) instead of passing `size` at every
+  call site.
+- **`CardSection` takes `flush`**, which removes its padding entirely so a
+  table, image or map runs to the edges of the card. `padded={false}` keeps its
+  old meaning — horizontal padding off, vertical rhythm kept.
+- **`--octans-table-header-border`** is the rule under a `DataTable` or
+  `ResourceList` header.
+- **`--octans-tint-{info,success,warning,error}`** — what a status Badge or
+  Banner mixes its background FROM.
+
+Changed
+
+- **The `Sheet` and `Icon` dimensions are theme tokens.** They were declared in
+  the global stylesheet with the page widths and the layout gutter, which meant
+  the Theme Builder never listed them and a saved theme could not carry them.
+  They now live in `tokens.scss` alongside the Tabs indicator, for the reason
+  that section already gives: how wide a product's sheets are, and whether they
+  glide or snap, is a decision worth carrying rather than a measurement.
+
+  Nothing moves visually and no name changes — `--octans-sheet-size`,
+  `-padding`, `-in-duration`, `-out-duration`, `-footer-align`, `-footer-gap`,
+  `--octans-icon-size` and `--octans-icon-valign` keep their values. The two
+  footer tokens had only ever been _referenced_ with fallbacks and are now
+  declared, so they show up in the builder like the rest.
+
+  `TokenKind` gains `'duration'` and `'keyword'`, since neither a `700ms` nor a
+  `flex-end` is a length. The Theme Builder shows a colour picker for `color`
+  and a text field for everything else, so both render correctly already.
+
+- **`Sheet`'s `padded` is padding, and nothing else.** It also used to cap the
+  content at a 900px measure and centre it. Content width is `size - 60px`, so
+  that cap only engaged above `size: 960` — invisible at the 700px default, and
+  then on a wide sheet the content silently stopped growing and drifted to the
+  middle. A sheet is only as wide as its `size` says; content that wants a
+  reading measure can set one itself.
+- **Banner body copy is `--octans-text`.** The icon and the title still carry
+  the status colour, which is what makes a banner readable at a glance; the
+  sentence underneath was wearing it too, and paying for it — amber-brown on a
+  pale amber wash measured 5.22:1 where body text measures about 11.
+  `--octans-banner-ink` still overrides everything.
+- **Warning banners and badges are amber rather than beige.** They were tinting
+  from `--octans-warning`, which is deliberately the deep `warning-700` step so
+  white label text clears 4.5:1 on it — and a 700 brown diluted into a surface
+  is a muddy beige. The new `--octans-tint-warning` takes the hue's true mid
+  step instead, the same way `--octans-rating` does. Every other role's tint is
+  still its own fill, so re-seeding a role moves its banners as before.
+- `--octans-banner-surface-strength` is 14% in light, up from 10%, and the
+  banner's border went from a quarter-strength rule to 35%. At 10% a banner read
+  as a slightly off-white panel rather than a coloured one.
+- **The rule under a table header matches the rules between its rows.**
+  `--octans-table-header-border` defaults to `--octans-border`;
+  `--octans-border-strong` sits at 1.85:1 against a white surface where a row
+  rule sits at 1.25, so the header was reading as a heavy bar. Set the token to
+  `var(--octans-border-strong)` for the old weight. `border-strong` itself is
+  unchanged, and still carries swatch outlines, the `Splitter` gutter and the
+  heatmap's month separators.
+- **`Page` keeps its primary action on the title row until 600px.** It used to
+  go full width — and so, because the header wraps, onto a row of its own — at
+  960px of page width, alongside the collapse of the secondary actions into a
+  menu. A 900px-wide page has ample room for a title and a button on one line,
+  so the header looked broken long before anything was cramped. The secondary
+  actions still collapse at 960px.
+- **A `DataTable` inside a `CardSection` respects the section's padding.** It
+  used to cancel that padding with a negative margin so it met the card's
+  edges — behaviour that was never designed, just what the stylesheet happened
+  to do, and which made a table in a `padded={false}` section overhang the card
+  by 16px on each side.
+
+  For a table that runs to the card's edges, say so: `<CardSection flush>`. To
+  cancel some other padding yourself, `CardSection` publishes what it is using
+  as `--octans-card-section-padding-x` / `-y`, so you can negate the real
+  number rather than restating `16px`.
+
+- **`DataTable` no longer rounds its own bottom corners.** `.Table` and the
+  last row's cells carried hardcoded `3px` bottom radii from before the radius
+  tokens existed (`--octans-radius-box` is `8px`), and every cell in the last
+  row got them rather than the outer two. They existed only to meet the card's
+  corner once the table had reached it, which nothing does any more.
+
+- **`Card` clips its content to its own corners** (`overflow: clip`). A card's
+  corners are the card's business: `border-radius` rounds an element's own
+  background and not its children's, so anything filling a card — a subdued
+  section, a table, an image, a map — used to paint square corners over the
+  rounded ones. Handling it per-child meant every such component had to know it
+  might be inside a card, which is how `DataTable` came to carry corner radii
+  in the first place.
+
+  `clip` rather than `hidden`: `hidden` would make a card a scroll container
+  and change what `position: sticky` inside it sticks to. `clip` does the same
+  clipping without becoming one. It needs Safari 16, already the floor here for
+  `color-mix()` and `@container`.
+
 ## 1.4.0
 
 Added

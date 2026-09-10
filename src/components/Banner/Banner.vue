@@ -118,6 +118,20 @@ export default defineComponent({
   }
 }
 
+/**
+ * Body copy is BODY text, not status text.
+ *
+ * The icon and the title carry the status colour, which is what makes the
+ * banner readable at a glance; running the sentence underneath in the same
+ * hue bought nothing and cost most of the contrast — amber-brown on a pale
+ * amber wash measured 5.22:1 where `--octans-text` measures about 11. The ink
+ * override still wins, so a theme that wants one flat colour throughout keeps
+ * getting it.
+ */
+.info {
+  color: var(--octans-banner-ink, var(--octans-text));
+}
+
 .title {
   font-weight: bold;
   font-family: var(--octans-font);
@@ -151,7 +165,10 @@ export default defineComponent({
  */
 @mixin bannerColor($fontColor, $surface) {
   background-color: var(#{$surface});
-  border: 1px solid color-mix(in srgb, var(#{$fontColor}) 25%, transparent);
+  // 35%, not 25%: with the panel itself tinted this lightly, the edge is what
+  // separates a banner from the card behind it, and a quarter-strength rule
+  // was not drawing one.
+  border: 1px solid color-mix(in srgb, var(#{$fontColor}) 35%, transparent);
   color: var(--octans-banner-ink, var(#{$fontColor}));
 }
 

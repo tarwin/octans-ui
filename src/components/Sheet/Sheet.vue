@@ -13,13 +13,10 @@ const manager = createSheetManager()
 
 const props = withDefaults(defineProps<SheetProps>(), {
   edge: 'right',
-  size: 700,
   peek: 100,
   minIndex: 1000,
   loading: false,
-  visible: false,
-  animateInDuration: 700,
-  animateOutDuration: 700
+  visible: false
 })
 
 const emit = defineEmits<{
@@ -52,6 +49,68 @@ const emit = defineEmits<{
 }>()
 
 const styles = useCssModule()
+
+/**
+ * `size` and the two durations fall back to the THEME rather than to literals,
+ * so an app can say once that its sheets are 480px wide and instant.
+ *
+ * They have to arrive as numbers: the slide is a `transform` this component
+ * computes, not a CSS transition on a width, so there is nothing for the
+ * browser to resolve on our behalf. Hence reading the computed style.
+ *
+ * Re-read on every open (`beforeEnter`) instead of once at setup, because a
+ * theme can be applied at any point in a session — and because at setup time
+ * the stylesheet may not have loaded yet, which is exactly when a sheet
+ * created eagerly would otherwise cache the fallback forever.
+ */
+const THEME_FALLBACK = { size: 700, inDuration: 700, outDuration: 700 }
+
+function readToken(name: string): string {
+  if (typeof window === 'undefined') return ''
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim()
+}
+
+function readLength(name: string, fallback: number): number {
+  const value = parseFloat(readToken(name))
+  return Number.isFinite(value) ? value : fallback
+}
+
+/** Milliseconds, from a token written either as `700ms` or as `0.7s`. */
+function readDuration(name: string, fallback: number): number {
+  const raw = readToken(name)
+  const value = parseFloat(raw)
+  if (!Number.isFinite(value)) return fallback
+  return /s\s*$/.test(raw) && !/ms\s*$/.test(raw) ? value * 1000 : value
+}
+
+const themeDefaults = ref({ ...THEME_FALLBACK })
+
+function readThemeDefaults() {
+  themeDefaults.value = {
+    size: readLength('--octans-sheet-size', THEME_FALLBACK.size),
+    inDuration: readDuration(
+      '--octans-sheet-in-duration',
+      THEME_FALLBACK.inDuration
+    ),
+    outDuration: readDuration(
+      '--octans-sheet-out-duration',
+      THEME_FALLBACK.outDuration
+    )
+  }
+}
+
+readThemeDefaults()
+
+/** The sheet's extent along the main axis, before it is clamped to the screen. */
+const size = computed(() => props.size ?? themeDefaults.value.size)
+const animateIn = computed(
+  () => props.animateInDuration ?? themeDefaults.value.inDuration
+)
+const animateOut = computed(
+  () => props.animateOutDuration ?? themeDefaults.value.outDuration
+)
 
 /**
  * All four edges are one problem in one dimension: the sheet slides along a
@@ -130,9 +189,9 @@ const containerStyle = computed(() => {
 
 const finalSize = computed(() => {
   if (isActive.value) {
-    return Math.min(props.size, screenSize.value)
+    return Math.min(size.value, screenSize.value)
   }
-  return props.size
+  return size.value
 })
 
 const actions = computed(() => {
@@ -150,6 +209,7 @@ const actions = computed(() => {
 })
 
 function beforeEnter(el: Element) {
+  readThemeDefaults()
   index.value = Math.max(props.minIndex, manager.getNextZIndex())
   // For some reason Safari on Mac does not like a scrollable container
   // inside a fixed position element. The container cannot be scrolled with
@@ -159,7 +219,7 @@ function beforeEnter(el: Element) {
   disableScroll.value = true
   manager.add(inst)
   if (el instanceof HTMLElement) {
-    el.style.transitionDuration = `${props.animateInDuration}ms`
+    el.style.transitionDuration = `${animateIn.value}ms`
     el.style.transform = transformFor(hiddenPosition.value)
   }
   emit('before-open')
@@ -170,7 +230,7 @@ function enter(el: Element, done: () => void) {
     el.style.transform = transformFor(restPosition.value)
   }
   isActive.value = true
-  setTimeout(done, props.animateInDuration)
+  setTimeout(done, animateIn.value)
 }
 
 function afterEnter() {
@@ -181,7 +241,7 @@ function afterEnter() {
 
 function beforeLeave(el: Element) {
   if (el instanceof HTMLElement) {
-    el.style.transitionDuration = `${props.animateOutDuration}ms`
+    el.style.transitionDuration = `${animateOut.value}ms`
     el.style.transform = transformFor(hiddenPosition.value)
   }
   manager.beforeRemove(inst)
@@ -189,7 +249,7 @@ function beforeLeave(el: Element) {
 }
 
 function leave(_el: Element, done: () => void) {
-  setTimeout(done, props.animateOutDuration)
+  setTimeout(done, animateOut.value)
 }
 
 function afterLeave() {
@@ -240,8 +300,8 @@ onBeforeUnmount(() => {
       ]"
       :style="{
         zIndex: index,
-        '--sheet-in-duration': `${animateInDuration}ms`,
-        '--sheet-out-duration': `${animateOutDuration}ms`
+        '--sheet-in-duration': `${animateIn}ms`,
+        '--sheet-out-duration': `${animateOut}ms`
       }"
     >
       <!-- @slot Rendered outside the sheet container (e.g. for nested sheets). -->
@@ -323,20 +383,27 @@ onBeforeUnmount(() => {
           <ScrollPane
             :class="$style.contentWrapper"
             :disabled="disableScroll"
-            :padding="padded ? '30px' : '0'"
+            :padding="padded ? 'var(--octans-sheet-padding, 30px)' : '0'"
             contain
           >
-            <div
-              :class="[
-                $style.content,
-                padded && $style.contentPadded,
-                contentClass
-              ]"
-            >
+            <div :class="[$style.content, contentClass]">
               <!-- @slot The main sheet content. -->
               <slot></slot>
             </div>
           </ScrollPane>
+          <div
+            v-if="$slots.footer"
+            :class="$style.footer"
+          >
+            <div :class="[$style.footerContent, footerClass]">
+              <!--
+                @slot A bar pinned to the bottom of the sheet, below the
+                scrolling content — the natural home for the save/cancel pair
+                on a sheet long enough that the header actions scroll away.
+              -->
+              <slot name="footer"></slot>
+            </div>
+          </div>
         </div>
       </transition>
     </div>
@@ -437,9 +504,31 @@ $slideDuration: 0.7s;
   // padding: 25px;
 }
 
-.contentPadded {
-  max-width: 900px;
-  margin: 0px auto;
+// Outside the ScrollPane, so it stays put while the content scrolls under it.
+// `flex: 0 0 auto` because the pane above is `flex: 1` and would otherwise
+// squeeze the footer as the content grows.
+.footer {
+  flex: 0 0 auto;
+  padding: 16px;
+  border-top: 1px solid var(--octans-border);
+  background: var(--octans-surface);
+}
+
+/**
+ * A row is the only layout assumption made here, and even that is only a
+ * default: alignment and gap come from custom properties, so putting the
+ * actions on the left is one declaration rather than a fight with this rule.
+ *
+ * `:where()` drops the whole block to ZERO specificity, which is what makes
+ * `footerClass` reliable — the class a caller passes lands on this same
+ * element, so at (0,1,0) each it would tie with this rule and be settled by
+ * stylesheet order, which a component cannot promise.
+ */
+:where(.footerContent) {
+  display: flex;
+  align-items: center;
+  justify-content: var(--octans-sheet-footer-align, flex-end);
+  gap: var(--octans-sheet-footer-gap, 8px);
 }
 
 .backdropEnterActive {

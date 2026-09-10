@@ -1,4 +1,8 @@
 import { type Preview, setup } from '@storybook/vue3-vite'
+import { createElement, useEffect, useState, type ComponentProps } from 'react'
+import { DocsContainer } from '@storybook/addon-docs/blocks'
+import { addons } from 'storybook/preview-api'
+import { GLOBALS_UPDATED, SET_GLOBALS } from 'storybook/internal/core-events'
 import { vueRouter } from 'storybook-vue3-router'
 import uiProviderDecorator from '../src/styleguide/uiProviderDecorator'
 import { setLocale as setDateLocale } from '../src/utils/date'
@@ -11,6 +15,8 @@ import {
   listCustomThemes
 } from '../src/utils/customTheme'
 import UI from '../src/lib'
+import { octansDark, octansLight } from './theme'
+import { resolveThemeGlobal } from './themeGlobal'
 // Icons that only stories and fixtures use. The library bundles the ones it
 // renders itself; these are registered here instead so they stay offline and
 // instant in Storybook without adding ~10 kB to what consumers download.
@@ -38,6 +44,58 @@ setup((app) => {
 
 import '../src/styles/global.scss'
 
+/**
+ * Puts the toolbar's Theme value on `<html>` as `data-octans-theme`; the token
+ * stylesheet does the rest, so no remount is needed for it to take effect. A
+ * saved custom theme applies its base the same way, then lays its sparse
+ * overrides on top as inline custom properties.
+ */
+function applyThemeGlobal(theme: unknown) {
+  if (typeof theme === 'string' && theme.startsWith('custom:')) {
+    const saved = getCustomTheme(theme.slice('custom:'.length))
+    if (saved) {
+      applyCustomTheme(saved)
+      return
+    }
+    // Deleted since Storybook booted — fall back to plain light.
+    clearCustomTheme()
+    setTheme('light')
+    return
+  }
+  clearCustomTheme()
+  setTheme(theme as ThemePreferenceType)
+}
+
+/**
+ * The decorator below only runs where there is a story to wrap, so an MDX page
+ * that renders none — Quick Start, Translations — would leave `<html>` with no
+ * `data-octans-theme` at all. The tokens then fall through to their
+ * `prefers-color-scheme` branch and follow the OS while Storybook's chrome
+ * follows the toolbar, which is how a machine set to dark ended up reading a
+ * LIGHT docs page whose `color-scheme` was `dark`: every colour a rule states
+ * outright stayed correct, and anything left at the UA default — `color:
+ * inherit` on the Quick Start install tabs — came out white on white.
+ *
+ * So sync from the channel instead, which carries the theme to every page,
+ * story or not. `getChannel()` throws if the preview has not wired it up yet;
+ * on that path the decorator is still the one applying the theme, and the
+ * first SET_GLOBALS after it connects picks docs pages up.
+ */
+try {
+  const channel = addons.getChannel()
+  const sync = (payload?: { globals?: Record<string, unknown> }) => {
+    const theme = payload?.globals?.theme
+    // A payload that carries no theme is one for some other global; applying
+    // `undefined` would strip the attribute and hand the page back to the OS.
+    if (theme !== undefined) applyThemeGlobal(theme)
+  }
+  channel.on(SET_GLOBALS, sync)
+  channel.on(GLOBALS_UPDATED, sync)
+} catch {
+  // No channel yet (or none at all, as in a portable-stories run outside the
+  // Storybook app) — stories still theme themselves through the decorator.
+}
+
 // Themes saved in the Theme Builder join the toolbar, so any story can be
 // viewed in them. The list is read once when Storybook boots — after saving a
 // new theme, reload to see it appear here.
@@ -46,6 +104,54 @@ const CUSTOM_THEMES = listCustomThemes().map((theme) => ({
   title: theme.name,
   icon: 'paintbrush'
 }))
+
+/**
+ * Storybook's docs container, wearing the theme the toolbar is set to.
+ *
+ * The theme global is read off `<html>` rather than out of the docs context:
+ * `applyThemeGlobal` above owns that attribute, so the container and the
+ * tokens can never disagree about which theme is current. Missing means
+ * `system` — `setTheme` removes the attribute in that case and lets
+ * `prefers-color-scheme` decide, which is exactly what `resolveThemeGlobal`
+ * does with the same value.
+ */
+function OctansDocsContainer({
+  context,
+  children
+}: ComponentProps<typeof DocsContainer>) {
+  const [theme, setThemeGlobal] = useState<string>(currentThemeGlobal)
+  useEffect(() => {
+    const channel = context.channel
+    const sync = (payload?: { globals?: Record<string, unknown> }) => {
+      // The attribute, not the payload: a custom theme arrives as
+      // `custom:<id>` and it is `applyCustomTheme` that decides which base it
+      // resolves to. Reading back what it wrote keeps that decision in one
+      // place. The listener at module scope has already run by the time the
+      // channel re-emits to us.
+      if (payload?.globals?.theme !== undefined)
+        setThemeGlobal(currentThemeGlobal())
+    }
+    channel.on(SET_GLOBALS, sync)
+    channel.on(GLOBALS_UPDATED, sync)
+    return () => {
+      channel.off(SET_GLOBALS, sync)
+      channel.off(GLOBALS_UPDATED, sync)
+    }
+  }, [context.channel])
+
+  return createElement(
+    DocsContainer,
+    {
+      context,
+      theme: resolveThemeGlobal(theme) === 'dark' ? octansDark : octansLight
+    },
+    children
+  )
+}
+
+function currentThemeGlobal(): string {
+  return document.documentElement.getAttribute('data-octans-theme') ?? 'system'
+}
 
 const preview: Preview = {
   globalTypes: {
@@ -96,23 +202,7 @@ const preview: Preview = {
       // required.
       setTranslationLocale(locale)
       setDateLocale(locale)
-      // Sets `data-octans-theme` on <html>; the token stylesheet does the
-      // rest, so no remount is needed for the theme to take effect. A saved
-      // custom theme applies its base the same way, then lays its sparse
-      // overrides on top as inline custom properties.
-      if (typeof theme === 'string' && theme.startsWith('custom:')) {
-        const saved = getCustomTheme(theme.slice('custom:'.length))
-        if (saved) {
-          applyCustomTheme(saved)
-        } else {
-          // Deleted since Storybook booted — fall back to plain light.
-          clearCustomTheme()
-          setTheme('light')
-        }
-      } else {
-        clearCustomTheme()
-        setTheme(theme as ThemePreferenceType)
-      }
+      applyThemeGlobal(theme)
       // What the story canvas stands in for. Most components live INSIDE a
       // card, so the default is the card surface — previewing a button on the
       // grey app background misstates its borders and tonal fills. Stories for
@@ -153,10 +243,16 @@ const preview: Preview = {
         date: /Date$/i
       }
     },
-    // Deliberately no `docs.theme` here. Docs pages inherit the manager's
-    // theme through the channel, so they follow the toolbar for free —
-    // whereas a value set here would be read once at startup and pin them to
-    // whatever the theme was at load.
+    docs: {
+      // Docs pages do NOT inherit the manager's theme — they render in the
+      // preview iframe with whatever `docs.theme` says, and unset means
+      // Storybook's stock light. That left a dark session reading light docs
+      // inside dark chrome. A plain `theme:` here would be no better: it is
+      // read once at startup and would pin docs to the theme that happened to
+      // be current at load. The container instead re-reads the toolbar on
+      // every change, which is the only place the two can stay in step.
+      container: OctansDocsContainer
+    },
     options: {
       // The addons panel (Controls / Actions / Interactions) stays shut unless
       // it is asked for. This is a component library's documentation before it

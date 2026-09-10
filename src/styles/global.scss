@@ -123,6 +123,12 @@
   --octans-page-action-gap: 4px;
   /** How far down the viewport `<Page loading>` hangs its spinner. */
   --octans-page-loader-offset: 100px;
+
+  // The `Sheet` and `Icon` dimensions used to sit here. They moved to
+  // tokens.scss, because they turned out to be theme decisions rather than
+  // measurements — see the note on the Tabs indicator there — and so belong
+  // in the Theme Builder and in a saved theme.
+
   /** The gap between `Layout` sections. */
   --octans-layout-gutter: 20px;
   /** The default `Stack` gap — the `spacing` presets override per-instance. */
@@ -144,16 +150,4 @@
   --octans-sidenav-width: var(--ui-sideNav-width);
   --ui-globalNav-height: 40px;
   --octans-globalnav-height: var(--ui-globalNav-height);
-
-  // --- icons ----------------------------------------------------------------
-  /**
-   * The vertical alignment applied to every `Icon`. `0` is the baseline the
-   * library has always drawn at, and it is the default so that setting this
-   * cannot silently move every icon in an existing app.
-   *
-   * An app that sets icons inline with running text usually wants
-   * `-0.125em` — the value Iconify's own `inline` mode applies. Set it once
-   * here rather than per call site.
-   */
-  --octans-icon-valign: 0;
 }

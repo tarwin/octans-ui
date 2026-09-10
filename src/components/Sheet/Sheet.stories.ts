@@ -169,21 +169,21 @@ export const Default: Story = {
 }
 
 /**
-`padded` does two things at once, and it is worth knowing they are separate:
-
-1. It puts a **30px gutter** around the content, inside the scrolling area — so
-   the scrollbar still sits against the sheet edge rather than floating in from
-   it.
-2. It caps the content at a **900px reading measure** and centres it. On a wide
-   sheet this is the more noticeable of the two, and it is why a padded 1600px
-   sheet does not give you 1600px-wide paragraphs.
+`padded` puts a **30px gutter** around the content, inside the scrolling area —
+so the scrollbar still sits against the sheet edge rather than floating in from
+it. That is all it does.
 
 Without it the content area is completely flush, which is what you want for
 anything that supplies its own edges — a full-bleed table, an image, a map, or
 a list whose rows should run the whole width.
 
-Toggle it from the header and watch both effects at once. The sheet is 1100px
-wide so the 900px cap actually bites.
+It used to also cap the content at a 900px measure and centre it, which was
+invisible until someone made a sheet wider than 960px and then silently stopped
+the content growing. A sheet is only as wide as its `size` says; if content
+inside one wants a reading measure, it can set one itself.
+
+Toggle it from the header. The sheet is 1100px wide, so with padding on the
+content now fills it.
 */
 export const Padding: Story = {
   render: () => ({
@@ -212,11 +212,11 @@ export const Padding: Story = {
           <Card title="Where the edges are">
             <CardSection>
               <p>
-                With padding on, this card floats 30px clear of the sheet and
-                stops at 900px however wide the sheet gets. With it off, the
-                card runs edge to edge and the corner radius sits flush against
-                the sheet — which usually looks like a mistake for a card, and
-                exactly right for a table.
+                With padding on, this card floats 30px clear of the sheet
+                and fills whatever is left, however wide the sheet gets. With
+                it off, the card runs edge to edge and the corner radius sits
+                flush against the sheet — which usually looks like a mistake
+                for a card, and exactly right for a table.
               </p>
             </CardSection>
             <CardSection subdued>
@@ -856,6 +856,96 @@ export const ActionsSlotMix: Story = {
  * Use the `color` prop to add an accent strip along the top of the sheet
  * header. Any CSS color value works.
  */
+/**
+ * A `footer` slot pins a bar to the bottom of the sheet, below the scrolling
+ * content. Use it for the save/cancel pair on a sheet long enough that the
+ * header actions have scrolled out of reach — or anywhere the commitment
+ * belongs at the end of the form rather than above it.
+ *
+ * The bar spans the sheet, and carries its own padding rather than following
+ * the content's — it is chrome, like the header above it.
+ *
+ * Its contents are laid out as a row, aligned to the end. Both parts of that
+ * are custom properties, so moving the actions to the other end — or splitting
+ * them — is one declaration:
+ *
+ * ```html
+ * <Sheet style="--octans-sheet-footer-align: flex-start">
+ * ```
+ *
+ * Set them on `:root` to change every sheet in the app. Anything more
+ * involved belongs in the slot itself: the footer imposes nothing a caller
+ * cannot take back, and `footerClass` lands on the same element at higher
+ * specificity than the defaults.
+ */
+export const Footer: Story = {
+  render: () => ({
+    components: { Sheet, Button, Card, CardSection, TextField },
+    setup() {
+      const visible = ref(false)
+      return { visible, sections: SECTIONS, toast }
+    },
+    template: `
+      <div>
+        <Button @click="visible = true">Show</Button>
+        <Sheet
+          title="Edit record"
+          padded
+          :visible="visible"
+          @close="visible = false"
+        >
+          <Card v-for="section in sections" :key="section.title" :title="section.title">
+            <CardSection>{{ section.body }}</CardSection>
+          </Card>
+          <template #footer>
+            <Button @click="visible = false">Cancel</Button>
+            <Button
+              type="primary"
+              @click="() => { toast.success('Saved'); visible = false }"
+            >Save</Button>
+          </template>
+        </Sheet>
+      </div>
+    `
+  })
+}
+
+/**
+ * The footer's layout is two custom properties, not a fixed rule. Here the
+ * cancel action sits at the far left and the commitment at the far right, by
+ * setting the alignment to `space-between` — no override, no `:deep()`.
+ */
+export const FooterAlignment: Story = {
+  render: () => ({
+    components: { Sheet, Button, Card, CardSection },
+    setup() {
+      const visible = ref(false)
+      const align = ref('space-between')
+      return { visible, align, sections: SECTIONS }
+    },
+    template: `
+      <div>
+        <Button @click="visible = true">Show</Button>
+        <Sheet
+          title="Footer alignment"
+          padded
+          :visible="visible"
+          :style="{ '--octans-sheet-footer-align': align }"
+          @close="visible = false"
+        >
+          <Card v-for="section in sections" :key="section.title" :title="section.title">
+            <CardSection>{{ section.body }}</CardSection>
+          </Card>
+          <template #footer>
+            <Button @click="visible = false">Cancel</Button>
+            <Button type="primary" @click="visible = false">Save</Button>
+          </template>
+        </Sheet>
+      </div>
+    `
+  })
+}
+
 export const Colors: Story = {
   render: () => ({
     components: { Sheet, Button },

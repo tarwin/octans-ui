@@ -10,7 +10,14 @@
  */
 
 export type TokenKind =
-  'color' | 'shadow' | 'radius' | 'font' | 'length' | 'percent'
+  | 'color'
+  | 'shadow'
+  | 'radius'
+  | 'font'
+  | 'length'
+  | 'percent'
+  | 'duration'
+  | 'keyword'
 
 export interface TokenDefinition {
   /** Token name without the `--octans-` prefix. */
@@ -201,6 +208,11 @@ export const TOKEN_GROUPS: TokenGroup[] = [
       color('border', 'Default dividers and outlines'),
       color('border-strong', 'Heavier dividers — decorative'),
       color(
+        'table-header-border',
+        'Rule under a DataTable or ResourceList header. Defaults to the ' +
+          'row-rule weight; set to border-strong for a heavier bar'
+      ),
+      color(
         'border-input',
         'Control outlines — deliberately soft; set to neutral-500 for ' +
           'strict WCAG 1.4.11'
@@ -248,7 +260,18 @@ export const TOKEN_GROUPS: TokenGroup[] = [
       ...role('info'),
       ...role('success'),
       ...role('warning'),
-      ...role('error', { states: true })
+      ...role('error', { states: true }),
+      color(
+        'tint-info',
+        'What a status tint (Badge, Banner) mixes from. Follows the fill'
+      ),
+      color('tint-success', 'Follows the success fill'),
+      color(
+        'tint-warning',
+        'The true amber, NOT the warning fill — that is the deep 700 step, ' +
+          'chosen to carry white text, and dilutes to beige'
+      ),
+      color('tint-error', 'Follows the error fill')
     ]
   },
   {
@@ -426,6 +449,74 @@ export const TOKEN_GROUPS: TokenGroup[] = [
         name: 'tabs-label-gap',
         kind: 'length',
         description: 'Space between the label and the mark'
+      }
+    ]
+  },
+  {
+    title: 'Sheet',
+    tier: 'semantic',
+    description:
+      'How big a Sheet is and how fast it moves. In the theme rather than the ' +
+      'global stylesheet for the same reason as the Tabs indicator: how wide ' +
+      'a product\u2019s sheets are, and whether they glide or snap, is a decision ' +
+      'worth carrying rather than repeating at every call site. The size and ' +
+      'the two durations are read by Sheet from the computed style \u2014 it ' +
+      'slides by a transform it computes itself, so the numbers have to reach ' +
+      'it as numbers \u2014 and are re-read each time a sheet opens.',
+    tokens: [
+      {
+        name: 'sheet-size',
+        kind: 'length',
+        description:
+          'Default width of a left/right sheet, height of a top/bottom one'
+      },
+      {
+        name: 'sheet-padding',
+        kind: 'length',
+        description: 'Gutter that `<Sheet padded>` puts around its content'
+      },
+      {
+        name: 'sheet-in-duration',
+        kind: 'duration',
+        description: 'Default open animation; 0ms opens instantly'
+      },
+      {
+        name: 'sheet-out-duration',
+        kind: 'duration',
+        description: 'Default close animation; 0ms closes instantly'
+      },
+      {
+        name: 'sheet-footer-align',
+        kind: 'keyword',
+        description:
+          'How the footer slot lays its row out \u2014 any justify-content value'
+      },
+      {
+        name: 'sheet-footer-gap',
+        kind: 'length',
+        description: 'Space between items in a sheet footer'
+      }
+    ]
+  },
+  {
+    title: 'Icons',
+    tier: 'semantic',
+    description:
+      'Two knobs an app sets once instead of passing props at every call ' +
+      'site. Both defaults are what the library has always drawn, so setting ' +
+      'either is opt-in and cannot silently move existing icons.',
+    tokens: [
+      {
+        name: 'icon-size',
+        kind: 'length',
+        description:
+          'Size of an Icon with no `size` prop. 1em follows the surrounding font'
+      },
+      {
+        name: 'icon-valign',
+        kind: 'length',
+        description:
+          'Vertical alignment of every Icon; -0.125em suits icons inline with text'
       }
     ]
   },

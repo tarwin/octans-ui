@@ -212,6 +212,35 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     label: 'error banner text',
     min: 4.5
   },
+  // The four above measure a banner's TITLE, which wears the status colour.
+  // Its body copy is `--octans-text`, and gets its own four pairs because it
+  // is the text a reader actually spends time on — and because it is what
+  // caps `--octans-banner-surface-strength`: turn the dial far enough and the
+  // wash starts eating the body text rather than the title.
+  {
+    fg: 'text',
+    bg: 'banner-info-surface',
+    label: 'info banner body copy',
+    min: 4.5
+  },
+  {
+    fg: 'text',
+    bg: 'banner-success-surface',
+    label: 'success banner body copy',
+    min: 4.5
+  },
+  {
+    fg: 'text',
+    bg: 'banner-warning-surface',
+    label: 'warning banner body copy',
+    min: 4.5
+  },
+  {
+    fg: 'text',
+    bg: 'banner-error-surface',
+    label: 'error banner body copy',
+    min: 4.5
+  },
   { fg: 'text-on-info', bg: 'info', label: 'label on info fill', min: 4.5 },
   {
     fg: 'text-on-success',

@@ -9,8 +9,13 @@ import { Meta } from '@storybook/addon-docs/blocks'
   and Copy button — building the <pre> by hand would lose both.
 
   Colours are deliberately absent apart from the active underline: everything
-  else is `currentColor` at reduced opacity, so this sits on whatever background
-  the docs theme happens to be without a second set of dark-mode rules.
+  else is the theme's text token at reduced opacity, so this sits on whatever
+  background the docs theme happens to be without a second set of dark-mode
+  rules. NOT `color: inherit` — nothing in the docs chrome sets a colour on the
+  elements above this one, so `inherit` resolves to the UA default, which
+  follows `color-scheme` rather than the docs theme. On a light docs page in a
+  browser whose `color-scheme` had gone dark, that default was white: the
+  labels vanished into the background.
 */}
 
 export const CodeTabs = ({ labels, children }) => {
@@ -59,7 +64,7 @@ export const CodeTabs = ({ labels, children }) => {
               font: 'inherit',
               fontSize: 13,
               fontWeight: i === active ? 700 : 400,
-              color: 'inherit',
+              color: 'var(--octans-text)',
               opacity: i === active ? 1 : 0.6,
               cursor: 'pointer'
             }}

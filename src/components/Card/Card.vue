@@ -69,7 +69,22 @@ export default defineComponent({
 @import '../../styles/variables';
 
 .Card {
-  // overflow: hidden;
+  /**
+   * The card's corners are the card's business.
+   *
+   * `border-radius` rounds an element's own background, not its children's, so
+   * anything that fills the card — a subdued section, a `DataTable`, an image,
+   * a map — paints square corners straight over the rounded ones. Handling
+   * that per-child means every such component has to know it might be in a
+   * card, which is how `DataTable` ended up with hardcoded corner radii.
+   *
+   * `clip`, not `hidden`: `hidden` makes this a scroll container, which
+   * changes what `position: sticky` inside the card sticks to. `clip` does the
+   * same clipping without becoming one, so a sticky element still follows the
+   * real scrollport — it is just clipped when it leaves the card. Safari 16,
+   * which is already the floor for `color-mix()` and `@container` here.
+   */
+  overflow: clip;
   background: var(--octans-surface);
   // border: 1px solid #e7e9ec;
   border-radius: var(--octans-radius-box);
