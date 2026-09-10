@@ -16,6 +16,13 @@ export interface DatePickerProps {
    * Renders a help icon next to the label which links to an external page.
    */
   helpLink?: string | false
+  /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
   placeholder?: string
   disabled?: boolean
   readonly?: boolean

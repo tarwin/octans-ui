@@ -9,18 +9,23 @@ export default defineComponent({
     return () => {
       const $style = useCssModule()
 
+      // The tooltip needs a position or the global tooltip CSS has nothing to
+      // offset against and the bubble lands on top of the icon. `top` rather
+      // than `bottom` so it does not cover the control the label introduces.
       const helpLinkMarkup =
         props.helpLink &&
         h(
           'a',
           {
             href: props.helpLink,
-            target: '_blank'
+            target: '_blank',
+            'data-ui-tooltip': props.helpLinkTooltip || undefined,
+            'data-ui-tooltip-position': props.helpLinkTooltip ? 'top' : undefined
           },
           [
             h(Icon, {
               class: $style.helpIcon,
-              icon: 'mdi:information'
+              icon: props.helpLinkIcon
             })
           ]
         )
@@ -141,6 +146,28 @@ export default defineComponent({
      */
     helpLink: {
       type: [String, Boolean] as PropType<string | false | null>,
+      required: false
+    },
+    /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     *
+     * Defaults to an information symbol. Change it where the link means
+     * something narrower than "help": `mdi:language-markdown` beside a field
+     * that accepts markdown says what the link is about before it is clicked.
+     */
+    helpLinkIcon: {
+      type: String,
+      default: 'mdi:information'
+    },
+    /**
+     * Text shown on hovering the `helpLink` icon.
+     *
+     * Worth setting whenever the icon is not self-evident. The link opens in a
+     * new tab, so this is the reader's only chance to find out where it goes
+     * before they lose their place in the form.
+     */
+    helpLinkTooltip: {
+      type: String,
       required: false
     },
     /**

@@ -4,6 +4,33 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.6.1
+
+Added
+
+- **`helpLink` takes its own icon and tooltip.** `helpLinkIcon` and
+  `helpLinkTooltip` on `Labelled`, `Choice` and every control that wraps them,
+  including per-choice on `ChoiceList` options. The icon was hard-coded to an
+  information symbol and said nothing on hover, so a field advertising
+  something specific — "this box takes markdown" — had to replace the entire
+  label through the slot to change one glyph.
+
+  ```html
+  <TextField
+    label="Notes"
+    help-link="https://commonmark.org/help/"
+    help-link-icon="mdi:language-markdown"
+    help-link-tooltip="Supports markdown"
+  />
+  ```
+
+Fixed
+
+- **`TextField` no longer ships a debug outline.** The hidden mirror element a
+  `multiline` field measures itself against carried `outline: 1px solid red`.
+  It was invisible in practice — the element is `visibility: hidden` — but it
+  had no business being in the stylesheet.
+
 ## 1.6.0
 
 Added

@@ -16,18 +16,23 @@ export default defineComponent({
       const styles = useCssModule()
       const slots = context.slots
 
+      // Same contract as `Labelled`, so a checkbox and a text field carry the
+      // same affordance beside their labels. The tooltip needs a position or
+      // the global tooltip CSS has nothing to offset against.
       const helpLinkMarkup =
         props.helpLink &&
         h(
           'a',
           {
             href: props.helpLink,
-            target: '_blank'
+            target: '_blank',
+            'data-ui-tooltip': props.helpLinkTooltip || undefined,
+            'data-ui-tooltip-position': props.helpLinkTooltip ? 'top' : undefined
           },
           [
             h(Icon, {
               class: styles.HelpIcon,
-              icon: 'mdi:information'
+              icon: props.helpLinkIcon
             })
           ]
         )
@@ -110,6 +115,19 @@ export default defineComponent({
      */
     helpLink: {
       type: [String, Boolean] as PropType<string | false | null>
+    },
+    /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     */
+    helpLinkIcon: {
+      type: String,
+      default: 'mdi:information'
+    },
+    /**
+     * Text shown on hovering the `helpLink` icon.
+     */
+    helpLinkTooltip: {
+      type: String
     },
     error: {
       type: [String, Boolean] as PropType<string | false | null>

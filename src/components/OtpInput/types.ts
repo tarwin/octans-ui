@@ -20,6 +20,13 @@ export interface OtpInputProps {
    */
   helpLink?: string | false
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * The current value — the characters across all cells joined into a string.
    */
   modelValue?: string | null

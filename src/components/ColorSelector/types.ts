@@ -63,6 +63,13 @@ export interface ColorSelectorProps extends Omit<
    */
   helpLink?: string | false | null
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * Where the picker opens relative to the trigger.
    */
   placement?: PopoverPlacementType

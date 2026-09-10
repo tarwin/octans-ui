@@ -22,6 +22,13 @@ export interface TimePickerProps {
    */
   helpLink?: string | false
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * Hint to display in the input when it is empty. Defaults to a format mask,
    * e.g. `"--:-- --"` (12 hour) or `"--:--"` (24 hour).
    */

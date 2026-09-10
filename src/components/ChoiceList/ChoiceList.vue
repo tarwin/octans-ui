@@ -88,6 +88,8 @@ export default defineComponent({
               label: choice.label,
               helpText: choice.helpText,
               helpLink: choice.helpLink,
+              helpLinkIcon: choice.helpLinkIcon,
+              helpLinkTooltip: choice.helpLinkTooltip,
               disabled: choice.disabled || props.disabled,
               readonly: choice.readonly || props.readonly,
               checked: isChecked,
@@ -121,6 +123,8 @@ export default defineComponent({
             label: choice.label,
             helpText: choice.helpText,
             helpLink: choice.helpLink,
+            helpLinkIcon: choice.helpLinkIcon,
+            helpLinkTooltip: choice.helpLinkTooltip,
             disabled: choice.disabled || props.disabled,
             readonly: choice.readonly || props.readonly,
             trueValue: choice.value,
@@ -143,7 +147,9 @@ export default defineComponent({
           label: props.label,
           error: props.error,
           helpText: props.helpText,
-          helpLink: props.helpLink
+          helpLink: props.helpLink,
+          helpLinkIcon: props.helpLinkIcon,
+          helpLinkTooltip: props.helpLinkTooltip
         },
         () => [segmented ? renderSegmented() : renderChoices()]
       )
@@ -166,6 +172,18 @@ export default defineComponent({
       type: String
     },
     /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     * Defaults to an information symbol. Per-choice links take theirs from
+     * the choice itself.
+     */
+    helpLinkIcon: {
+      type: String
+    },
+    /** Text shown on hovering the `helpLink` icon. */
+    helpLinkTooltip: {
+      type: String
+    },
+    /**
      * The choices to render. See `ChoiceListOptionType`, which is exported.
      *
      * ```ts
@@ -174,6 +192,8 @@ export default defineComponent({
      *   value: any
      *   helpText?: string
      *   helpLink?: string
+     *   helpLinkIcon?: string
+     *   helpLinkTooltip?: string
      *   disabled?: boolean
      *   readonly?: boolean
      *   // shown only while this choice is selected

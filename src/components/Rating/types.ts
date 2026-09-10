@@ -20,6 +20,13 @@ export interface RatingProps {
    */
   helpLink?: string | false
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * The current rating value. `null` or `0` means unrated.
    */
   modelValue?: number | null

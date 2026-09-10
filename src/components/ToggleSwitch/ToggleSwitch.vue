@@ -155,6 +155,8 @@ function toggle() {
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :help-link-icon="helpLinkIcon"
+    :help-link-tooltip="helpLinkTooltip"
     :required="required"
     :class="rootClass"
     :style="rootStyle"

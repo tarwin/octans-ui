@@ -24,6 +24,13 @@ export interface ToggleSwitchProps {
    */
   helpLink?: string | false | null
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * Marks the field as required: an asterisk after the label, and
    * `aria-required` on the switch.
    */

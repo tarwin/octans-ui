@@ -22,7 +22,7 @@ const collections = [
   },
   {
     "prefix": "lucide",
-    "lastModified": 1787576027,
+    "lastModified": 1789034318,
     "aliases": {},
     "width": 24,
     "height": 24,
@@ -128,6 +128,9 @@ const collections = [
       },
       "inbox": {
         "body": "<path fill=\"currentColor\" d=\"M19 15h-4a3 3 0 0 1-3 3a3 3 0 0 1-3-3H5V5h14m0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2\"/>"
+      },
+      "language-markdown": {
+        "body": "<path fill=\"currentColor\" d=\"M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6h17.12c.79 0 1.44.63 1.44 1.41v9.18c0 .78-.65 1.41-1.44 1.41M6.81 15.19v-3.66l1.92 2.35l1.92-2.35v3.66h1.93V8.81h-1.93l-1.92 2.35l-1.92-2.35H4.89v6.38zM19.69 12h-1.92V8.81h-1.92V12h-1.93l2.89 3.28z\"/>"
       },
       "lightbulb": {
         "body": "<path fill=\"currentColor\" d=\"M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z\"/>"

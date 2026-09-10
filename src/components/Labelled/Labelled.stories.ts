@@ -72,6 +72,37 @@ export const WithHelpLink: Story = {
   })
 }
 
+/**
+ * `helpLinkIcon` and `helpLinkTooltip` let the affordance say what it is
+ * before it is clicked. An information symbol beside a label means "there is
+ * more to read"; a markdown glyph with "Supports markdown" on hover tells the
+ * reader something they can act on without leaving the form.
+ *
+ * Reach for these rather than the `label` slot when all that changes is the
+ * icon — the slot replaces the whole label row, including the required
+ * asterisk, and you end up rebuilding what you already had.
+ */
+export const HelpLinkIconAndTooltip: Story = {
+  render: () => ({
+    components: { Labelled },
+    template: `
+      <div style="display: flex; gap: 32px">
+        <Labelled label="Notes" help-link="https://example.com">
+          <input type="text" placeholder="Default icon" />
+        </Labelled>
+        <Labelled
+          label="Notes"
+          help-link="https://commonmark.org/help/"
+          help-link-icon="mdi:language-markdown"
+          help-link-tooltip="Supports markdown"
+        >
+          <input type="text" placeholder="Hover the icon" />
+        </Labelled>
+      </div>
+    `
+  })
+}
+
 export const WithError: Story = {
   render: () => ({
     components: { Labelled },

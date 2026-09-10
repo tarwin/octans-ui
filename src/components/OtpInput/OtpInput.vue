@@ -196,6 +196,8 @@ onMounted(() => {
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :help-link-icon="helpLinkIcon"
+    :help-link-tooltip="helpLinkTooltip"
   >
     <!--
       Forwarded rather than left to the props alone: a label often needs a

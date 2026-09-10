@@ -37,6 +37,17 @@ export default defineComponent({
     helpLink: {
       type: [String, Boolean] as PropType<string | false | null>
     },
+    /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     * Defaults to an information symbol.
+     */
+    helpLinkIcon: {
+      type: String
+    },
+    /** Text shown on hovering the `helpLink` icon. */
+    helpLinkTooltip: {
+      type: String
+    },
     placeholder: {
       type: String
     },
@@ -74,6 +85,8 @@ export default defineComponent({
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :help-link-icon="helpLinkIcon"
+    :help-link-tooltip="helpLinkTooltip"
   >
     <!--
       Forwarded rather than left to the props alone: a label often needs a

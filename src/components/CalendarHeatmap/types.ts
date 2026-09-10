@@ -68,6 +68,13 @@ export interface CalendarHeatmapProps {
    */
   helpLink?: string | false
   /**
+   * The icon drawn for `helpLink` — any name the `Icon` component takes.
+   * Defaults to an information symbol.
+   */
+  helpLinkIcon?: string
+  /** Text shown on hovering the `helpLink` icon. */
+  helpLinkTooltip?: string
+  /**
    * The data to plot, one entry per day.
    *
    * Defaults to empty, which draws the calendar grid in `emptyColor` — the

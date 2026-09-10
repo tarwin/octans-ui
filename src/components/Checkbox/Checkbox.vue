@@ -46,6 +46,8 @@ export default defineComponent({
           error: props.error,
           helpText: props.helpText,
           helpLink: props.helpLink,
+          helpLinkIcon: props.helpLinkIcon,
+          helpLinkTooltip: props.helpLinkTooltip,
           disabled: props.disabled,
           readonly: props.readonly,
           tooltip: props.tooltip,
@@ -91,6 +93,17 @@ export default defineComponent({
     helpLink: {
       type: [String, Boolean] as PropType<string | false | null>,
       required: false
+    },
+    /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     * Defaults to an information symbol.
+     */
+    helpLinkIcon: {
+      type: String
+    },
+    /** Text shown on hovering the `helpLink` icon. */
+    helpLinkTooltip: {
+      type: String
     },
     name: {
       type: String

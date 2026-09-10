@@ -208,6 +208,8 @@ watch(
     :help-text="helpText"
     :help-text-html="helpTextHtml"
     :help-link="helpLink"
+    :help-link-icon="helpLinkIcon"
+    :help-link-tooltip="helpLinkTooltip"
     :required="required"
   >
     <!--
@@ -450,7 +452,6 @@ $addonInnerMargin: 8px;
   user-select: none;
   white-space: pre-line;
   word-break: break-word;
-  outline: 1px solid red;
 }
 
 .TextField_prefix,

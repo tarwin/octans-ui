@@ -45,6 +45,8 @@ export default defineComponent({
           error: props.error,
           helpText: props.helpText,
           helpLink: props.helpLink,
+          helpLinkIcon: props.helpLinkIcon,
+          helpLinkTooltip: props.helpLinkTooltip,
           disabled: props.disabled,
           readonly: props.readonly
         },
@@ -95,6 +97,17 @@ export default defineComponent({
      */
     helpLink: {
       type: [String, Boolean] as PropType<string | false | null>
+    },
+    /**
+     * The icon drawn for `helpLink` — any name the `Icon` component takes.
+     * Defaults to an information symbol.
+     */
+    helpLinkIcon: {
+      type: String
+    },
+    /** Text shown on hovering the `helpLink` icon. */
+    helpLinkTooltip: {
+      type: String
     },
     /**
      * Radio buttons with the same name will form a group.

@@ -192,6 +192,8 @@ onMounted(() => {
         :help-text="helpText"
         :help-text-html="helpTextHtml"
         :help-link="helpLink"
+        :help-link-icon="helpLinkIcon"
+        :help-link-tooltip="helpLinkTooltip"
         searchable
         @update:modelValue="onSelectTimezone"
       />
@@ -242,6 +244,8 @@ onMounted(() => {
       :help-text="helpText"
       :help-text-html="helpTextHtml"
       :help-link="helpLink"
+      :help-link-icon="helpLinkIcon"
+      :help-link-tooltip="helpLinkTooltip"
       :label="label"
       :title="selected && selected.title"
       :description="selected && selected.description"
