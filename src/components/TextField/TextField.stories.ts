@@ -1,6 +1,7 @@
 import { Button, ButtonGroup } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { Select } from '@/components/Select'
+import { Stack } from '@/components/Stack'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import TextField from './TextField.vue'
@@ -322,6 +323,49 @@ export const ProgrammableFocus: Story = {
         <br />
         <Button @click="focus">Focus after 1 second</Button>
       </div>
+    `
+  })
+}
+
+/**
+ * A `multiline` field grows to fit what is typed into it, up to a ceiling —
+ * `200px` by default — after which it scrolls.
+ *
+ * `maxHeight` moves that ceiling: any CSS length, or `"none"` to grow without
+ * one. Reach for a viewport-relative value more readily than `"none"`, since a
+ * field that grows past the bottom of the screen takes the form's buttons with
+ * it. The same thing is settable in CSS as `--octans-textfield-max-height`,
+ * for when the ceiling belongs to the layout rather than the call site.
+ */
+export const MaxHeight: Story = {
+  render: () => ({
+    components: { TextField, Stack },
+    setup() {
+      const lines = Array.from({ length: 12 }, (_, n) => `Line ${n + 1}`).join(
+        '\n'
+      )
+      return { capped: ref(lines), tall: ref(lines), uncapped: ref(lines) }
+    },
+    template: `
+      <Stack vertical>
+        <TextField
+          label="Default — scrolls past 200px"
+          multiline
+          v-model="capped"
+        />
+        <TextField
+          label="max-height 400px"
+          multiline
+          max-height="400px"
+          v-model="tall"
+        />
+        <TextField
+          label='max-height "none" — grows forever'
+          multiline
+          max-height="none"
+          v-model="uncapped"
+        />
+      </Stack>
     `
   })
 }

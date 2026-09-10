@@ -62,15 +62,20 @@ export default defineComponent({
         ]
       )
 
-      const helpTextMarkup =
-        props.helpText &&
-        h(
-          'div',
-          {
-            class: styles.HelpText
-          },
-          props.helpText
-        )
+      // Wraps rather than replaces, and wins over the prop — same contract as
+      // `Labelled`'s help text slot, so `<Checkbox>` and `<TextField>` behave
+      // the same way from the outside.
+      const helpTextSlot = slots.helpText
+      const helpTextMarkup = helpTextSlot
+        ? h('div', { class: styles.HelpText }, helpTextSlot())
+        : props.helpText &&
+          h(
+            'div',
+            {
+              class: styles.HelpText
+            },
+            props.helpText
+          )
 
       const errorMarkup =
         props.error &&

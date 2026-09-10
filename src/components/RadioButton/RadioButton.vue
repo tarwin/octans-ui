@@ -50,6 +50,12 @@ export default defineComponent({
         },
         {
           default: () => [controlMarkup],
+          // Only defined when the caller actually passed it: `Choice` decides
+          // between the slot and the `helpText` prop by whether the slot
+          // exists, so an always-present forwarder would blank out the prop.
+          ...(context.slots.helpText
+            ? { helpText: () => context.slots.helpText!() }
+            : {}),
           content: () => {
             if (isChecked && context.slots.default) {
               return h(

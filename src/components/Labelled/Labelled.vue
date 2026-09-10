@@ -59,15 +59,22 @@ export default defineComponent({
           message: props.error
         })
 
-      const helpText =
-        props.helpText &&
-        h(
-          'div',
-          {
-            class: $style.helpText
-          },
-          [props.helpText]
-        )
+      // The slot WRAPS the styled block rather than replacing it: help text is
+      // rich inline copy that still has to read as help text. That is the
+      // opposite of the `label` slot, which hands out `className` and lets the
+      // caller build its own row, because a label often needs a control beside
+      // it. When both the slot and the prop are given, the slot wins.
+      const helpTextSlot = context.slots.helpText
+      const helpText = helpTextSlot
+        ? h('div', { class: $style.helpText }, helpTextSlot())
+        : props.helpText &&
+          h(
+            'div',
+            {
+              class: $style.helpText
+            },
+            [props.helpText]
+          )
 
       const helpTextHtml =
         props.helpTextHtml &&

@@ -35,6 +35,20 @@ export interface TextFieldProps {
    */
   multiline?: boolean | string | number
   /**
+   * How tall a `multiline` field may grow before it starts to scroll. Any CSS
+   * length, or `"none"` for no ceiling at all. A number is read as pixels.
+   *
+   * A multiline field already grows to fit what is typed into it; this is only
+   * the ceiling on that growth, and it defaults to `200px`. Reach for `"50vh"`
+   * more readily than `"none"` — a field that grows past the viewport inside a
+   * sheet or modal takes its buttons with it.
+   *
+   * The same thing is settable in CSS as `--octans-textfield-max-height`, on
+   * the field or any ancestor, for when the ceiling belongs to the layout
+   * rather than to the call site.
+   */
+  maxHeight?: string | number
+  /**
    * Maximum character length for the input.
    */
   maxLength?: number

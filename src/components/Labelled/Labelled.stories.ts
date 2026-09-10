@@ -124,6 +124,33 @@ export const CustomLabelSlot: Story = {
 }
 
 /**
+The `helpText` slot is for help text that is more than a sentence of plain
+copy — a link, an inline value, a warning that only sometimes applies.
+
+Unlike the `label` slot it WRAPS rather than replaces: whatever you put here
+still gets the help text styling, because rich copy sitting under a field
+still has to read as help text. When both the slot and the prop are given,
+the slot wins.
+
+Every control that wraps `Labelled` forwards this slot, so `<TextField>`,
+`<Select>` and the rest take it too — as do `<Checkbox>` and `<RadioButton>`,
+which forward it to `Choice`.
+*/
+export const HelpTextSlot: Story = {
+  render: () => ({
+    components: { Labelled, TextField },
+    template: `
+      <TextField label="Override ToS link" placeholder="https://…">
+        <template #helpText>
+          Replaces the default Terms of Service link.
+          Currently <a href="https://example.com/tos">example.com/tos</a>.
+        </template>
+      </TextField>
+    `
+  })
+}
+
+/**
 Multiple form elements can be wrapped by a single `Labelled`, which is
 useful for building custom composite fields.
 */

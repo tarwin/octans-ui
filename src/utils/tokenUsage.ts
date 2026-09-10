@@ -353,6 +353,12 @@ export const TOKEN_USAGE: Record<string, string[]> = {
     'text-on-primary',
     'text-subdued'
   ],
+  Popover: [
+    'border',
+    'radius-box',
+    'shadow-md',
+    'surface'
+  ],
   ProgressBar: [
     'error-surface',
     'info-surface',

@@ -43,6 +43,20 @@ const mask = shallowRef<Mask | null>(null)
 
 const hasMask = computed(() => Boolean(props.mask) && !props.multiline)
 
+// Published as a custom property rather than applied directly, because the
+// element it has to reach is the input, several levels down, and the rule it
+// has to beat — `.TextField__multiline .TextField_input` — outranks anything
+// a consumer can put on the outside of the component. The ghost reads the same
+// property, so the measurement and the visible height stay in step.
+const maxHeightStyle = computed(() => {
+  const value = props.maxHeight
+  if (value === undefined || value === null || value === '') return undefined
+  return {
+    '--octans-textfield-max-height':
+      typeof value === 'number' ? `${value}px` : value
+  }
+})
+
 const maskOptions = () => ({
   mask: props.mask,
   tokens: props.maskTokens,
@@ -196,6 +210,28 @@ watch(
     :help-link="helpLink"
     :required="required"
   >
+    <!--
+      Forwarded rather than left to the props alone: a label often needs a
+      control beside it, and help text is often rich copy. Both are guarded,
+      because `Labelled` prefers a slot that merely EXISTS over the matching
+      prop — forwarding unconditionally would blank out `label` and
+      `help-text` for every caller that uses them as props.
+    -->
+    <template
+      v-if="$slots.label"
+      #label="labelProps"
+    >
+      <slot
+        name="label"
+        v-bind="labelProps"
+      ></slot>
+    </template>
+    <template
+      v-if="$slots.helpText"
+      #helpText
+    >
+      <slot name="helpText"></slot>
+    </template>
     <PreventAutoComplete :enabled="autocomplete === 'off'">
       <div
         :class="[
@@ -210,6 +246,7 @@ watch(
           $slots.left && $style.TextField__hasLeft,
           $slots.right && $style.TextField__hasRight
         ]"
+        :style="maxHeightStyle"
       >
         <div
           v-if="$slots.left"
@@ -367,7 +404,7 @@ $addonInnerMargin: 8px;
   }
 
   .TextField__multiline & {
-    max-height: 200px;
+    max-height: var(--octans-textfield-max-height, 200px);
     overflow: auto;
     resize: none;
     line-height: 24px;

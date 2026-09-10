@@ -121,6 +121,28 @@ watch(
     :help-link="helpLink"
     :required="required"
   >
+    <!--
+      Forwarded rather than left to the props alone: a label often needs a
+      control beside it, and help text is often rich copy. Both are guarded,
+      because `Labelled` prefers a slot that merely EXISTS over the matching
+      prop — forwarding unconditionally would blank out `label` and
+      `help-text` for every caller that uses them as props.
+    -->
+    <template
+      v-if="$slots.label"
+      #label="labelProps"
+    >
+      <slot
+        name="label"
+        v-bind="labelProps"
+      ></slot>
+    </template>
+    <template
+      v-if="$slots.helpText"
+      #helpText
+    >
+      <slot name="helpText"></slot>
+    </template>
     <Popover
       placement="bottom-start"
       ref="popper"

@@ -8,7 +8,11 @@ import {
   watch as vueWatch,
   type CSSProperties
 } from 'vue'
-import type { ScrollPaneProps } from './types'
+import type {
+  ScrollPaneAlignType,
+  ScrollPaneProps,
+  ScrollPaneScrollIntoViewOptions
+} from './types'
 
 /**
  * Scrolls its content as necessary and fades the edges where content overflows,
@@ -118,7 +122,97 @@ function scrollTo(x: number, y: number) {
   container.value?.scrollTo(x, y)
 }
 
-defineExpose({ scrollTo, update: updateImmediate })
+/**
+ * How far to move one axis so `target` sits where `align` asks for.
+ *
+ * Everything is measured from bounding rects rather than `offsetTop`, because
+ * the target's offset parent is whatever positioned ancestor happens to be in
+ * the way — inside a portalled overlay that is often not this container, and
+ * the arithmetic then comes out wrong in a way that only shows up on some
+ * pages.
+ */
+function offsetFor(
+  align: ScrollPaneAlignType,
+  paneStart: number,
+  paneEnd: number,
+  targetStart: number,
+  targetEnd: number,
+  pad: number
+) {
+  switch (align) {
+    case 'start':
+      return targetStart - paneStart - pad
+    case 'end':
+      return targetEnd - paneEnd + pad
+    case 'center':
+      return (
+        targetStart -
+        paneStart -
+        (paneEnd - paneStart - (targetEnd - targetStart)) / 2
+      )
+    default: {
+      // "nearest": move only if the target is off one edge, and only far
+      // enough to bring it back on.
+      const before = targetStart - paneStart - pad
+      const after = targetEnd - paneEnd + pad
+      if (before < 0) return before
+      if (after > 0) return after
+      return 0
+    }
+  }
+}
+
+/**
+ * Scrolls THIS pane so `target` is visible, and touches nothing else.
+ *
+ * `Element.scrollIntoView` walks every scrollable ancestor, so calling it on
+ * an item inside a pane that lives in a dropdown or a sheet is as likely to
+ * scroll the page out from under the overlay as it is to move the list. This
+ * knows which container it owns, so it scrolls that one.
+ *
+ * `target` may be an element or a selector resolved within the pane. Anything
+ * that is not inside the pane is ignored rather than guessed at.
+ */
+function scrollIntoView(
+  target: Element | string | null | undefined,
+  options: ScrollPaneScrollIntoViewOptions = {}
+) {
+  const el = container.value
+  if (!el || !target) return
+  const node = typeof target === 'string' ? el.querySelector(target) : target
+  if (!node || !el.contains(node)) return
+
+  const pane = el.getBoundingClientRect()
+  const box = node.getBoundingClientRect()
+  const pad = options.offset ?? 0
+
+  const top = scrollsY.value
+    ? el.scrollTop +
+      offsetFor(
+        options.block ?? 'nearest',
+        pane.top,
+        pane.bottom,
+        box.top,
+        box.bottom,
+        pad
+      )
+    : el.scrollTop
+  const left = scrollsX.value
+    ? el.scrollLeft +
+      offsetFor(
+        options.inline ?? 'nearest',
+        pane.left,
+        pane.right,
+        box.left,
+        box.right,
+        pad
+      )
+    : el.scrollLeft
+
+  el.scrollTo({ top, left, behavior: options.behavior })
+}
+
+defineExpose({ scrollTo, scrollIntoView, update: updateImmediate })
 </script>
 
 <template>

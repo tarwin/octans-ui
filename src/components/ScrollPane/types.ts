@@ -1,5 +1,29 @@
 export type ScrollPaneDirectionType = 'vertical' | 'horizontal' | 'both'
 
+/** Where in the pane `scrollIntoView` should leave the target. */
+export type ScrollPaneAlignType = 'nearest' | 'start' | 'center' | 'end'
+
+export interface ScrollPaneScrollIntoViewOptions {
+  /**
+   * Vertical placement. `"nearest"` (the default) scrolls only as far as it
+   * takes to make the target visible, and does nothing at all if it already
+   * is — the right behaviour for keyboard navigation through a list.
+   */
+  block?: ScrollPaneAlignType
+  /**
+   * Horizontal placement. Same values as `block`, and ignored unless the
+   * pane's `direction` scrolls horizontally.
+   */
+  inline?: ScrollPaneAlignType
+  /**
+   * Breathing room to leave between the target and the edge it is scrolled
+   * to, in pixels. Applies to `"nearest"`, `"start"` and `"end"`.
+   */
+  offset?: number
+  /** Passed straight to `Element.scrollTo`. */
+  behavior?: ScrollBehavior
+}
+
 export interface ScrollPaneProps {
   /**
    * Which way the content scrolls.

@@ -253,3 +253,40 @@ export const Playground: Story = {
     `
   })
 }
+
+/**
+ * A popover hands your content straight through and paints nothing of its own,
+ * which is right for anything that already dresses itself — an
+ * `ActionListMenu`, a date picker, a card — and wrong for a plain `<div>`,
+ * which ends up floating transparent over the page.
+ *
+ * `surface` is the way out of that: surface colour, border, radius and shadow,
+ * applied to your content's own root element. It is defined with `:where()`,
+ * so any rule of your own still wins — set a background beside it and yours is
+ * the one that shows.
+ */
+export const Surface: Story = {
+  render: () => ({
+    components: { Popover, Button, Stack },
+    template: `
+      <Stack spacing="loose">
+        <Popover surface>
+          <template #trigger>
+            <Button>With surface</Button>
+          </template>
+          <div style="padding: 12px; width: 220px">
+            Painted by the popover — nothing here sets a background.
+          </div>
+        </Popover>
+        <Popover>
+          <template #trigger>
+            <Button>Without</Button>
+          </template>
+          <div style="padding: 12px; width: 220px">
+            The same content, transparent over whatever is behind it.
+          </div>
+        </Popover>
+      </Stack>
+    `
+  })
+}

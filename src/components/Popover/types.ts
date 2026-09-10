@@ -39,5 +39,18 @@ export interface PopoverProps {
    * cascading sub-menus, so hovering a descendant keeps its ancestors open.
    */
   hover?: boolean
+  /**
+   * Paints the content: surface colour, border, corner radius and a shadow.
+   *
+   * Off by default, and deliberately so — a popover hands the content slot
+   * straight through, so anything that already dresses itself (an
+   * `ActionListMenu`, a date picker, a card) would end up with two borders and
+   * two shadows. Turn it on for bring-your-own-content overlays, which would
+   * otherwise render transparent over the page.
+   *
+   * The styles land on the content's own root element and are defined with
+   * `:where()`, so any rule of your own still wins.
+   */
+  surface?: boolean
   zIndex?: number
 }

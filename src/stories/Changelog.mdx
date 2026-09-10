@@ -4,6 +4,78 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.6.0
+
+Added
+
+- **Help text can be a slot.** `Labelled` and `Choice` take a `helpText` slot,
+  and every control built on them forwards it — `TextField`, `Select`,
+  `DatePicker`, `TimePicker`, `RangeSlider`, `ToggleSwitch`, `FileInput`,
+  `ColorSelector`, `CalendarHeatmap`, `SegmentedControl`, `OtpInput`,
+  `NavField`, `Rating`, `Checkbox` and `RadioButton`. Help text that needs a
+  link, an inline value or a conditional warning no longer has to be built
+  outside the field and positioned back under it.
+
+  It WRAPS rather than replaces, so slot content still gets the help text
+  styling — rich copy under a field still has to read as help text. The slot
+  wins where both it and the `help-text` prop are given.
+
+- **The `label` slot is forwarded too.** `Labelled` has always had it, and
+  nothing that wrapped `Labelled` passed it through, so a field that wanted a
+  control beside its label had to drop down to `<Labelled>` and rebuild the
+  control inside it. The slot still hands out `className`, so the default label
+  styling is one binding away.
+
+- **`TextField` takes `maxHeight`.** A `multiline` field has always grown to
+  fit what is typed into it; what it could not do was grow past `200px`, and
+  that ceiling was out of reach — the rule lives at
+  `.TextField__multiline .TextField_input`, which outranks anything a caller
+  can put on the outside of the component.
+
+  Any CSS length, or `"none"` for no ceiling at all. Reach for `"50vh"` more
+  readily than `"none"`: a field that grows past the bottom of the screen takes
+  the form's buttons with it. Also settable in CSS as
+  `--octans-textfield-max-height`, for when the ceiling belongs to the layout
+  rather than the call site.
+
+- **`Popover` takes `surface`.** A popover hands your content through and
+  paints nothing of its own, which is right for content that already dresses
+  itself — an `ActionListMenu`, a date picker, a card — and wrong for a plain
+  `<div>`, which floats transparent over the page. `surface` gives it the
+  surface colour, border, radius and shadow, on the content's own root element.
+
+  Off by default, because turning it on for everything would put a second
+  border and a second shadow around every overlay that already has one. The
+  styles are defined with `:where()`, so a rule of your own always wins.
+
+- **`ScrollPane.scrollIntoView(target, options)`.** Scrolls the pane and
+  nothing else. `Element.scrollIntoView` walks every scrollable ancestor, so
+  calling it on an item inside a pane that lives in a dropdown or a sheet is as
+  likely to scroll the page out from under the overlay as it is to move the
+  list — which is why consumers kept hand-rolling this against the container
+  they knew about. The pane knows which container it owns.
+
+  Takes an element or a selector resolved inside the pane, and `block` /
+  `inline` / `offset` / `behavior`. `block` defaults to `"nearest"`, which
+  moves only when the target is off an edge and only as far as it takes —
+  arrow-key navigation through a list wants a list that mostly does not move.
+  Measured from bounding rects, so it stays correct where the target's offset
+  parent is not the pane.
+
+Fixed
+
+- **`Popover` with `autoHide` no longer treats part of its own trigger as the
+  page.** A click on the trigger is not an outside click, but reka reports it
+  as one — its outside detection excludes the content layer and nothing else —
+  so the popover has to recognise its own trigger or it would close and reopen
+  on the same click. It did that by walking to its wrapper and taking
+  `children[0]`, which is the trigger only when the trigger is a single
+  element: a trigger with two roots had half of it counted as the page, and
+  clicking that half closed the popover.
+
+  It now asks whether the click landed anywhere in its own inline DOM, which is
+  the trigger whatever shape the trigger is.
+
 ## 1.5.0
 
 Added

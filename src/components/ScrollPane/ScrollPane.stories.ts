@@ -233,7 +233,52 @@ export const ProgrammaticScrolling: Story = {
         <Stack spacing="tight">
           <Button @click="$refs.scrollPane.scrollTo(0, 300)">Scroll to 300px</Button>
           <Button @click="$refs.scrollPane.scrollTo(0, 0)">Scroll to top</Button>
-          <Button @click="$refs.middle.scrollIntoView()">Scroll to middle item</Button>
+          <Button @click="$refs.scrollPane.scrollIntoView($refs.middle)">Scroll to middle item</Button>
+        </Stack>
+      </Stack>
+    `
+  })
+}
+
+/**
+ * `scrollIntoView` moves THIS pane and nothing else.
+ *
+ * The DOM's own `Element.scrollIntoView` walks every scrollable ancestor, so
+ * calling it on an item inside a pane that lives in a dropdown, a sheet or a
+ * modal is as likely to scroll the page out from under the overlay as it is to
+ * move the list. The pane knows which container it owns, so it scrolls that
+ * one — and it takes an element or a selector resolved inside the pane.
+ *
+ * `block` defaults to `"nearest"`, which moves only when the target is off an
+ * edge and only as far as it takes: the right behaviour for walking a list
+ * with the arrow keys, where a list that jumps on every keystroke is worse
+ * than one that does not move at all.
+ */
+export const ScrollIntoView: Story = {
+  render: () => ({
+    components: { ScrollPane, Button, Stack },
+    template: `
+      <Stack
+        vertical
+        spacing="tight"
+      >
+        <ScrollPane
+          style="max-height: 250px"
+          ref="pane"
+        >
+          <div
+            v-for="n in 80"
+            :key="n"
+            :id="'row-' + n"
+            :style="n === 40 ? 'color: var(--octans-text-error); font-weight: 600' : ''"
+          >Row {{n}}</div>
+        </ScrollPane>
+        <Stack spacing="tight">
+          <Button @click="$refs.pane.scrollIntoView('#row-40')">Nearest</Button>
+          <Button @click="$refs.pane.scrollIntoView('#row-40', { block: 'start' })">Start</Button>
+          <Button @click="$refs.pane.scrollIntoView('#row-40', { block: 'center' })">Centre</Button>
+          <Button @click="$refs.pane.scrollIntoView('#row-40', { block: 'end', offset: 16 })">End, 16px clear</Button>
+          <Button @click="$refs.pane.scrollIntoView('#row-40', { block: 'start', behavior: 'smooth' })">Smooth</Button>
         </Stack>
       </Stack>
     `

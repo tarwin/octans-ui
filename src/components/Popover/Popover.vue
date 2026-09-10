@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<PopoverProps>(), {
   autoTriggerToggle: true,
   autoHide: false,
   hover: false,
+  surface: false,
   zIndex: 10000
 })
 
@@ -24,7 +25,7 @@ const emit = defineEmits<{
 }>()
 
 const isVisible = ref(false)
-const trigger = ref()
+const wrapper = ref<HTMLElement>()
 
 const alignment = computed(() => {
   return getRadixPopperPlacement(props.placement)
@@ -107,17 +108,25 @@ function setVisible(value: boolean) {
 }
 
 /**
- * HACK: I dont want the component to automatically hide when clicking the trigger
- * This is carried over from an older UI library and can surely be improved.
- * Also, these stupid events (like interact-outside) get triggered multiple times for some reason :(
+ * A click on the TRIGGER is not an outside click, even though reka reports it
+ * as one: `usePointerDownOutside` only excludes the content layer, so without
+ * this the trigger would close the content here and immediately reopen it in
+ * `handleTriggerClick`, or vice versa, depending on which ran last.
+ *
+ * The wrapper below is the whole of this component's inline DOM — the content
+ * is portalled away to `teleportTo` — so containment in it means "the trigger,
+ * whatever shape it is". Asking the wrapper rather than the trigger element
+ * keeps this working for triggers with several root nodes, or a `v-if` root,
+ * where there is no single element to point at.
+ *
+ * `event.target` really is the clicked element and not the content root: reka
+ * dispatches the custom event on `detail.originalEvent.target`.
  */
 function tryAutoHide(event?: Event) {
-  // TODO: need to figure out how best to determine if the trigger is clicked
-  const target = event?.target as HTMLElement
-  const parentElement: HTMLDivElement | undefined =
-    trigger.value?.$el?.parentElement
-  const isPopoverInteraction = parentElement?.children[0]?.contains(target)
-  if (props.autoHide && !isPopoverInteraction) {
+  if (!props.autoHide) return
+  const target = event?.target as Node | undefined
+  const hitTrigger = !!target && !!wrapper.value?.contains(target)
+  if (!hitTrigger) {
     hide()
   }
 }
@@ -145,7 +154,7 @@ defineExpose({
 <template>
   <!-- I dont like this, but we may need a div so that CSS classes
   are applied correctly... -->
-  <div>
+  <div ref="wrapper">
     <PopoverRoot :open="isVisible">
       <PopoverTrigger
         asChild
@@ -153,7 +162,6 @@ defineExpose({
         @click="handleTriggerClick"
         @pointerenter="handlePointerEnter"
         @pointerleave="handlePointerLeave"
-        ref="trigger"
       >
         <slot
           name="trigger"
@@ -178,7 +186,7 @@ defineExpose({
         -->
         <PopoverContent
           asChild
-          class="UIElement"
+          :class="['UIElement', surface && $style.surface]"
           :side="alignment.side"
           :align="alignment.align"
           avoidCollisions
@@ -201,3 +209,17 @@ defineExpose({
     </PopoverRoot>
   </div>
 </template>
+
+<style lang="scss" module>
+/*
+ * `:where()` so it stays at zero specificity. `asChild` merges this class onto
+ * the CALLER's own root element, which will usually carry a class of its own —
+ * and that class is the one that should win when the two disagree.
+ */
+:where(.surface) {
+  background: var(--octans-surface);
+  border: 1px solid var(--octans-border);
+  border-radius: var(--octans-radius-box);
+  box-shadow: var(--octans-shadow-md);
+}
+</style>
