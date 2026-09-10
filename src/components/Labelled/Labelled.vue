@@ -20,7 +20,9 @@ export default defineComponent({
             href: props.helpLink,
             target: '_blank',
             'data-ui-tooltip': props.helpLinkTooltip || undefined,
-            'data-ui-tooltip-position': props.helpLinkTooltip ? 'top' : undefined
+            'data-ui-tooltip-position': props.helpLinkTooltip
+              ? 'top'
+              : undefined
           },
           [
             h(Icon, {
