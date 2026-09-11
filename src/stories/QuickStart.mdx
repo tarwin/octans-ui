@@ -316,6 +316,24 @@ createApp(App).use(UI, {
 Dates are formatted with DayJS, which carries its own locale data —
 `setLocale('fr')` switches both.
 
+## Time zone
+
+Dates render in the viewer's own clock unless you say otherwise. An app that
+must show one fixed zone regardless of who is looking — an operations console
+pinned to head-office time — sets it at install:
+
+```ts
+createApp(App).use(UI, { timezone: 'Australia/Sydney' })
+```
+
+Or later, with `setTimezone('Australia/Sydney')`. Either way it is a display
+setting: a stored value is never reinterpreted, and any individual
+`Formatter`, `Calendar` or `DatePicker` can override it with a `timezone`
+prop. A zone the runtime does not recognise warns and falls back to the
+viewer's clock rather than throwing.
+
+It is read once per render and is not reactive, so set it before mounting.
+
 ## Via a script tag
 
 There is a UMD build for pages without a bundler. Vue must be on the page

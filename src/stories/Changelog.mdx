@@ -4,6 +4,24 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.6.2
+
+Fixed
+
+- **`timezone` is an install option.** `setLocale` was called for you from
+  `app.use(UI, { locale })` and `setTimezone` was not, so an app configuring
+  both installed the plugin and then made a second, separate call. Leaving it
+  out failed quietly — dates fall back to the viewer's own clock, which looks
+  correct to anyone testing from the same country as the server.
+
+  ```ts
+  createApp(App).use(UI, { locale: 'en', timezone: 'Australia/Sydney' })
+  ```
+
+  Same semantics as calling `setTimezone` directly: display only, overridable
+  per call site with a `timezone` prop, and a zone the runtime does not know
+  warns and falls back rather than throwing.
+
 ## 1.6.1
 
 Added

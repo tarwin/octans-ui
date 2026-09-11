@@ -37,6 +37,15 @@ interface PluginOptions {
   translations?: Record<string, TranslationDictionary>
   /** Locale to activate at install time. Defaults to `'en'`. */
   locale?: string
+  /**
+   * Library-wide display time zone to activate at install time, as an IANA id
+   * (`'Australia/Sydney'`). Equivalent to calling `setTimezone` yourself.
+   *
+   * Left unset, dates render in the viewer's own clock. Affects DISPLAY only —
+   * a stored value is not reinterpreted. A zone this runtime does not know
+   * warns and falls back rather than throwing.
+   */
+  timezone?: string
 }
 
 // for some reason, referring to Vue type breaks things when used outside
@@ -53,6 +62,13 @@ const install = (app: any, options?: PluginOptions) => {
   if (options?.locale) {
     setTranslationLocale(options.locale)
     setLocale(options.locale)
+  }
+  // `locale` has always been settable here while `timezone` was not, so an app
+  // configuring both had to install the plugin and then make a second, separate
+  // call — easy to leave out, and the symptom is dates that look right because
+  // they fall back to the viewer's own clock.
+  if (options?.timezone) {
+    setTimezone(options.timezone)
   }
   // Register every component globally. This mainly exists for the UMD/CDN
   // build, where a plain HTML page has no way to import components. It costs
