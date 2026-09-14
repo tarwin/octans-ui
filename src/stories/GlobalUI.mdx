@@ -358,9 +358,10 @@ $ui.format(10485760, 'filesize') // "10.49 MB"
 `dateNumeral`, `dateShort`, `dateTimeShort`, `dateLong`, `dateTimeLong`,
 `dateMonthShort`, `dateMonthLong`, `dateMonthYearShort`, `dateMonthYearLong`.
 
-The `context` object accepts `{ locale, currency }`. When omitted, the locale
-falls back to the active translation locale (see `$ui.setTranslationLocale`) or
-`en-US`, and currency to `USD`.
+The `context` object accepts `{ locale, currency, timezone, inputTimezone }`.
+When omitted, the locale falls back to the active translation locale (see
+`$ui.setTranslationLocale`) or `en-US`, currency to `USD`, and the two zones to
+whatever `$ui.setTimezone` / `$ui.setInputTimezone` are set to.
 
 ---
 
@@ -372,6 +373,46 @@ date components.
 ```ts
 $ui.setLocale('fr')
 ```
+
+---
+
+## `$ui.setTimezone(zone)` / `$ui.setInputTimezone(zone)`
+
+The two halves of how a date is handled, as IANA ids. `setTimezone` is the
+clock a date is **shown** on; `setInputTimezone` is the clock a string with no
+zone of its own was **written** on.
+
+```ts
+$ui.setInputTimezone('UTC') // '2024-03-15 02:00:00' means 02:00 UTC
+$ui.setTimezone('Australia/Sydney') // render every date in Sydney time
+```
+
+Both can be set at install instead, as `app.use(UI, { timezone, inputTimezone
+})`. Read them back with `$ui.getTimezone()` and `$ui.getInputTimezone()`;
+clear either with `null`.
+
+They do not cover quite the same ground. `setTimezone` reaches every date the
+library renders — `$ui.format`, `Formatter`, and what `Calendar` and
+`DatePicker` consider today. `setInputTimezone` only applies where a stored
+value is parsed for display, which is `$ui.format` and `Formatter`.
+`DatePicker` and `TimePicker` read `modelValue` against an explicit
+`modelFormat` and are deliberately untouched by it: the value in a date field
+is a wall clock the user typed, not an instant to be converted.
+
+`inputTimezone` is the one people miss. A MySQL `DATETIME` arrives as
+`2024-03-15 02:00:00`, which names a wall clock rather than a moment, so
+without it the value is read as the reader's own local time and the same stored
+row means a different instant in every country. Setting `timezone` alone does
+not fix that — it converts an instant that was already wrong. Values that
+already name an instant (a `Z` or offset suffix, a `Date`, an epoch number) are
+never reinterpreted, and a bare `2024-03-15` is treated as a day rather than a
+moment, so neither zone moves it.
+
+Both are read during render and are not reactive: set them before mounting, or
+remount the subtree that shows dates.
+
+A zone the runtime does not know warns and falls back to the viewer's clock
+rather than throwing.
 
 ---
 

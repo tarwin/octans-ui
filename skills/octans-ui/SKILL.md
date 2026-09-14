@@ -242,20 +242,37 @@ later:
 import { addTranslations, setTranslationLocale } from '@octans/ui'
 ```
 
-Dates have two knobs, both set once at start-up and both global:
+Dates have three knobs, all global, all settable at install
+(`app.use(UI, { locale, timezone, inputTimezone })`) or later:
 
 ```ts
-import { setLocale, setTimezone } from '@octans/ui'
+import { setLocale, setTimezone, setInputTimezone } from '@octans/ui'
 
 setLocale('fr') // formats, month names, and the day the week starts on
+setInputTimezone('UTC') // what a string with NO zone of its own means
 setTimezone('America/Los_Angeles') // what "now" is, and what zone dates render in
 ```
 
-`setTimezone` is for an app that must show ONE zone to everybody — an
-operations console pinned to head-office time — rather than each viewer's own
-clock, which is the default. It affects display only; it never reinterprets a
-stored value. `Formatter`, `Calendar` and `DatePicker` each take a `timezone`
-prop to override it for one instance.
+The two zones answer different questions and are easy to confuse:
+
+- **`setTimezone`** — the clock a date is SHOWN on. For an app that must show
+  one zone to everybody, an operations console pinned to head-office time,
+  rather than each viewer's own clock, which is the default.
+- **`setInputTimezone`** — the clock a date was WRITTEN on. A MySQL `DATETIME`
+  arrives as `2024-03-15 02:00:00`, a wall clock naming no moment, so without
+  this it is read as the reader's own local time and the same stored row means
+  a different instant in every country. Setting `setTimezone` alone does NOT
+  fix that: it converts an instant that was already wrong. Set both, or
+  neither.
+
+Neither is reactive — they are read during render, so set them before mounting
+or remount the subtree. Two things are deliberately never reinterpreted: a
+value that already names an instant (a `Z` or offset suffix, a `Date`, an epoch
+number), and a bare `2024-03-15`, which is a day rather than a moment and would
+otherwise render as the 14th west of the display zone.
+
+`Formatter` takes `timezone` and `input-timezone` props to override either for
+one instance; `Calendar` and `DatePicker` take `timezone`.
 
 ## Components
 

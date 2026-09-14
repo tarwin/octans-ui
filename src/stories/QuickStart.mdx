@@ -328,11 +328,48 @@ createApp(App).use(UI, {
 })
 ```
 
-Or later, with `setInputTimezone('UTC')` and `setTimezone('Australia/Sydney')`.
-Both are unset by default, which means the viewer's own clock, and both can be
-overridden per call site with an `input-timezone` / `timezone` prop. A zone the
-runtime does not recognise warns and falls back rather than throwing. Both are
-read once per render and are not reactive, so set them before mounting.
+Both are unset by default, which means the viewer's own clock, and a zone the
+runtime does not recognise warns and falls back rather than throwing.
+
+### Setting them later
+
+Neither has to be decided at install. Both setters are exported from the
+package and hang off `$ui`, so an app that learns the zone after sign-in — from
+the user's profile, or an account setting — sets it then:
+
+```ts
+import { setInputTimezone, setTimezone } from '@octans/ui'
+
+setInputTimezone('UTC') // the API stores UTC
+setTimezone(user.timezone) // show it on their clock
+```
+
+Pass `null` or nothing to either one to clear it back to the viewer's own
+clock.
+
+They are read during render and are **not reactive**, so a change after mount
+does not re-render dates already on screen. Set them before mounting, or before
+the view that shows dates — and if you must change one on a live screen, key
+the subtree so it remounts.
+
+### What each one reaches
+
+`timezone` reaches every date the library renders. `inputTimezone` only applies
+where a stored value is parsed for display — `Formatter` and `$ui.format`.
+`DatePicker` and `TimePicker` read `modelValue` against an explicit
+`modelFormat` and are deliberately left alone: what sits in a date field is a
+wall clock the user typed, not an instant to convert.
+
+### Overriding one date
+
+Any `Formatter`, `Calendar` or `DatePicker` takes `timezone`, and `Formatter`
+also takes `input-timezone`, for the one feed that disagrees with the rest:
+
+```html
+<Formatter type="dateTimeShort" :value="row.created" input-timezone="UTC" />
+```
+
+`$ui.format` takes the same two through its context argument.
 
 ### Why the input zone matters
 
