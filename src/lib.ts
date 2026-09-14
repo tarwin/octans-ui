@@ -6,7 +6,13 @@ import { loader } from './components/LoaderOverlay'
 import { saveBar } from './components/SaveBar'
 import { toast } from './components/ToastManager'
 import { format } from './utils/format'
-import { setLocale, setTimezone, getTimezone } from './utils/date'
+import {
+  setLocale,
+  setTimezone,
+  getTimezone,
+  setInputTimezone,
+  getInputTimezone
+} from './utils/date'
 import {
   setTheme,
   toggleTheme,
@@ -46,6 +52,19 @@ interface PluginOptions {
    * warns and falls back rather than throwing.
    */
   timezone?: string
+  /**
+   * Time zone that date strings carrying no zone of their own are READ in, as
+   * an IANA id — `'UTC'` for the usual case. Equivalent to calling
+   * `setInputTimezone` yourself.
+   *
+   * The companion to `timezone`, and the other half of the same question:
+   * `timezone` is the clock dates are SHOWN on, this is the clock they were
+   * WRITTEN on. A MySQL `DATETIME` comes back as `'2024-03-15 02:00:00'`,
+   * which names no instant, so left unset it is read as the viewer's own local
+   * time — and the same stored row then means something different to a reader
+   * in Sydney than to one in London, whatever `timezone` says.
+   */
+  inputTimezone?: string
 }
 
 // for some reason, referring to Vue type breaks things when used outside
@@ -69,6 +88,9 @@ const install = (app: any, options?: PluginOptions) => {
   // they fall back to the viewer's own clock.
   if (options?.timezone) {
     setTimezone(options.timezone)
+  }
+  if (options?.inputTimezone) {
+    setInputTimezone(options.inputTimezone)
   }
   // Register every component globally. This mainly exists for the UMD/CDN
   // build, where a plain HTML page has no way to import components. It costs
@@ -106,7 +128,12 @@ export * from './components/all'
 // So consumers can bundle their own Iconify collections offline instead of
 // letting them resolve through api.iconify.design at runtime.
 export { addCollection, addIcon } from '@iconify/vue'
-export { setTimezone, getTimezone } from './utils/date'
+export {
+  setTimezone,
+  getTimezone,
+  setInputTimezone,
+  getInputTimezone
+} from './utils/date'
 export {
   translate,
   $t,
@@ -230,6 +257,8 @@ const UI = {
   t: translate,
   setTimezone,
   getTimezone,
+  setInputTimezone,
+  getInputTimezone,
   setTranslations,
   addTranslations,
   setTranslationLocale,

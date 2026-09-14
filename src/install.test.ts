@@ -1,7 +1,12 @@
 import { createApp } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Octans from './lib'
-import { getTimezone, setTimezone } from './utils/date'
+import {
+  getInputTimezone,
+  getTimezone,
+  setInputTimezone,
+  setTimezone
+} from './utils/date'
 
 /**
  * `locale` has been an install option since the plugin existed and `timezone`
@@ -16,6 +21,7 @@ function install(options?: Record<string, unknown>) {
 
 afterEach(() => {
   setTimezone(undefined)
+  setInputTimezone(undefined)
   vi.restoreAllMocks()
 })
 
@@ -41,5 +47,27 @@ describe('plugin install options', () => {
   it('still applies the locale alongside it', () => {
     install({ locale: 'en', timezone: 'Europe/Paris' })
     expect(getTimezone()).toBe('Europe/Paris')
+  })
+
+  it('sets the input time zone', () => {
+    install({ inputTimezone: 'UTC' })
+    expect(getInputTimezone()).toBe('UTC')
+  })
+
+  it('takes both zones at once, because they answer different questions', () => {
+    // The pairing an app reading UTC out of a database and showing local time
+    // actually wants. Setting only `timezone` converts an instant that was
+    // already wrong, so the two have to be settable in one call or the second
+    // one gets forgotten.
+    install({ timezone: 'Australia/Sydney', inputTimezone: 'UTC' })
+    expect(getTimezone()).toBe('Australia/Sydney')
+    expect(getInputTimezone()).toBe('UTC')
+  })
+
+  it('warns and falls back on an input zone the runtime does not know', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    install({ inputTimezone: 'UTC+10' })
+    expect(getInputTimezone()).toBeUndefined()
+    expect(warn).toHaveBeenCalled()
   })
 })

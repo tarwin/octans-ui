@@ -8,13 +8,14 @@ export default defineComponent({
     const style = useCssModule()
 
     return () => {
-      const { type, value, locale, currency, timezone } = props
+      const { type, value, locale, currency, timezone, inputTimezone } = props
       const context = {
         locale: locale,
         currency: currency,
         // `undefined`, not `''`, so an unset prop falls through to the
         // library-wide zone rather than pinning this one to UTC-nothing.
-        timezone: timezone || undefined
+        timezone: timezone || undefined,
+        inputTimezone: inputTimezone || undefined
       }
       let title
       if (type && type.indexOf('date') >= 0) {
@@ -58,6 +59,20 @@ export default defineComponent({
      * every date in the app follows. This is the per-instance override.
      */
     timezone: {
+      type: String
+    },
+    /**
+     * IANA time zone a `value` that names no zone of its own is READ in.
+     *
+     * `timezone` is the clock the date is shown on; this is the clock it was
+     * written on. `'2024-03-15 02:00:00'` straight out of a MySQL `DATETIME`
+     * names no instant, so without this it is taken as the viewer's own local
+     * time and the same row reads as a different moment in every country.
+     *
+     * Usually you want `setInputTimezone('UTC')` at app start. This is the
+     * per-instance override, for the one feed that disagrees.
+     */
+    inputTimezone: {
       type: String
     }
   }

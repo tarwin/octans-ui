@@ -4,6 +4,53 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.7.0
+
+Added
+
+- **`setInputTimezone` — the zone a date string with no zone of its own is
+  READ in.** The companion to `setTimezone`, and the other half of the same
+  question: that one is the clock a date is shown on, this is the clock it was
+  written on.
+
+  ```ts
+  createApp(App).use(UI, {
+    inputTimezone: 'UTC', // what a naive string means
+    timezone: 'Australia/Sydney' // what zone to render in
+  })
+  ```
+
+  A MySQL `DATETIME` comes back as `2024-03-15 02:00:00`, which names a wall
+  clock and not a moment — so it was read as the reader's own local time, and
+  one stored row meant two instants eleven hours apart to a reader in Sydney
+  and a reader in London. Setting `timezone` alone did not fix it: that
+  converts an instant that was already wrong. The two only work as a pair.
+
+  Settable at install, with `setInputTimezone('UTC')`, per call through
+  `format`, or per instance with `<Formatter input-timezone="UTC" />`. A zone
+  the runtime does not know warns and falls back, as `setTimezone` does.
+
+Fixed
+
+- **A date with no time no longer moves between zones.** `2024-03-15` out of a
+  `DATE` column is a day, not a moment. It was being read as local midnight
+  and then converted, so with a display zone set it could render as the 14th —
+  the classic off-by-one on a date of birth. Bare dates are now left floating:
+  neither zone is applied.
+
+- **Durations count the hour a daylight-saving change adds.** Both ends of a
+  `duration` pair are now read in the input zone. A span whose ends straddle a
+  transition was measured against the reader's clock, so eight wall-clock hours
+  in a zone that shifts came out as eight rather than nine — wrong once or
+  twice a year, in whichever hemisphere the reader was in.
+
+Breaking
+
+- Dates carrying no zone are only reinterpreted once `inputTimezone` is set, so
+  an app that sets nothing renders exactly as before. Apps already calling
+  `setTimezone` against naive strings will see those dates move to the instants
+  they were always meant to be, and bare `YYYY-MM-DD` values stop shifting.
+
 ## 1.6.2
 
 Fixed

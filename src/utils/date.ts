@@ -163,16 +163,101 @@ function getTimezone(): string | undefined {
 }
 
 /**
+ * The library-wide INPUT time zone: what a date string that carries no zone of
+ * its own is taken to mean. Unset by default, which is the viewer's own clock.
+ *
+ * This is the other half of the question `setTimezone` answers. That one says
+ * which clock a date is RENDERED in; this one says which clock it was WRITTEN
+ * in. They are separate unknowns, and an app reading UTC out of a database and
+ * showing it in Sydney needs to answer both.
+ *
+ * It matters because a naive string — `'2024-03-15 02:00:00'`, the shape every
+ * MySQL `DATETIME` comes back as — is a wall clock with no instant attached.
+ * Read against the viewer's clock, the same stored row becomes a different
+ * moment for every reader, and setting a display zone does not fix that: it
+ * converts an instant that was already wrong.
+ *
+ * Set it to `'UTC'` when values are stored in UTC, which is the common case.
+ */
+let inputTimezone: string | undefined
+
+function setInputTimezone(timezone?: string | null) {
+  if (!timezone) {
+    inputTimezone = undefined
+    return
+  }
+  // Validated here, where the name is, for the same reason `setTimezone`
+  // validates: otherwise the throw surfaces from inside a formatter.
+  try {
+    dayjs().tz(timezone)
+    inputTimezone = timezone
+  } catch {
+    console.warn(
+      `[octans] setInputTimezone: "${timezone}" is not a time zone this ` +
+        "runtime knows. Falling back to the viewer's own clock."
+    )
+    inputTimezone = undefined
+  }
+}
+
+function getInputTimezone(): string | undefined {
+  return inputTimezone
+}
+
+/** A bare calendar date: `2024-03-15`, and nothing else. */
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+/** Ends in `Z` or a UTC offset, so the string already says which instant. */
+const HAS_OFFSET = /(?:Z|[+-]\d{2}:?\d{2})$/i
+
+/**
+ * True for a value that names a DAY rather than a moment.
+ *
+ * These are deliberately left floating: no input zone applied, no display zone
+ * applied. A birthday or a MySQL `DATE` column has no time and no zone, so
+ * pinning it to one and rendering it in another moves it — `'2024-03-15'` read
+ * as UTC and shown in Los Angeles is the 14th, which is how a date of birth
+ * ends up off by a day.
+ */
+function isFloatingDate(value?: dayjs.ConfigType): boolean {
+  return typeof value === 'string' && DATE_ONLY.test(value.trim())
+}
+
+/**
+ * Turns a value into an instant, using `zone` for strings that do not say.
+ *
+ * Anything that is already an instant is left alone: a `Date`, an epoch
+ * number, another dayjs object, or a string ending in `Z` or an offset. Only
+ * the naive strings are ambiguous, and only they are pinned.
+ */
+function parseInTimezone(value?: dayjs.ConfigType, zone?: string) {
+  if (value === undefined) return dayjs()
+  if (!zone || typeof value !== 'string') return dayjs(value)
+  if (HAS_OFFSET.test(value.trim())) return dayjs(value)
+  try {
+    return dayjs.tz(value, zone)
+  } catch {
+    return dayjs(value)
+  }
+}
+
+/**
  * Reads a value in the display time zone, or the viewer's clock when there
- * isn't one. `timezone` overrides the global for this one call.
+ * isn't one. `timezone` overrides the global for this one call, as does
+ * `inputTimezone` for the zone a naive string is read in.
  *
  * A zone the runtime rejects falls back rather than throwing: a date that
  * renders in the wrong zone is a bug, and a component that throws while
  * rendering is an outage.
  */
-function inTimezone(value?: dayjs.ConfigType, timezone?: string) {
+function inTimezone(
+  value?: dayjs.ConfigType,
+  timezone?: string,
+  input?: string
+) {
+  if (isFloatingDate(value)) return dayjs(value)
+  const date = parseInTimezone(value, input ?? inputTimezone)
   const zone = timezone ?? displayTimezone
-  const date = value === undefined ? dayjs() : dayjs(value)
   if (!zone) return date
   try {
     return date.tz(zone)
@@ -183,4 +268,15 @@ function inTimezone(value?: dayjs.ConfigType, timezone?: string) {
 
 const mysqlFormat = 'YYYY-MM-DD HH:mm:ss'
 
-export { dayjs, setLocale, setTimezone, getTimezone, inTimezone, mysqlFormat }
+export {
+  dayjs,
+  setLocale,
+  setTimezone,
+  getTimezone,
+  setInputTimezone,
+  getInputTimezone,
+  isFloatingDate,
+  parseInTimezone,
+  inTimezone,
+  mysqlFormat
+}

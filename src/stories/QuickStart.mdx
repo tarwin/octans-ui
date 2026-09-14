@@ -318,21 +318,43 @@ Dates are formatted with DayJS, which carries its own locale data —
 
 ## Time zone
 
-Dates render in the viewer's own clock unless you say otherwise. An app that
-must show one fixed zone regardless of who is looking — an operations console
-pinned to head-office time — sets it at install:
+There are two questions here, and they have separate answers: which clock a
+date is **shown** on, and which clock it was **written** on.
 
 ```ts
-createApp(App).use(UI, { timezone: 'Australia/Sydney' })
+createApp(App).use(UI, {
+  inputTimezone: 'UTC', // what a string with no zone means
+  timezone: 'Australia/Sydney' // what zone to render in
+})
 ```
 
-Or later, with `setTimezone('Australia/Sydney')`. Either way it is a display
-setting: a stored value is never reinterpreted, and any individual
-`Formatter`, `Calendar` or `DatePicker` can override it with a `timezone`
-prop. A zone the runtime does not recognise warns and falls back to the
-viewer's clock rather than throwing.
+Or later, with `setInputTimezone('UTC')` and `setTimezone('Australia/Sydney')`.
+Both are unset by default, which means the viewer's own clock, and both can be
+overridden per call site with an `input-timezone` / `timezone` prop. A zone the
+runtime does not recognise warns and falls back rather than throwing. Both are
+read once per render and are not reactive, so set them before mounting.
 
-It is read once per render and is not reactive, so set it before mounting.
+### Why the input zone matters
+
+A MySQL `DATETIME` comes back as `2024-03-15 02:00:00`. That names a wall
+clock, not a moment — nothing in the string says which zone it belongs to, so
+it is read as the reader's own local time. The same stored row then means
+02:00 in Sydney to one reader and 02:00 in London to another: two instants
+eleven hours apart.
+
+Setting `timezone` alone does not fix that. It converts an instant that was
+already wrong, so the rendered time still depends on where the reader is
+sitting. The two settings only work as a pair.
+
+Values that already name an instant are never touched: a string ending in `Z`
+or a `+10:00` offset, a `Date`, an epoch number.
+
+### Dates without a time
+
+A bare `2024-03-15` — a `DATE` column, a birthday, a deadline — is a day
+rather than a moment, so neither zone is applied to it. Read as UTC and shown
+in Los Angeles it would render as the 14th, which is how a date of birth ends
+up off by one.
 
 ## Via a script tag
 

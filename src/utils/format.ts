@@ -1,5 +1,12 @@
 import memoize from 'lodash-es/memoize'
-import { dayjs, getTimezone, inTimezone } from '@/utils'
+import {
+  dayjs,
+  getInputTimezone,
+  getTimezone,
+  inTimezone,
+  isFloatingDate,
+  parseInTimezone
+} from '@/utils'
 import { isEmptyValue } from './'
 import { $t, getTranslationLocale } from './translate'
 import type plugin from 'dayjs/plugin/duration'
@@ -15,6 +22,17 @@ export interface FormatContextInterface {
    * to be, unconditionally.
    */
   timezone?: string
+  /**
+   * IANA time zone a date string with no zone of its own is READ in.
+   *
+   * `timezone` picks the clock a date is shown on; this picks the clock it was
+   * written on. `'2024-03-15 02:00:00'` out of a MySQL `DATETIME` names no
+   * instant by itself, so without this it is read as the viewer's local time
+   * and one stored row becomes a different moment for every reader.
+   *
+   * Defaults to the library-wide input zone set with `setInputTimezone`.
+   */
+  inputTimezone?: string
 }
 
 export const emptyValuePlaceholder = '—'
@@ -58,7 +76,7 @@ function createDateFormatter(fn: (d: dayjs.Dayjs) => string) {
   // ignore it and read the viewer's clock, which is fine until the app has to
   // show one fixed zone to everybody.
   return function (value: string, context?: FormatContextInterface) {
-    return fn(inTimezone(value, context?.timezone))
+    return fn(inTimezone(value, context?.timezone, context?.inputTimezone))
   }
 }
 
@@ -148,10 +166,43 @@ function formatDuration(duration: plugin.Duration, short = false) {
   return short ? parts.join(' ') || '0s' : parts.join(' ')
 }
 
+/**
+ * The elapsed time between the two ends of a `[start, end]` pair, in either
+ * order.
+ *
+ * Both ends are read in the input zone rather than through a bare `dayjs()`.
+ * Only the SPAN is printed, so a shared offset would cancel out — but a
+ * daylight-saving change falling between the two does not. Read against a
+ * viewer's clock that shifts where the stored zone does not, an eight-hour
+ * span comes out as nine, once or twice a year, in whichever hemisphere the
+ * reader happens to be in.
+ */
+function spanBetween(value: any, context?: FormatContextInterface) {
+  if (!Array.isArray(value) && value.length !== 2) {
+    throw new Error('Duration formatter value must be an array of two dates')
+  }
+  const zone = context?.inputTimezone
+  const a = parseInTimezone(value[0], zone)
+  const b = parseInTimezone(value[1], zone)
+  return dayjs.duration(Math.abs(b.diff(a)))
+}
+
 export const formatters: Record<string, any> = {
   dateAgo: createDateFormatter((m) => m.fromNow()),
   dateCalendar: createDateFormatter((m) => m.calendar()),
-  dateIso: createDateFormatter((m) => m.toISOString()),
+  dateIso(value: string, context?: FormatContextInterface) {
+    // A day has no instant to report. Rendering one anyway — local midnight as
+    // a UTC timestamp — prints the day before for every reader east of
+    // Greenwich, which is exactly the confusion the floating rule removes from
+    // the visible date. `Formatter` puts this in the `title`, so the tooltip
+    // would have contradicted the text it was explaining.
+    if (isFloatingDate(value)) return value.trim()
+    return inTimezone(
+      value,
+      context?.timezone,
+      context?.inputTimezone
+    ).toISOString()
+  },
   dateNumeral: createDateFormatter((m) => m.format('L')),
   dateShort: createDateFormatter((m) => m.format('ll')),
   dateTimeShort: createDateFormatter((m) => m.format('lll')),
@@ -161,29 +212,11 @@ export const formatters: Record<string, any> = {
   dateMonthLong: createDateFormatter((m) => m.format('MMMM')),
   dateMonthYearShort: createDateFormatter((m) => m.format('MMM, YYYY')),
   dateMonthYearLong: createDateFormatter((m) => m.format('MMMM, YYYY')),
-  duration(value: any) {
-    if (!Array.isArray(value) && value.length !== 2) {
-      throw new Error('Duration formatter value must be an array of two dates')
-    }
-    let start = value[0]
-    let end = value[1]
-    if (start > end) {
-      start = value[1]
-      end = value[0]
-    }
-    return formatDuration(dayjs.duration(dayjs(end).diff(start)))
+  duration(value: any, context?: FormatContextInterface) {
+    return formatDuration(spanBetween(value, context))
   },
-  durationShort(value: any) {
-    if (!Array.isArray(value) && value.length !== 2) {
-      throw new Error('Duration formatter value must be an array of two dates')
-    }
-    let start = value[0]
-    let end = value[1]
-    if (start > end) {
-      start = value[1]
-      end = value[0]
-    }
-    return formatDuration(dayjs.duration(dayjs(end).diff(start)), true)
+  durationShort(value: any, context?: FormatContextInterface) {
+    return formatDuration(spanBetween(value, context), true)
   },
   durationMs(value: any) {
     // return moment.duration(value).humanize()
@@ -241,6 +274,9 @@ export function format(
   }
   if (!context.timezone) {
     context.timezone = getTimezone()
+  }
+  if (!context.inputTimezone) {
+    context.inputTimezone = getInputTimezone()
   }
   const formatFn = formatters[format]
   if (!formatFn) {
