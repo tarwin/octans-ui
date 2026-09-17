@@ -107,6 +107,7 @@
     "jsdom": "^30.0.1",
     "npm-run-all2": "^9.0.3",
     "prettier": "^3.9.6",
+    "remark-gfm": "^4.0.1",
     "sass": "^1.102.0",
     "storybook": "^10.5.7",
     "storybook-vue3-router": "^7.0.0",
