@@ -327,6 +327,7 @@ watch(
 
 <style lang="scss" module>
 @import '../../styles/variables';
+@import '../../styles/mixins';
 
 $shadowInner: none;
 $shadowBorderFocus: 0 0 0 1px $focusColor;
@@ -437,12 +438,7 @@ $addonInnerMargin: 8px;
     box-shadow: none;
     cursor: $inputReadonlyCursor;
   }
-
-  @media (max-width: 640px) {
-    // Use 16px as minimum font size for smaller mobile devices to prevent iOS
-    // Safari from zooming the viewport.
-    font-size: 16px;
-  }
+  @include inputNoZoom;
 }
 
 .TextField_ghost {

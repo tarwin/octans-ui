@@ -581,6 +581,7 @@ defineExpose({ commit })
 
 <style lang="scss" module>
 @import '../../styles/variables';
+@import '../../styles/mixins';
 
 $handleSize: 14px;
 $trackHeight: 12px;
@@ -765,6 +766,7 @@ $trackHeight: 12px;
   border-radius: var(--octans-radius-field);
   font: inherit;
   font-size: 12px;
+  @include inputNoZoom;
 
   &:focus-visible {
     outline: 2px solid $focusColor;

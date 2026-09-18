@@ -8,6 +8,15 @@
   }
 }
 
+// iOS Safari zooms the viewport when a focused input, select or textarea has
+// a computed font-size under 16px. Every text-entry control should include
+// this, however small it renders on desktop.
+@mixin inputNoZoom() {
+  @media (max-width: 640px) {
+    font-size: 16px;
+  }
+}
+
 @mixin inputBase() {
   position: relative;
   display: block;
@@ -19,6 +28,7 @@
   border: 1px solid variables.$inputBorderColor;
   border-radius: variables.$inputBorderRadius;
   font-size: variables.$inputFontSize;
+  @include inputNoZoom;
   // Must be explicit: form controls do not inherit colour OR font, so without
   // these they fall back to the user agent's own — white-on-black that stays
   // light in dark mode whatever the surrounding theme says, set in Arial

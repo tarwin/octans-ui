@@ -151,6 +151,8 @@ const changePageSize = (event: Event) => {
 </template>
 
 <style lang="scss" module>
+@import '../../styles/mixins';
+
 .Pagination {
   display: flex;
   align-items: center;
@@ -239,6 +241,7 @@ const changePageSize = (event: Event) => {
   border-radius: var(--octans-radius-field);
   background: transparent;
   font-size: 14px;
+  @include inputNoZoom;
   text-align: center;
   cursor: pointer;
 

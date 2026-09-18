@@ -1290,6 +1290,7 @@ function isSearchableKey(char: string) {
 
 <style lang="scss" module>
 // @import '../../styles/variables';
+@import '../../styles/mixins';
 
 $borderColor: var(--octans-border-input);
 $inputReadonlyCursor: not-allowed;
@@ -1507,6 +1508,7 @@ $errorColor: var(--octans-error);
   border: none;
   font-family: inherit;
   font-size: 14px;
+  @include inputNoZoom;
   outline: none;
   // Inputs inherit neither background nor colour from the theme.
   background: transparent;

@@ -516,6 +516,7 @@ function handleIsLight(color: string) {
 
 <style lang="scss" module>
 @import '../../styles/variables';
+@import '../../styles/mixins';
 
 $handleWidth: 14px;
 $barHeight: 22px;
@@ -630,6 +631,7 @@ $rowHeight: 26px;
   border-radius: var(--octans-radius-field);
   font: inherit;
   font-size: 12px;
+  @include inputNoZoom;
 
   &:focus-visible {
     outline: 2px solid $focusColor;

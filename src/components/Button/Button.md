@@ -23,11 +23,9 @@
 
 ### Icons
 
-`icon` takes a Font Awesome class string or an Iconify name — they're told
-apart by the `:`.
+`icon` takes an Iconify name.
 
 ```js
-<Button icon="fa fa-plus">Font Awesome</Button>
 <Button icon="mdi:plus">Iconify</Button>
 <Button icon="not:mdi:bell">Negated with a not: prefix</Button>
 ```

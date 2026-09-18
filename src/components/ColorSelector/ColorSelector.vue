@@ -552,6 +552,7 @@ function rememberCurrent() {
 
 <style lang="scss" module>
 @import '../../styles/variables';
+@import '../../styles/mixins';
 
 .ColorSelector {
   display: flex;
@@ -679,6 +680,7 @@ function rememberCurrent() {
   border: 0;
   font-family: var(--octans-font-mono);
   font-size: 12px;
+  @include inputNoZoom;
 
   // The field already draws one around the whole control on `:focus-within`.
   &:focus {

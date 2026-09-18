@@ -157,9 +157,7 @@ import icons from '@iconify-json/lucide/icons.json'
 addCollection(icons)
 ```
 
-Font Awesome class strings (`fa fa-plus`) are still accepted for compatibility,
-but the library no longer uses or ships Font Awesome — load it yourself if you
-pass those names.
+Font Awesome class strings (`fa fa-plus`) are accepted, but you need to load it yourself if you pass those names.
 
 ## Theming
 
