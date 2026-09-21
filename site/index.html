@@ -7,7 +7,7 @@
     <title>Octans UI — an opinionated Vue 3 UI framework</title>
     <meta
       name="description"
-      content="Octans UI is an opinionated Vue 3 component library: 77 accessible, themeable components plus the application shell to hang them on. Live Storybook docs, design tokens and an interactive theme builder."
+      content="Octans UI is an opinionated Vue 3 component library: 79 accessible, themeable components plus the application shell to hang them on. Live Storybook docs, design tokens and an interactive theme builder."
     />
     <link rel="canonical" href="https://octans.dev/" />
     <!-- Kept in step with the active theme by the switcher at the end of body. -->
@@ -28,7 +28,7 @@
     />
     <meta
       property="og:description"
-      content="77 accessible, themeable Vue 3 components plus the application shell to hang them on."
+      content="79 accessible, themeable Vue 3 components plus the application shell to hang them on."
     />
     <meta
       property="og:image"
@@ -47,7 +47,7 @@
     />
     <meta
       name="twitter:description"
-      content="77 accessible, themeable Vue 3 components plus the application shell to hang them on."
+      content="79 accessible, themeable Vue 3 components plus the application shell to hang them on."
     />
     <meta
       name="twitter:image"
@@ -423,7 +423,8 @@
       }
 
       p code,
-      li code {
+      li code,
+      p code {
         font-family: var(--mono);
         font-size: 0.87em;
         color: var(--text);
@@ -532,7 +533,7 @@
       </header>
 
       <main>
-        <h1><span>77 components</span> for Vue 3.</h1>
+        <h1><span>79 components</span> for Vue 3.</h1>
 
         <p class="lede">
           An <strong>opinionated</strong> component library — accessible,
@@ -589,16 +590,20 @@
         </div>
 
         <h2>What's in it</h2>
+        <!--
+          Storybook has no URL for a sidebar group, so each links to the
+          first page in its group; the sidebar opens the group to show it.
+        -->
         <div class="grid census">
-          <div>Forms <b>22</b></div>
-          <div>Layout <b>13</b></div>
-          <div>Feedback <b>10</b></div>
-          <div>Data display <b>9</b></div>
-          <div>Utilities <b>6</b></div>
-          <div>Navigation <b>5</b></div>
-          <div>Typography <b>5</b></div>
-          <div>Overlays <b>4</b></div>
-          <div>Actions <b>3</b></div>
+          <a class="cell" href="./storybook/?path=/docs/components-forms-calendar--docs">Forms <b>22</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-layout-appframe--docs">Layout <b>13</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-feedback-banner--docs">Feedback <b>11</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-data-display-badge--docs">Data display <b>9</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-utilities-eventdelegator--docs">Utilities <b>6</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-typography-caption--docs">Typography <b>6</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-navigation-globalnav--docs">Navigation <b>5</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-overlays-modal--docs">Overlays <b>4</b></a>
+          <a class="cell" href="./storybook/?path=/docs/components-actions-actionlist--docs">Actions <b>3</b></a>
         </div>
         <p>
           Plus the shell: <code>AppFrame</code>, <code>Page</code>,
@@ -615,8 +620,9 @@ createApp(App).use(Octans).mount(<span class="s">'#app'</span>)
 <span class="c">// $ui.toast(), $ui.confirm(), $t() — available in every template</span></code></pre>
         <p>
           Components import individually too, if you would rather not install
-          the plugin: <code>import { Button, Card } from '@octans/ui'</code>.
+          the plugin:
         </p>
+        <pre><code><span class="k">import</span> { Button, Card } <span class="k">from</span> <span class="s">'@octans/ui'</span></code></pre>
 
         <h2>Also in the docs</h2>
         <ul class="links">
