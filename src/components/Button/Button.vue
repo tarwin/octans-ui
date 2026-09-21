@@ -196,6 +196,19 @@ export default defineComponent({
     pressed: {
       type: Boolean,
       default: undefined
+    },
+    /**
+     * The native `<button type>`. `type` is taken by the visual type above,
+     * so this is the only way to reach the attribute.
+     *
+     * Defaults to `button` rather than the browser's `submit`: a Button inside
+     * a `<form>` should not post it just because someone clicked “Cancel” or
+     * pressed Enter in a text field. Set `native-type="submit"` on the one
+     * button that submits the form. Ignored when `url` renders a link.
+     */
+    nativeType: {
+      type: String as PropType<'button' | 'submit' | 'reset'>,
+      default: 'button'
     }
   },
   setup(props, { slots }) {
@@ -329,6 +342,7 @@ export default defineComponent({
             props.loading && style.loading,
             props.pressed && style.pressed
           ],
+          type: element === 'button' ? props.nativeType : undefined,
           disabled: props.disabled,
           // See the `loading` prop: busy is announced, but the element stays
           // focusable and stays whatever element it was, so focus and the

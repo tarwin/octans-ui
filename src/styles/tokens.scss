@@ -723,13 +723,14 @@
   /**
    * The size every `Icon` without an explicit `size` prop is drawn at.
    *
-   * `1em` — the icon follows the surrounding font size, which is what lets a
-   * component scale its own icons by setting `font-size` on the container, and
-   * is the size the library has always drawn at. An app that wants roomier
-   * icons throughout sets this once (`1.25em` reads well against 14px text)
-   * rather than passing `size` at every call site.
+   * Relative to the surrounding font size, which is what lets a component
+   * scale its own icons by setting `font-size` on the container. `1.25em`
+   * rather than `1em`: icon glyphs sit inside a padded viewBox (Material's
+   * fill about 20 of 24 units), so a `1em` icon reads a step smaller than the
+   * text beside it. At 1.25em the glyph matches the text's weight. `1em` puts
+   * an app back on the size the library drew at before 1.8.1.
    */
-  --octans-icon-size: 1em;
+  --octans-icon-size: 1.25em;
 
   // --- typography ----------------------------------------------------------
   --octans-font: var(--ui-font);

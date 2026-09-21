@@ -282,10 +282,13 @@ watch(jumpOpen, async (open) => {
           </button>
         </template>
         <template #default="{ hide }">
-          <form
-            :class="$style.Jump"
-            @submit.prevent="jump(hide)"
-          >
+          <!--
+            Not a <form>: the input's min/max would make the browser refuse an
+            out-of-range submit with a validation bubble, where `jump` clamps
+            to the last page — as the inline field below does. The Go button
+            is for iOS, whose numeric keypad has no Enter key.
+          -->
+          <div :class="$style.Jump">
             <label :class="$style.Jump_field">
               <span :class="$style.Jump_label">Go to page</span>
               <input
@@ -297,10 +300,15 @@ watch(jumpOpen, async (open) => {
                 min="1"
                 :max="lastPageIndex + 1"
                 :placeholder="`1 – ${lastPageIndex + 1}`"
+                @keydown.enter.prevent="jump(hide)"
               />
             </label>
-            <Button type="primary">Go</Button>
-          </form>
+            <Button
+              type="primary"
+              @click="jump(hide)"
+              >Go</Button
+            >
+          </div>
         </template>
       </Popover>
       <div

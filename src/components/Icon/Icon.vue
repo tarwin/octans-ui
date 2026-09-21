@@ -218,15 +218,14 @@ export default defineComponent({
 /**
  * The size an icon takes when the caller did not ask for one.
  *
- * `1em` is what Iconify itself defaults to, so the shipped behaviour is
- * unchanged — icons scale with the surrounding font size, which is how several
- * components in this library size their own icons (see `Sheet`'s close button,
- * which sets `font-size` rather than passing `size`). The token exists so an
- * app that wants roomier icons everywhere can say so once.
+ * Icons scale with the surrounding font size, which is how several components
+ * in this library size their own icons (see `Sheet`'s close button, which sets
+ * `font-size` rather than passing `size`). The fallback matches the token's
+ * default in `tokens.scss` — see there for why it is not Iconify's `1em`.
  */
 .themeSized {
-  width: var(--octans-icon-size, 1em);
-  height: var(--octans-icon-size, 1em);
+  width: var(--octans-icon-size, 1.25em);
+  height: var(--octans-icon-size, 1.25em);
 }
 
 .wrapper {

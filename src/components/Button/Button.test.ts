@@ -115,3 +115,32 @@ describe('Button pressed', () => {
     expect(classesOf({ type: 'outline', pressed: true })).toContain('pressed')
   })
 })
+
+// `type` is the visual type, so the native attribute has its own prop. Inside
+// a <form> a bare <button> defaults to `submit`, which would post the form
+// from every Cancel button and every Enter in a text field.
+describe('Button nativeType', () => {
+  it('never submits a surrounding form by default', () => {
+    expect(mount(Button).attributes('type')).toBe('button')
+  })
+
+  it('does not let the visual type leak into the native attribute', () => {
+    expect(
+      mount(Button, { props: { type: 'primary' } }).attributes('type')
+    ).toBe('button')
+  })
+
+  it('opts a button into submitting', () => {
+    expect(
+      mount(Button, { props: { nativeType: 'submit' } }).attributes('type')
+    ).toBe('submit')
+  })
+
+  it('puts no type on a link', () => {
+    expect(
+      mount(Button, { props: { url: 'https://example.com' } }).attributes(
+        'type'
+      )
+    ).toBeUndefined()
+  })
+})

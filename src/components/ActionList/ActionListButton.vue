@@ -110,6 +110,9 @@ export default defineComponent({
         element,
         {
           class: $style.ActionListButton,
+          // A menu row is never a form's submit button, and without this a
+          // `<button>` inside a `<form>` defaults to `submit`.
+          type: element === 'button' ? 'button' : undefined,
           href: props.url,
           target: props.external ? '_blank' : undefined,
           disabled: props.disabled,

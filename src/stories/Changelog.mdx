@@ -4,6 +4,31 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.8.1
+
+Changed
+
+- **Icons are a step larger.** `--octans-icon-size` now defaults to `1.25em`
+  rather than `1em`: icon glyphs sit inside a padded viewBox, so at `1em` they
+  read smaller than the text beside them. Every `Icon` without an explicit
+  `size` grows with it — a `TextField` prefix, a `Button` icon, a `Banner`
+  glyph. Set `--octans-icon-size: 1em` to keep the old size.
+
+- **Button no longer submits a form by default.** A bare `<button>` is
+  `type="submit"`, so every `Button` inside a `<form>` posted it. The native
+  type now defaults to `button`; give the one button that submits
+  `native-type="submit"`. (`type` remains the visual type.) `ActionList`
+  rows are `type="button"` too.
+
+Fixed
+
+- **DataTable** sort carets were a few pixels wide; they are now the size of
+  `Select`'s caret and sit level with the column label.
+
+- **Pagination**'s "Go to page" button in the compact form did nothing on
+  click — only Enter worked. Out-of-range pages now clamp there as they do
+  in the inline field, instead of a browser validation bubble.
+
 ## 1.8.0
 
 Added

@@ -88,6 +88,35 @@ pill on the top-right corner. The object form gives full control.
 </template>
 ```
 
+### Inside a form
+
+A bare `<button>` defaults to `type="submit"`, so every button in a form would
+post it. `Button` defaults its native type to `button` instead; give the one
+button that submits `native-type="submit"`. (`type` itself is the visual type.)
+
+```vue
+<template>
+  <form @submit.prevent="log('submitted')">
+    <Button @click="log('cancel')">Cancel</Button>
+    <Button
+      type="primary"
+      native-type="submit"
+      >Save</Button
+    >
+  </form>
+</template>
+
+<script>
+export default {
+  methods: {
+    log() {
+      console.log(...arguments)
+    }
+  }
+}
+</script>
+```
+
 ### Full-width
 
 ```vue

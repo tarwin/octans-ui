@@ -209,6 +209,31 @@ describe('Pagination options', () => {
     expect((input.element as HTMLInputElement).value).toBe('')
   })
 
+  // The popover field has a Go button because iOS's numeric keypad has no
+  // Enter key; a click must jump, not just Enter.
+  it('jumps from the popover field on Enter and on the Go button', async () => {
+    const wrapper = mount(Pagination, {
+      props: { ...PROPS, jumpTo: true, compact: true },
+      attachTo: document.body
+    })
+    await wrapper.find('button[aria-label="Go to page"]').trigger('click')
+    // The popover teleports to <body>, so look there rather than in the wrapper.
+    const input = document.body.querySelector(
+      'input[type="number"]'
+    ) as HTMLInputElement
+    const go = [...document.body.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Go'
+    ) as HTMLButtonElement
+    input.value = '7'
+    input.dispatchEvent(new Event('input'))
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    input.value = '99'
+    input.dispatchEvent(new Event('input'))
+    go.click()
+    expect(wrapper.emitted('change')).toEqual([[150], [225]])
+    wrapper.unmount()
+  })
+
   it('makes the compact readout a button when jumping is on', () => {
     const wrapper = mount(Pagination, {
       props: { ...PROPS, jumpTo: true, compact: true }

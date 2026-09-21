@@ -487,6 +487,10 @@ const render = () => {
           props.sort && props.sort.direction === 'asc'
             ? 'mdi:menu-up'
             : 'mdi:menu-down',
+        // `menu-down` is a 10×5 triangle in a 24-unit box, so at the header's
+        // font size it is a few pixels wide. The same size `Select` gives its
+        // caret, so the two read as one glyph.
+        size: '20px',
         class: $style.SortIcon
       })
 
@@ -763,6 +767,13 @@ $padding: 16px;
 .SortIcon {
   opacity: 0.3;
   margin-right: 5px;
+  // The caret is a 20px box beside 14px text, and the glyph sits in the
+  // box's upper half. On the baseline that puts it above the label; centre
+  // the box on the text's middle instead.
+  vertical-align: middle;
+  // Sits the caret on the label's x-height rather than dead centre — a
+  // filled triangle reads lower than it is drawn.
+  margin-top: -2px;
 
   .Cell_isSorted &,
   .Cell_sortable:hover & {
