@@ -241,10 +241,42 @@ export const AllComponents: Story = {
 
       // Navigation
       const tab = ref('all')
+      // More than fit the tile, so the overflow menu shows, with badges,
+      // icons (via the `tab` slot) and a disabled tab all in the one strip.
       const tabs = [
-        { value: 'all', label: 'All' },
-        { value: 'draft', label: 'Draft' },
-        { value: 'archived', label: 'Archived' }
+        { value: 'all', label: 'All', icon: 'mdi:inbox', badge: '42' },
+        {
+          value: 'draft',
+          label: 'Draft',
+          badge: '3',
+          badgeStatus: 'attention'
+        },
+        { value: 'scheduled', label: 'Scheduled', icon: 'mdi:clock-outline' },
+        {
+          value: 'published',
+          label: 'Published',
+          icon: 'mdi:send',
+          badge: '12',
+          badgeStatus: 'success'
+        },
+        { value: 'archived', label: 'Archived' },
+        { value: 'trashed', label: 'Trashed', disabled: true },
+        {
+          value: 'flagged',
+          label: 'Flagged',
+          icon: 'mdi:alert-octagon',
+          badge: '1',
+          badgeStatus: 'critical'
+        },
+        {
+          value: 'pending',
+          label: 'Pending review',
+          badge: '7',
+          badgeStatus: 'warning',
+          badgeProgress: 'partiallyComplete'
+        },
+        { value: 'shared', label: 'Shared with me' },
+        { value: 'starred', label: 'Starred', icon: 'mdi:star' }
       ]
       const offset = ref(0)
 
@@ -472,7 +504,18 @@ export const AllComponents: Story = {
             </div>
           </Tile>
           <Tile name="Tabs">
-            <Tabs :tabs="tabs" v-model:selected="tab" />
+            <Tabs :tabs="tabs" v-model:selected="tab" indicator="bar">
+              <template #tab="{ tab: t }">
+                <Icon v-if="t.icon" :icon="t.icon" style="margin-right: 6px" />
+                {{ t.label }}
+                <Badge
+                  v-if="t.badge"
+                  :status="t.badgeStatus"
+                  :progress="t.badgeProgress"
+                  style="margin-left: 6px"
+                >{{ t.badge }}</Badge>
+              </template>
+            </Tabs>
             <div>Selected: {{ tab }}</div>
           </Tile>
           <Tile name="Link">
@@ -488,7 +531,7 @@ export const AllComponents: Story = {
               :offset="offset"
               :limit="10"
               :total="250"
-              :max-pages="5"
+              :page-slots="7"
               @change="(value) => (offset = value)"
             />
           </Tile>

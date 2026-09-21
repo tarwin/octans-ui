@@ -4,7 +4,9 @@ import { Icon } from '@/components/Icon'
 import { ScrollPane } from '@/components/ScrollPane'
 import { Spinner } from '@/components/Spinner'
 import debounce from 'lodash-es/debounce'
-import { computed, onBeforeUnmount, ref, useCssModule } from 'vue'
+import { computed, onBeforeUnmount, ref, useCssModule, useId } from 'vue'
+import { trapTab } from '@/utils/focusTrap'
+import { $t } from '@/utils/translate'
 import { SheetInstance, createSheetManager } from './manager'
 import type { SheetProps } from './types'
 import type { ActionType } from '../types'
@@ -128,6 +130,8 @@ const direction = computed(() =>
 
 const index = ref<number>(0)
 const isActive = ref<boolean>(false)
+const container = ref<HTMLElement>()
+const titleId = useId()
 const disableScroll = ref<boolean>(true)
 const screenWidth = ref<number>(window.innerWidth)
 const screenHeight = ref<number>(window.innerHeight)
@@ -230,7 +234,44 @@ function enter(el: Element, done: () => void) {
     el.style.transform = transformFor(restPosition.value)
   }
   isActive.value = true
+  takeFocus()
   setTimeout(done, animateIn.value)
+}
+
+/**
+ * Focus goes into the sheet as it opens and back to where it was when it
+ * closes, and `trapTab` keeps Tab inside it in between — the sheet is not a
+ * `<dialog>`, so nothing else stops a keyboard user walking out under the
+ * backdrop. Restored only if focus is still ours to give back: a caller that
+ * moved it on during the close should not have it yanked.
+ */
+let previouslyFocused: HTMLElement | null = null
+
+function takeFocus() {
+  if (!container.value) return
+  previouslyFocused = document.activeElement as HTMLElement | null
+  if (!container.value.contains(document.activeElement)) {
+    container.value.focus()
+  }
+}
+
+function restoreFocus() {
+  const target = previouslyFocused
+  previouslyFocused = null
+  if (!target || !target.isConnected) return
+  const active = document.activeElement
+  if (
+    active &&
+    active !== document.body &&
+    !container.value?.contains(active)
+  ) {
+    return
+  }
+  target.focus?.()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (container.value) trapTab(event, container.value)
 }
 
 function afterEnter() {
@@ -255,6 +296,7 @@ function leave(_el: Element, done: () => void) {
 function afterLeave() {
   manager.remove(inst)
   disableScroll.value = true
+  restoreFocus()
   emit('after-close')
 }
 
@@ -329,6 +371,12 @@ onBeforeUnmount(() => {
         @after-leave="afterLeave"
       >
         <div
+          ref="container"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="titleId"
+          :aria-busy="loading || undefined"
+          tabindex="-1"
           :class="[
             $style.container,
             $style[`container__${edge}`],
@@ -336,6 +384,7 @@ onBeforeUnmount(() => {
           ]"
           v-if="visible"
           :style="containerStyle"
+          @keydown="onKeydown"
         >
           <div
             v-if="loading"
@@ -350,13 +399,20 @@ onBeforeUnmount(() => {
             :class="$style.header"
             :style="color ? { borderTopColor: color } : undefined"
           >
-            <div
+            <button
+              type="button"
               :class="$style.close"
+              :aria-label="$t('ui.modal.close')"
               @click="close"
             >
               <Icon icon="mdi:close" />
+            </button>
+            <div
+              :id="titleId"
+              :class="$style.title"
+            >
+              {{ title }}
             </div>
-            <div :class="$style.title">{{ title }}</div>
             <div :class="$style.actions">
               <!-- @slot Custom content in the header, shown left of the action buttons. -->
               <slot name="actions"></slot>
@@ -441,6 +497,10 @@ $slideDuration: 0.7s;
   position: fixed;
   top: 0;
   left: 0;
+  // Focused as a whole when it opens; it is a container, so no ring.
+  &:focus {
+    outline: none;
+  }
   display: flex;
   flex-direction: column;
   background: var(--octans-surface-sunken);
@@ -483,7 +543,10 @@ $slideDuration: 0.7s;
 .close {
   padding: 10px 15px;
   color: var(--octans-text-subdued);
+  font: inherit;
   font-size: 20px;
+  background: none;
+  border: 0;
   &:hover {
     color: var(--octans-text);
     cursor: pointer;

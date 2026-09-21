@@ -53,4 +53,14 @@ export interface PopoverProps {
    */
   surface?: boolean
   zIndex?: number
+  /**
+   * Shows the content as a sheet rising from the bottom of the screen, behind
+   * a scrim, instead of a panel anchored to the trigger.
+   *
+   * `'mobile'` does so only on a phone-sized viewport (under 568px) and keeps
+   * the anchored panel everywhere else; `true` always does. Off by default.
+   * Both slots receive `sheet`, so the content can drop its own border and
+   * shadow when the sheet is already drawing them.
+   */
+  sheet?: boolean | 'mobile'
 }

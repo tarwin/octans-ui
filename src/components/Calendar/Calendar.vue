@@ -552,6 +552,11 @@ $hoverBgColor: var(--octans-surface-hover);
 .Cell {
   margin: calc(var(--cell-margin) * 1px) 0px;
 
+  // Taller in a Popover sheet, where the cells are tapped rather than clicked.
+  [data-popover-sheet] & {
+    padding: 12px 9px;
+  }
+
   &:hover {
     background: $hoverBgColor;
     cursor: pointer;

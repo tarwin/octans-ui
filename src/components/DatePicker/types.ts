@@ -31,6 +31,14 @@ export interface DatePickerProps {
    */
   type?: 'datetime' | 'date' | 'month' | 'year'
   /**
+   * How the calendar opens. `'mobile'` (the default) shows it as a sheet
+   * rising from the bottom of the screen on a phone-sized viewport, where an
+   * anchored panel sits awkwardly and fights the keyboard, and as a panel
+   * under the field everywhere else. `true` always uses the sheet, `false`
+   * never does.
+   */
+  sheet?: boolean | 'mobile'
+  /**
    * The model date value formatted according to `modelFormat`. Parts of the
    * date may be truncated depending on the `type` being used.
    */

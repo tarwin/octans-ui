@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import Tabs from './Tabs.vue'
+import { Splitter } from '@/components/Splitter'
 
 const meta = {
   title: 'Components/Navigation/Tabs',
@@ -204,6 +205,103 @@ export const CustomTabContent: Story = {
           </template>
         </Tabs>
       </Card>
+    `
+  })
+}
+
+const MANY_TABS = [
+  { value: 'all', label: 'All', icon: 'mdi:inbox', badge: '42' },
+  { value: 'draft', label: 'Draft', badge: '3', badgeStatus: 'attention' },
+  { value: 'scheduled', label: 'Scheduled', icon: 'mdi:clock-outline' },
+  {
+    value: 'published',
+    label: 'Published',
+    icon: 'mdi:send',
+    badge: '12',
+    badgeStatus: 'success'
+  },
+  { value: 'archived', label: 'Archived' },
+  { value: 'trashed', label: 'Trashed', disabled: true },
+  { value: 'flagged', label: 'Flagged', icon: 'mdi:alert-octagon' },
+  { value: 'shared', label: 'Shared with me' },
+  { value: 'starred', label: 'Starred', icon: 'mdi:star' }
+]
+
+/** A tab's `icon` is drawn before its label, in the strip and in the menu. */
+export const WithIcons: Story = {
+  render: () => ({
+    components: { Tabs, Card },
+    setup() {
+      const selected = ref('all')
+      return { selected, tabs: MANY_TABS.slice(0, 4) }
+    },
+    template: `
+      <Card>
+        <Tabs :tabs="tabs" v-model:selected="selected" />
+      </Card>
+    `
+  })
+}
+
+/**
+ * The tabs that do not fit move into a menu at the end of the strip, in
+ * order, and nothing is held back for the menu while everything fits. When the
+ * selected tab is in the menu the button shows it — icon and badge included —
+ * and carries the indicator. Resize the card to see the strip give way one tab
+ * at a time; it keeps its height even with every tab in the menu.
+ */
+export const OverflowMenu: Story = {
+  render: () => ({
+    components: { Tabs, Card, Splitter },
+    setup() {
+      const selected = ref('starred')
+      const size = ref<number | string>('60%')
+      return { selected, size, tabs: MANY_TABS }
+    },
+    template: `
+      <div style="height: 200px; border: 1px solid var(--octans-border); border-radius: var(--octans-radius-box); overflow: hidden">
+        <Splitter v-model:size="size" :min="120">
+          <template #start>
+            <div style="padding: 16px">
+              <Card>
+                <Tabs :tabs="tabs" v-model:selected="selected" />
+                <div style="padding: 16px">Selected: {{ selected }}</div>
+              </Card>
+            </div>
+          </template>
+          <template #end>
+            <div style="height: 100%; padding: 16px; background: var(--octans-surface-sunken)">Drag the gutter</div>
+          </template>
+        </Splitter>
+      </div>
+    `
+  })
+}
+
+/**
+ * `overflow="scroll"` keeps every tab in the strip and scrolls it sideways
+ * instead, without a scrollbar; the edge with more tabs behind it fades, and
+ * selecting a tab scrolls it into view. `:scroll-indicators="false"` drops
+ * the fades, as in the second strip.
+ */
+export const OverflowScroll: Story = {
+  render: () => ({
+    components: { Tabs, Card },
+    setup() {
+      const selected = ref('all')
+      return { selected, tabs: MANY_TABS }
+    },
+    template: `
+      <div style="max-width: 480px">
+        <Card>
+          <Tabs :tabs="tabs" v-model:selected="selected" overflow="scroll" />
+          <div style="padding: 16px">Selected: {{ selected }}</div>
+        </Card>
+        <div style="height: 16px"></div>
+        <Card>
+          <Tabs :tabs="tabs" v-model:selected="selected" overflow="scroll" :scroll-indicators="false" />
+        </Card>
+      </div>
     `
   })
 }

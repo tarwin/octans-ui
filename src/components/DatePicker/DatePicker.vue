@@ -15,7 +15,8 @@ const props = withDefaults(defineProps<DatePickerProps>(), {
   minTime: '00:00',
   maxTime: '23:59',
   clearable: false,
-  autoOpen: true
+  autoOpen: true,
+  sheet: 'mobile'
 })
 
 const emit = defineEmits<{
@@ -151,8 +152,16 @@ watch(
       auto-hide
       :auto-trigger-toggle="false"
       :zIndex="2005"
+      :sheet="sheet"
     >
-      <template #trigger="{ show, hide }">
+      <!--
+        In the sheet form the field is a button in all but name: the sheet
+        takes focus, so it opens on the tap (click) rather than on focus —
+        focus comes BACK to the field when the sheet closes, and opening on
+        it again would reopen the sheet at once — and `inputmode="none"`
+        keeps the phone's keyboard down, since the calendar is the way in.
+      -->
+      <template #trigger="{ show, hide, sheet: inSheet }">
         <div :class="$style.DatePicker_inputWrapper">
           <div
             v-if="clearable"
@@ -181,12 +190,13 @@ watch(
             :disabled="disabled"
             :readonly="readonly"
             :aria-required="required || undefined"
+            :inputmode="inSheet ? 'none' : undefined"
             @input="inputValue = ($event?.target as HTMLInputElement)?.value"
             @change="
               setFromInput(($event?.target as HTMLInputElement).value, hide)
             "
             @click="attemptShow(show)"
-            @focus="attemptShow(show)"
+            @focus="inSheet || attemptShow(show)"
             @keydown.enter="
               setFromInput(($event?.target as HTMLInputElement).value, hide)
             "
@@ -195,8 +205,13 @@ watch(
           />
         </div>
       </template>
-      <template #default="{ hide }">
-        <div :class="$style.DatePicker_popper">
+      <template #default="{ hide, sheet: inSheet }">
+        <div
+          :class="[
+            $style.DatePicker_popper,
+            inSheet && $style.DatePicker_popper__sheet
+          ]"
+        >
           <Calendar
             :type="type"
             :model-format="modelFormat"
@@ -294,5 +309,24 @@ watch(
   border: 1px solid var(--octans-border);
   border-radius: var(--octans-radius-field);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+// In the sheet the surface, border and shadow are the sheet's own, and the
+// calendar spreads to the full width so the day cells grow into thumb-sized
+// targets instead of staying at their desktop 280px.
+.DatePicker_popper__sheet {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+
+  > * {
+    width: 100%;
+    // Fills a phone. When the sheet is forced on a wider screen the calendar
+    // is centred instead of stretching seven cells across the whole width.
+    max-width: 420px;
+    margin: 0 auto;
+  }
 }
 </style>

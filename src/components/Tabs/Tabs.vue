@@ -2,25 +2,33 @@
 import { ActionList, type ActionListItemType } from '@/components/ActionList'
 import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import { ScrollPane } from '@/components/ScrollPane'
 import debounce from 'lodash-es/debounce'
 import {
   computed,
   defineComponent,
   h,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
   useCssModule,
   useSlots,
+  watch,
   type PropType
 } from 'vue'
+import { overflowTabs } from './layout'
 import type { TabType, TabsProps } from './types'
 
 // `indicator` deliberately has NO default: an unset prop means "whatever the
 // theme says", and `withDefaults` would erase the difference between that and
 // an instance that explicitly asked for an underline.
 const props = withDefaults(defineProps<TabsProps>(), {
-  tabs: () => []
+  tabs: () => [],
+  overflow: 'menu',
+  scrollIndicators: true,
+  menuContent: true
 })
 
 const emit = defineEmits<{
@@ -46,8 +54,23 @@ const indicatorClass = computed(() =>
 
 const truncatedTabMap = ref<Record<string, boolean>>({})
 const tabContainer = ref<HTMLDivElement>()
+// In scroll mode the strip sits in a ScrollPane, which owns the scrolling and
+// the fades at either edge; otherwise this is the plain wrapper div.
+const scrollPane = ref<InstanceType<typeof ScrollPane> | HTMLElement>()
 const tabElements = ref<HTMLButtonElement[]>([])
+// A component ref: the ActionList's root element is its `$el`.
+const menuElement = ref<{ $el?: HTMLElement }>()
 const resizeObserver = ref<ResizeObserver | null>(null)
+/**
+ * The height of a tab, held on the strip as a minimum: a tab in the menu is
+ * taken out of the flow, so with every tab in there the strip would otherwise
+ * shrink to the menu button and the content below it would jump up.
+ */
+const tabHeight = ref(0)
+
+const selectedTab = computed(() =>
+  props.tabs.find((tab) => tab.value === props.selected)
+)
 
 const truncatedTabs = computed(() => {
   return props.tabs.filter((tab) => truncatedTabMap.value[tab.value])
@@ -55,7 +78,7 @@ const truncatedTabs = computed(() => {
 
 /**
  * What a tab renders inside its own button — the `tab` slot if the caller
- * supplied one, otherwise the label and its badge.
+ * supplied one, otherwise the icon, the label and its badge.
  *
  * Shared with the overflow menu on purpose. A tab that overflows keeps
  * whatever it was showing: previously the menu row was the bare label, so on a
@@ -65,6 +88,7 @@ const truncatedTabs = computed(() => {
 function renderTabContent(tab: TabType) {
   if (slots.tab) return slots.tab({ tab })
   return [
+    tab.icon ? h(Icon, { icon: tab.icon, class: $style.Tab_icon }) : null,
     tab.label,
     tab.badge
       ? h(
@@ -96,7 +120,7 @@ const truncatedTabActions = computed(() => {
       label: tab.label,
       icon: tab.value === props.selected ? 'mdi:check' : null,
       disabled: tab.disabled,
-      content: () => renderTabContent(tab),
+      content: props.menuContent ? () => renderTabContent(tab) : undefined,
       onAction: () => onChange(tab)
     }
     return action
@@ -105,11 +129,6 @@ const truncatedTabActions = computed(() => {
 
 const hasSelectedTruncatedTab = computed(() => {
   return truncatedTabs.value.some((tab) => tab.value === props.selected)
-})
-
-const truncatedTabLabel = computed(() => {
-  const selectedTab = props.tabs.find((tab) => tab.value === props.selected)
-  return (hasSelectedTruncatedTab.value && selectedTab?.label) || ''
 })
 
 function onChange(tab: TabType) {
@@ -121,26 +140,84 @@ function onChange(tab: TabType) {
   emit('update:selected', tab.value, tab)
 }
 
+// ---- Overflow ---------------------------------------------------------------
+
+// The menu button when there is nothing to measure: its padding, the link
+// button's own, and a dots icon — or, standing in for the selected tab, that
+// tab's width plus the caret.
+const MENU_DOTS_WIDTH = 72
+const MENU_LABEL_EXTRA = 44
+
 function resizeTabs() {
-  // A map of all tab IDs and whether they should be hidden
-  const newTruncatedTabMap: Record<string, boolean> = {}
-  const tabsContainerWidth = tabContainer.value?.getBoundingClientRect().width
-  // Start with an initial width to compensate for the truncated button that
-  // might need to be shown.
-  let currentWidth = 150
-  tabElements.value.forEach((tabEl, index) => {
-    const tab = props.tabs[index]
-    const width = tabEl.offsetWidth
-    currentWidth += width
-    newTruncatedTabMap[tab.value] = currentWidth >= (tabsContainerWidth || 0)
+  const container = tabContainer.value
+  if (!container) return
+  const widths = tabElements.value.map((el) => el.offsetWidth)
+  tabHeight.value = Math.max(
+    0,
+    ...tabElements.value.map((el) => el.offsetHeight)
+  )
+
+  if (props.overflow === 'scroll') {
+    truncatedTabMap.value = {}
+    return
+  }
+
+  const selectedIndex = props.tabs.findIndex(
+    (tab) => tab.value === props.selected
+  )
+  const menuWidth = (labelled: boolean) => {
+    // Measured when it is on screen in the mode being asked about, estimated
+    // otherwise.
+    const measured = menuElement.value?.$el?.offsetWidth
+    if (measured && labelled === hasSelectedTruncatedTab.value) return measured
+    return labelled ? widths[selectedIndex] + MENU_LABEL_EXTRA : MENU_DOTS_WIDTH
+  }
+
+  const hidden = overflowTabs(
+    widths,
+    container.clientWidth,
+    selectedIndex,
+    menuWidth
+  )
+  const map: Record<string, boolean> = {}
+  props.tabs.forEach((tab, index) => {
+    map[tab.value] = hidden[index]
   })
-  truncatedTabMap.value = newTruncatedTabMap
+  truncatedTabMap.value = map
+}
+
+/**
+ * Lays the strip out twice: the first pass can only estimate the menu button
+ * when it is not on screen yet (or is about to change from dots to the
+ * selected tab), the second measures the one the first pass put there.
+ */
+async function layout() {
+  resizeTabs()
+  await nextTick()
+  resizeTabs()
+  scrollSelectedIntoView()
+}
+
+/**
+ * In scroll mode, brings the selected tab into view — with room to spare, so
+ * it is not left under the pane's edge fade.
+ */
+function scrollSelectedIntoView() {
+  if (props.overflow !== 'scroll') return
+  const pane = scrollPane.value
+  const index = props.tabs.findIndex((tab) => tab.value === props.selected)
+  const el = tabElements.value[index]
+  if (!pane || !('scrollIntoView' in pane) || !el) return
+  pane.scrollIntoView(el, { inline: 'nearest', offset: 24, behavior: 'smooth' })
 }
 
 onMounted(() => {
   if (tabContainer.value) {
+    // Once by hand: a background tab gets no observer callbacks until it is
+    // shown, and the strip should still be laid out when it is.
+    layout()
     resizeObserver.value = new ResizeObserver(
-      debounce(resizeTabs, 100, {
+      debounce(layout, 100, {
         leading: true,
         trailing: true
       })
@@ -148,6 +225,18 @@ onMounted(() => {
     resizeObserver.value.observe(tabContainer.value)
   }
 })
+
+// The tabs themselves and the selection both change what fits: a new tab
+// list has new widths, and the menu button grows when the selected tab is in
+// the menu.
+watch(
+  [() => props.tabs, () => props.selected, () => props.overflow],
+  async () => {
+    await nextTick()
+    layout()
+  },
+  { deep: true }
+)
 
 onBeforeUnmount(() => {
   if (resizeObserver.value) {
@@ -159,50 +248,75 @@ onBeforeUnmount(() => {
 
 <template>
   <div :class="['UIElement', $style.Tabs, indicatorClass]">
-    <div
-      :class="$style.Tab_container"
-      ref="tabContainer"
+    <component
+      :is="overflow === 'scroll' ? ScrollPane : 'div'"
+      ref="scrollPane"
+      v-bind="
+        overflow === 'scroll'
+          ? {
+              direction: 'horizontal',
+              indicators: scrollIndicators,
+              containerClass: $style.Tab_scroller
+            }
+          : {}
+      "
     >
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        type="button"
+      <div
         :class="[
-          $style.Tab,
-          tab.disabled && $style.Tab__disabled,
-          selected === tab.value && $style.Tab__selected
+          $style.Tab_container,
+          overflow === 'scroll' && $style.Tab_container__scroll
         ]"
-        @click="onChange(tab)"
-        @mouseup="($event.currentTarget as HTMLElement)?.blur()"
-        ref="tabElements"
-        :style="{
-          visibility: truncatedTabMap[tab.value] ? 'hidden' : 'visible',
-          position: truncatedTabMap[tab.value] ? 'absolute' : 'relative'
-        }"
+        ref="tabContainer"
+        :style="{ minHeight: tabHeight ? `${tabHeight}px` : undefined }"
       >
-        <div :class="$style.Tab_title">
-          <TabContent :tab="tab" />
-        </div>
-        <div :class="$style.Tab_bar" />
-      </button>
-      <ActionList
-        v-if="truncatedTabActions.length > 0"
-        :items="truncatedTabActions"
-        placement="bottom-end"
-        :class="[
-          $style.TruncatedTabsButton,
-          hasSelectedTruncatedTab && $style.selected
-        ]"
-      >
-        <Button
-          type="link"
-          :icon="truncatedTabLabel ? '' : 'mdi:dots-horizontal'"
-          :dropdown="!!truncatedTabLabel"
+        <button
+          v-for="tab in tabs"
+          :key="tab.value"
+          type="button"
+          :class="[
+            $style.Tab,
+            tab.disabled && $style.Tab__disabled,
+            selected === tab.value && $style.Tab__selected
+          ]"
+          @click="onChange(tab)"
+          @mouseup="($event.currentTarget as HTMLElement)?.blur()"
+          ref="tabElements"
+          :style="{
+            visibility: truncatedTabMap[tab.value] ? 'hidden' : 'visible',
+            position: truncatedTabMap[tab.value] ? 'absolute' : 'relative'
+          }"
         >
-          {{ truncatedTabLabel }}
-        </Button>
-      </ActionList>
-    </div>
+          <div :class="$style.Tab_title">
+            <TabContent :tab="tab" />
+          </div>
+          <div :class="$style.Tab_bar" />
+        </button>
+        <ActionList
+          v-if="truncatedTabActions.length > 0"
+          ref="menuElement"
+          :items="truncatedTabActions"
+          placement="bottom-end"
+          :class="[
+            $style.TruncatedTabsButton,
+            hasSelectedTruncatedTab && $style.selected
+          ]"
+        >
+          <Button
+            type="link"
+            :icon="hasSelectedTruncatedTab ? '' : 'mdi:dots-horizontal'"
+            :dropdown="hasSelectedTruncatedTab"
+          >
+            <template v-if="hasSelectedTruncatedTab && selectedTab">
+              <TabContent
+                v-if="menuContent"
+                :tab="selectedTab"
+              />
+              <template v-else>{{ selectedTab.label }}</template>
+            </template>
+          </Button>
+        </ActionList>
+      </div>
+    </component>
   </div>
 </template>
 
@@ -234,7 +348,27 @@ $textColor: var(--octans-text);
 
 .Tab_container {
   display: flex;
+  // Anchors the tabs that are in the menu, which are absolutely positioned
+  // so they keep a measurable width without taking up any room.
+  position: relative;
   box-shadow: inset 0 -1px 0 var(--octans-border);
+}
+
+// Every tab stays in the strip and the ScrollPane around it scrolls, fading
+// the edge there is more behind. No scrollbar: the selected tab is scrolled
+// into view instead, and a bar under a row of tabs reads as part of them.
+.Tab_scroller {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+// As wide as its tabs rather than the pane, so the divider runs under all of
+// them and not just the ones in view.
+.Tab_container__scroll {
+  display: inline-flex;
+  min-width: 100%;
 }
 
 .Tab {
@@ -242,6 +376,9 @@ $textColor: var(--octans-text);
   // Anchors `.Tab_bar`, which is positioned against the whole tab rather than
   // the label, so the offset token can drop it onto the container's divider.
   position: relative;
+  // A flex item shrinks to fit by default, which in a scrolling strip would
+  // squash the tabs rather than let the strip scroll.
+  flex-shrink: 0;
   padding: 0;
   border: none;
   background: none;
@@ -315,6 +452,11 @@ $textColor: var(--octans-text);
   cursor: pointer;
 }
 
+.Tab_icon {
+  margin-right: 6px;
+  vertical-align: -0.15em;
+}
+
 .Tab_badge {
   position: relative;
   top: -1px;
@@ -326,6 +468,7 @@ $textColor: var(--octans-text);
   display: flex;
   align-items: center;
   position: relative;
+  flex-shrink: 0;
   margin-left: auto;
   padding: 0 16px;
 

@@ -11,14 +11,14 @@ type DataTableFooterProps = {
   limit: number
   total: number
   summary?: string
-  maxPages: number
+  pageSlots: number
   pageSizes?: number[] | false
   loading: boolean
 }
 
 const props = withDefaults(defineProps<DataTableFooterProps>(), {
   summary: 'Showing {range} of {total}',
-  maxPages: 10,
+  pageSlots: 11,
   loading: false
 })
 
@@ -59,7 +59,8 @@ const updateOffset = (offset: number) => {
         :offset="offset"
         :limit="limit"
         :total="total"
-        :max-pages="maxPages"
+        :page-slots="pageSlots"
+        align="right"
         :page-sizes="pageSizes"
         @change="updateOffset"
         @updateLimit="(val: number) => $emit('updateLimit', val)"

@@ -4,6 +4,41 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.8.0
+
+Added
+
+- **DatePicker** opens its calendar in a sheet from the bottom of the screen
+  on a phone, full width behind a scrim, with the keyboard kept down
+  (`sheet`, default `'mobile'`). The sheet form is a `Popover` option, so any
+  popover can take it.
+
+Changed
+
+- **Pagination.** The strip is the same width whichever page is current
+  (`pageSlots`, replacing the deprecated `maxPages`), and on a phone or in a
+  narrow container it takes a compact `« ‹ 3 / 20 › »` form (`compact`,
+  `compactBelow`, `hideFirstLast`). New `align`, `jumpTo` and `showPageSize`
+  props; the ellipsis is clickable and the chevrons sit on centre.
+
+- **Tabs.** Tabs go into the overflow menu only when they no longer fit, and
+  the strip keeps its height with every tab in there. New `overflow="scroll"`
+  (with `scrollIndicators`), `icon` on a tab, and `menuContent`, which shows
+  each tab in the menu and on its button as the strip does.
+
+- **DataTable** pages with seven slots beside its summary, right-aligned, and
+  takes the compact form on a phone.
+
+Fixed
+
+- **Modal** is now a proper dialog for assistive technology and the keyboard:
+  `role="dialog"`, `aria-modal`, a label from its title and a name on the
+  close button; focus moves into it on open and back to the opener on close;
+  Tab stays inside it; and the page no longer scrolls behind it.
+
+- **Sheet** gets the same dialog role, labelling, focus handling and Tab trap.
+  Its close control is a real button.
+
 ## 1.7.1
 
 Fixed

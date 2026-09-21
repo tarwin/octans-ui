@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { alertModal, confirmModal } from './index'
+import Modal from './Modal.vue'
 import { teardownHost } from './host'
 import { modals } from './manager'
 import ModalHost from './ModalHost.vue'
@@ -213,5 +214,108 @@ describe('imperative modal API', () => {
     expect(document.body.textContent).toContain('SURVIVOR')
 
     host.unmount()
+  })
+})
+
+describe('Modal accessibility', () => {
+  const wrappers: Array<{ unmount: () => void }> = []
+  afterEach(() => {
+    for (const wrapper of wrappers) wrapper.unmount()
+    wrappers.length = 0
+  })
+
+  // Transitions are real here: the leave hook is what releases the scroll
+  // lock and returns focus, and test-utils stubs them out by default.
+  const open = async (props: Record<string, unknown> = {}) => {
+    const wrapper = mount(Modal, {
+      props: { visible: false, title: 'Settings', onClose: () => {}, ...props },
+      slots: { default: '<input id="field" /><button id="save">Save</button>' },
+      global: { stubs: { transition: false } },
+      attachTo: document.body
+    })
+    wrappers.push(wrapper)
+    await wrapper.setProps({ visible: true })
+    await settle()
+    return wrapper
+  }
+  const dialog = () =>
+    document.querySelector<HTMLElement>('[role="dialog"]') as HTMLElement
+  const tab = (shiftKey = false) =>
+    dialog().dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey,
+        bubbles: true,
+        cancelable: true
+      })
+    )
+
+  it('is a labelled modal dialog', async () => {
+    await open()
+    const el = dialog()
+    expect(el.getAttribute('aria-modal')).toBe('true')
+    const labelledBy = el.getAttribute('aria-labelledby')!
+    expect(document.getElementById(labelledBy)?.textContent?.trim()).toBe(
+      'Settings'
+    )
+    // The X is an icon-only button, so it needs a name of its own.
+    expect(el.querySelector('[aria-label="Close"]')).not.toBeNull()
+  })
+
+  it('takes focus on open and gives it back on close', async () => {
+    const opener = document.createElement('button')
+    document.body.appendChild(opener)
+    opener.focus()
+
+    const wrapper = await open()
+    expect(document.activeElement).toBe(dialog())
+
+    await wrapper.setProps({ visible: false })
+    await waitFor(() => document.activeElement === opener)
+    expect(document.activeElement).toBe(opener)
+  })
+
+  it('keeps Tab inside the dialog', async () => {
+    await open()
+    // The X button in the header is the first stop; the slot's Save button
+    // is the last.
+    const close = dialog().querySelector<HTMLElement>('[aria-label="Close"]')!
+    const save = document.getElementById('save')!
+
+    save.focus()
+    tab()
+    expect(document.activeElement).toBe(close)
+
+    tab(true)
+    expect(document.activeElement).toBe(save)
+
+    // From the dialog itself, Tab goes to the first stop.
+    dialog().focus()
+    tab()
+    expect(document.activeElement).toBe(close)
+  })
+
+  it('locks page scroll while open', async () => {
+    const wrapper = await open()
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await wrapper.setProps({ visible: false })
+    await waitFor(() => document.body.style.overflow !== 'hidden')
+    expect(document.body.style.overflow).toBe('')
+  })
+
+  it('keeps the page locked until the whole stack is gone', async () => {
+    confirmModal({ title: 'ONE', primaryActionLabel: 'OK-1' })
+    confirmModal({ title: 'TWO', primaryActionLabel: 'OK-2' })
+    await settle()
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await clickButton('OK-2')
+    await waitFor(() => modals.entries.length === 1)
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await clickButton('OK-1')
+    await waitFor(() => modals.entries.length === 0)
+    expect(document.body.style.overflow).toBe('')
   })
 })

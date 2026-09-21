@@ -355,7 +355,9 @@ export const TOKEN_USAGE: Record<string, string[]> = {
   ],
   Popover: [
     'border',
+    'overlay',
     'radius-box',
+    'radius-full',
     'shadow-md',
     'surface'
   ],

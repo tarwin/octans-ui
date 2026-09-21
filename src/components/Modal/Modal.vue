@@ -1,11 +1,22 @@
 <script lang="ts" setup>
 import { Button, ButtonGroup } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
-import { computed, inject, ref } from 'vue'
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  ref,
+  useId,
+  watch
+} from 'vue'
 import { EventDelegator } from '../EventDelegator'
 import ModalBackdrop from './ModalBackdrop.vue'
 import { MODAL_STACK, type ModalStackContext } from './manager'
 import type { ModalProps } from './types'
+import { trapTab } from '@/utils/focusTrap'
+import { lockScroll } from '@/utils/scrollLock'
+import { $t } from '@/utils/translate'
 
 const props = withDefaults(defineProps<ModalProps>(), {
   loading: false,
@@ -30,6 +41,7 @@ const header = ref<HTMLElement>()
 const preBody = ref<HTMLElement>()
 const footer = ref<HTMLElement>()
 const dialog = ref<HTMLElement>()
+const titleId = useId()
 
 /**
  * Set when a `<ModalHost>` is rendering this modal as part of a stack. The host
@@ -78,6 +90,69 @@ const actions = computed(() => {
   return _actions
 })
 
+/**
+ * The page cannot scroll behind an open modal. Held from the moment `visible`
+ * turns on until the leave transition ends, so the page does not scroll under
+ * a modal that is still sliding away. Counted, so a stack keeps the page
+ * locked until the last modal is gone.
+ */
+let releaseScroll: (() => void) | null = null
+
+watch(
+  () => props.visible,
+  async (visible) => {
+    if (!visible) return
+    if (!releaseScroll) releaseScroll = lockScroll()
+    // Focus moves as the enter transition STARTS, not when it ends: a Tab
+    // pressed during the slide is then already trapped, and a modal mounted
+    // already visible (no enter transition at all) still gets it.
+    await nextTick()
+    if (props.visible) takeFocus()
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(() => {
+  releaseScroll?.()
+  releaseScroll = null
+  restoreFocus()
+})
+
+/**
+ * Focus goes into the dialog when it opens and back to where it was when it
+ * closes, so a keyboard user is not left on a control under the backdrop.
+ * `trapTab` on the dialog stops Tab walking out in between. In a stack the
+ * host owns the return trip — it hands focus to the modal underneath, or back
+ * to the page after the last one — so a managed modal only takes focus.
+ */
+let previouslyFocused: HTMLElement | null = null
+
+function takeFocus() {
+  if (!dialog.value) return
+  if (!stack) previouslyFocused = document.activeElement as HTMLElement | null
+  // A modal usually opens from a click, so nothing inside has focus yet; a
+  // caller that focuses a field of its own in `afterEnter` still wins, since
+  // this runs first.
+  if (!dialog.value.contains(document.activeElement)) dialog.value.focus()
+}
+
+function restoreFocus() {
+  const target = previouslyFocused
+  previouslyFocused = null
+  if (!target || !target.isConnected) return
+  // Only if focus is still ours to give back: a caller that moved it on
+  // during the close should not have it yanked.
+  const active = document.activeElement
+  if (active && active !== document.body && !dialog.value?.contains(active)) {
+    return
+  }
+  target.focus?.()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (dialog.value) trapTab(event, dialog.value)
+}
+
 function enter() {
   updateBodyMaxHeight()
 }
@@ -90,6 +165,9 @@ function afterEnter() {
 }
 
 function afterLeave() {
+  releaseScroll?.()
+  releaseScroll = null
+  restoreFocus()
   /**
    * Emitted after the modal is hidden.
    */
@@ -140,9 +218,14 @@ function updateBodyMaxHeight() {
         <div
           ref="dialog"
           tabindex="-1"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="noHeader ? undefined : titleId"
+          :aria-busy="loading || undefined"
           :class="$style.dialog"
           :style="[stackStyle, dialogStyle]"
           v-show="visible"
+          @keydown="onKeydown"
         >
           <div
             v-if="loading"
@@ -159,12 +242,18 @@ function updateBodyMaxHeight() {
             :class="$style.header"
             ref="header"
           >
-            <div :class="$style.title">{{ title }}</div>
+            <div
+              :id="titleId"
+              :class="$style.title"
+            >
+              {{ title }}
+            </div>
             <Button
               v-if="onClose"
               :class="$style.close"
               type="link"
               icon="mdi:close"
+              :aria-label="$t('ui.modal.close')"
               @click="close"
             />
           </div>
@@ -261,6 +350,12 @@ function updateBodyMaxHeight() {
     0 2px 16px 0 rgba(32, 42, 54, 0.08);
   transform: translate(-50%, 0);
   overflow: hidden;
+
+  // The dialog as a whole takes focus when it opens, so Tab starts from its
+  // first control. It is a container, not a control, so it draws no ring.
+  &:focus {
+    outline: none;
+  }
 
   .overflowVisible & {
     overflow: visible;

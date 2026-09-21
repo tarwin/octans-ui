@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { ScrollPane } from '@/components/ScrollPane'
 import Tabs from './Tabs.vue'
 
 const TABS = [
@@ -56,5 +57,26 @@ describe('Tabs content', () => {
     })
     expect(wrapper.findAll('.custom')).toHaveLength(TABS.length)
     expect(wrapper.text()).toContain('All!')
+  })
+})
+
+describe('Tabs icons and overflow', () => {
+  it('draws a tab icon before the label', () => {
+    const wrapper = mount(Tabs, {
+      props: { tabs: [{ value: 'all', label: 'All', icon: 'mdi:inbox' }] }
+    })
+    const title = wrapper.find('[class*="Tab_title"]')
+    expect(title.find('[class*="Tab_icon"]').exists()).toBe(true)
+    expect(title.text()).toBe('All')
+  })
+
+  it('scrolls in a ScrollPane instead of truncating when asked', () => {
+    const wrapper = mount(Tabs, { props: { tabs: TABS, overflow: 'scroll' } })
+    expect(wrapper.findComponent(ScrollPane).exists()).toBe(true)
+    expect(
+      mount(Tabs, { props: { tabs: TABS } })
+        .findComponent(ScrollPane)
+        .exists()
+    ).toBe(false)
   })
 })

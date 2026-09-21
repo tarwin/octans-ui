@@ -6,8 +6,19 @@ import {
   PopoverRoot,
   PopoverTrigger
 } from 'reka-ui'
-import { computed, inject, onBeforeUnmount, provide, ref, watch } from 'vue'
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  provide,
+  ref,
+  watch
+} from 'vue'
 import type { PopoverProps } from './types'
+import { trapTab } from '@/utils/focusTrap'
+import { PHONE_QUERY, useMediaQuery } from '@/utils/mediaQuery'
+import { lockScroll } from '@/utils/scrollLock'
 
 const props = withDefaults(defineProps<PopoverProps>(), {
   placement: 'bottom',
@@ -17,7 +28,8 @@ const props = withDefaults(defineProps<PopoverProps>(), {
   autoHide: false,
   hover: false,
   surface: false,
-  zIndex: 10000
+  zIndex: 10000,
+  sheet: false
 })
 
 const emit = defineEmits<{
@@ -31,14 +43,70 @@ const alignment = computed(() => {
   return getRadixPopperPlacement(props.placement)
 })
 
+/**
+ * The sheet form, when `sheet` asks for it. `'mobile'` follows the viewport,
+ * so a phone turned to landscape can switch back to the anchored panel.
+ */
+const isPhone = useMediaQuery(PHONE_QUERY)
+const sheetActive = computed(() =>
+  props.sheet === 'mobile' ? isPhone.value : !!props.sheet
+)
+
 const slotProps = computed(() => {
   return {
     visible: isVisible.value,
+    sheet: sheetActive.value,
     show,
     hide,
     toggle
   }
 })
+
+/**
+ * A sheet covers the page the way a modal does, so it takes the same care:
+ * the page behind it stops scrolling, focus moves into it and Tab stays
+ * there, and focus goes back to the trigger when it closes. The anchored
+ * panel does none of this — it is a flyout, and focus stays where it was.
+ */
+const panel = ref<HTMLElement>()
+let releaseScroll: (() => void) | null = null
+let previouslyFocused: HTMLElement | null = null
+
+watch(
+  () => isVisible.value && sheetActive.value,
+  async (open) => {
+    if (open) {
+      releaseScroll ??= lockScroll()
+      previouslyFocused = document.activeElement as HTMLElement | null
+      await nextTick()
+      if (panel.value && !panel.value.contains(document.activeElement)) {
+        panel.value.focus()
+      }
+      return
+    }
+    releaseScroll?.()
+    releaseScroll = null
+    const target = previouslyFocused
+    previouslyFocused = null
+    const active = document.activeElement
+    const ours =
+      !active || active === document.body || panel.value?.contains(active)
+    if (ours && target?.isConnected) target.focus()
+  }
+)
+
+function sheetKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    tryAutoHide()
+    return
+  }
+  if (panel.value) trapTab(event, panel.value)
+}
+
+/** The scrim is never the trigger, so a tap on it is an outside click. */
+function scrimClick() {
+  tryAutoHide()
+}
 
 function handleTriggerClick() {
   if (!props.autoTriggerToggle) {
@@ -84,7 +152,11 @@ function handlePointerLeave() {
   closeTimer = setTimeout(hide, CLOSE_DELAY)
 }
 
-onBeforeUnmount(clearCloseTimer)
+onBeforeUnmount(() => {
+  clearCloseTimer()
+  releaseScroll?.()
+  releaseScroll = null
+})
 
 function show() {
   setVisible(true)
@@ -155,7 +227,66 @@ defineExpose({
   <!-- I dont like this, but we may need a div so that CSS classes
   are applied correctly... -->
   <div ref="wrapper">
-    <PopoverRoot :open="isVisible">
+    <template v-if="sheetActive">
+      <!--
+        `display: contents`, so the wrapper adds no box: the trigger lays out
+        exactly as it does in the anchored form, where reka merges onto it.
+      -->
+      <div
+        :class="$style.sheetTrigger"
+        @click="handleTriggerClick"
+      >
+        <slot
+          name="trigger"
+          v-bind="slotProps"
+        ></slot>
+      </div>
+      <Teleport to="body">
+        <div class="UIElement">
+          <transition
+            :enter-active-class="$style.scrimEnterActive"
+            :leave-active-class="$style.scrimLeaveActive"
+            :enter-from-class="$style.scrimEnterFrom"
+            :leave-to-class="$style.scrimLeaveTo"
+          >
+            <div
+              v-show="isVisible"
+              :class="$style.scrim"
+              :style="{ zIndex }"
+              @click="scrimClick"
+            ></div>
+          </transition>
+          <transition
+            :enter-active-class="$style.sheetEnterActive"
+            :leave-active-class="$style.sheetLeaveActive"
+            :enter-from-class="$style.sheetEnterFrom"
+            :leave-to-class="$style.sheetLeaveTo"
+          >
+            <div
+              v-show="isVisible"
+              ref="panel"
+              role="dialog"
+              aria-modal="true"
+              tabindex="-1"
+              data-popover-sheet
+              :class="$style.sheet"
+              :style="{ zIndex }"
+              @keydown="sheetKeydown"
+            >
+              <div
+                :class="$style.sheetHandle"
+                aria-hidden="true"
+              ></div>
+              <slot v-bind="slotProps">Empty</slot>
+            </div>
+          </transition>
+        </div>
+      </Teleport>
+    </template>
+    <PopoverRoot
+      v-else
+      :open="isVisible"
+    >
       <PopoverTrigger
         asChild
         as="div"
@@ -221,5 +352,72 @@ defineExpose({
   border: 1px solid var(--octans-border);
   border-radius: var(--octans-radius-box);
   box-shadow: var(--octans-shadow-md);
+}
+
+.sheetTrigger {
+  display: contents;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--octans-overlay);
+  opacity: 0.32;
+}
+
+.sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: 85vh;
+  padding: 8px 16px;
+  // Clears the home indicator on a phone; the fallback is the same 16px.
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  overflow: auto;
+  background: var(--octans-surface);
+  border-radius: var(--octans-radius-box) var(--octans-radius-box) 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+
+  // Focused as a whole when it opens, so Tab starts from its first control;
+  // a container, so no ring.
+  &:focus {
+    outline: none;
+  }
+}
+
+.sheetHandle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  background: var(--octans-border);
+  border-radius: var(--octans-radius-full);
+}
+
+.scrimEnterActive,
+.scrimLeaveActive {
+  transition: opacity 0.2s ease;
+}
+.scrimEnterFrom,
+.scrimLeaveTo {
+  opacity: 0;
+}
+
+.sheetEnterActive,
+.sheetLeaveActive {
+  transition: transform 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.sheetEnterFrom,
+.sheetLeaveTo {
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrimEnterActive,
+  .scrimLeaveActive,
+  .sheetEnterActive,
+  .sheetLeaveActive {
+    transition: none;
+  }
 }
 </style>

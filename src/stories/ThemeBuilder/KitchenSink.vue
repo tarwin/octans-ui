@@ -347,7 +347,7 @@ const rows = [
           :offset="pageOffset"
           :limit="25"
           :total="250"
-          :max-pages="5"
+          :page-slots="7"
           @change="(o: number) => (pageOffset = o)"
         />
       </CardSection>

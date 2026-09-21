@@ -290,3 +290,39 @@ export const Surface: Story = {
     `
   })
 }
+
+/**
+ * `sheet` shows the content as a sheet from the bottom of the screen, behind
+ * a scrim, instead of a panel anchored to the trigger. `sheet="mobile"` does
+ * so only on a phone-sized viewport (under 568px), which is what `DatePicker`
+ * uses; `sheet` on its own forces it, as the first example does here. The
+ * slot receives `sheet`, so content can drop its own border and shadow.
+ */
+export const Sheet: Story = {
+  render: () => ({
+    components: { Popover, Button, Stack },
+    template: `
+      <Stack spacing="loose">
+        <Popover sheet auto-hide>
+          <template #trigger>
+            <Button>Always a sheet</Button>
+          </template>
+          <template #default="{ hide }">
+            <div style="display: grid; gap: 12px">
+              <p>Tap the scrim, press Escape or use the button to close.</p>
+              <Button type="primary" @click="hide">Done</Button>
+            </div>
+          </template>
+        </Popover>
+        <Popover sheet="mobile" auto-hide surface>
+          <template #trigger>
+            <Button>Sheet on a phone only</Button>
+          </template>
+          <div style="padding: 12px; max-width: 260px">
+            Anchored here; a sheet under 568px. Narrow the window to see it switch.
+          </div>
+        </Popover>
+      </Stack>
+    `
+  })
+}

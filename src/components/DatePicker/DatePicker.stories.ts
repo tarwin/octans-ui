@@ -40,6 +40,30 @@ export const Default: Story = {
 }
 
 /**
+ * On a phone-sized viewport (under 568px) the calendar opens in a sheet from
+ * the bottom of the screen, behind a scrim, and the field keeps the keyboard
+ * down. That is the default (`sheet="mobile"`); it is forced on here so it
+ * shows at any width. `:sheet="false"` keeps the anchored panel everywhere.
+ */
+export const OnAPhone: Story = {
+  render: () => ({
+    components: { DatePicker, FormLayout },
+    setup() {
+      const date = ref('2019-09-29 00:00:00')
+      const when = ref('2019-09-29 14:30:00')
+      return { date, when }
+    },
+    template: `
+      <FormLayout>
+        <DatePicker label="Date" placeholder="Choose a date" v-model="date" sheet />
+        <DatePicker label="Date and time" type="datetime" v-model="when" sheet />
+        <pre>{{date}} / {{when}}</pre>
+      </FormLayout>
+    `
+  })
+}
+
+/**
   This example shows how the type prop formats the underlying model value.
   Note how each subsequent picker will truncate more of the model value.
  */

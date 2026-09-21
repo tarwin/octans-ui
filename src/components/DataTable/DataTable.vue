@@ -219,11 +219,13 @@ const wrappedBulkActions = computed(() => {
   return null
 })
 
-const maxPages = computed(() => {
+// Seven slots — `1 … 9 10 11 … 20` — beside the summary; under the collapse
+// threshold just previous/next, and the compact form on phones.
+const pageSlots = computed(() => {
   if (width.value && width.value < props.actionCollapseThreshold) {
     return 0
   }
-  return 5
+  return 7
 })
 
 const loadingStates = computed(() => {
@@ -597,7 +599,7 @@ const render = () => {
       limit: props.pagination.limit,
       total: props.pagination.total || props.rows.length,
       summary: props.pagination.summary,
-      maxPages: maxPages.value,
+      pageSlots: pageSlots.value,
       pageSizes: props.pagination.pageSizes,
       loading: loadingStates.value.footer,
       onUpdateOffset: (val: number) => updateOffset(val),
