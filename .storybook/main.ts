@@ -28,6 +28,17 @@ const config: StorybookConfig & { title?: string } = {
     name: '@storybook/vue3-vite',
     options: {}
   },
+  core: {
+    // The dev server answers "Invalid host" to any Host header that is not
+    // localhost. Allow ngrok tunnels so `ngrok http 6006` works on a phone.
+    allowedHosts: [
+      '.ngrok-free.app',
+      '.ngrok-free.dev',
+      '.ngrok.app',
+      '.ngrok.io',
+      '.ngrok.dev'
+    ]
+  },
   async viteFinal(config) {
     config.build = config.build ?? {}
     config.build.target = 'es2022'
