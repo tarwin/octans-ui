@@ -17,7 +17,9 @@ export const Basic: Story = {
     components: { Tooltip },
     template: `
       <div>
-        <Tooltip content="This is the text" placement="right">Hello</Tooltip> this is a thing.
+        <Tooltip content="This is the text" placement="top">
+          <span style="text-decoration: underline dotted;">Hover this sentence for basic tooltip.</span>
+        </Tooltip>
       </div>
     `
   })
@@ -27,8 +29,8 @@ export const Slot: Story = {
   render: () => ({
     components: { Tooltip },
     template: `
-      <Tooltip>
-        <span style="text-decoration: underline;">Hover over this</span>
+      <Tooltip placement="top">
+        <span style="text-decoration: underline dotted;">Hover this sentence for HTML tooltip.</span>
         <template v-slot:content>
           It works with <b>HTML</b> also!
         </template>
