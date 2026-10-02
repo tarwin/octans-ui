@@ -818,7 +818,9 @@ export default defineComponent({
           if (this.activeIndex < 0) this.activeIndex = 0
           this.scrollActiveOptionIntoView()
         } else if (code === 'Escape') {
-          // Close the dropdown.
+          // Close the dropdown — and only the dropdown: marking the key
+          // handled stops a Sheet around this Select closing on it too.
+          event.preventDefault()
           this.close()
           // Ensure the main control is focused in case the search input had
           // focus. This is so that the focus outline appears.

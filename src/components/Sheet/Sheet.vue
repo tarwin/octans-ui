@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon'
 import { ScrollPane } from '@/components/ScrollPane'
 import { Spinner } from '@/components/Spinner'
 import debounce from 'lodash-es/debounce'
-import { computed, onBeforeUnmount, ref, useCssModule, useId } from 'vue'
+import { computed, onBeforeUnmount, ref, useCssModule, useId, watch } from 'vue'
 import { trapTab } from '@/utils/focusTrap'
 import { $t } from '@/utils/translate'
 import { SheetInstance, createSheetManager } from './manager'
@@ -18,7 +18,8 @@ const props = withDefaults(defineProps<SheetProps>(), {
   peek: 100,
   minIndex: 1000,
   loading: false,
-  visible: false
+  visible: false,
+  closeOnEscape: true
 })
 
 const emit = defineEmits<{
@@ -307,6 +308,46 @@ function close() {
   }
 }
 
+/**
+ * Something drawn over the sheet that Escape should close first. Checked from
+ * the DOM because none of them tell us: reka's layers (Popover, Tooltip) and
+ * Modal both listen on `window`, which hears the key only after `document`
+ * has. A closed reka layer is unmounted, and Modal carries its marker only
+ * while `visible`, so one on its way out does not hold the key. Popover's
+ * phone sheet is a `v-show`, not a reka layer.
+ */
+function layerAbove() {
+  if (document.querySelector('[data-dismissable-layer], [data-octans-modal]')) {
+    return true
+  }
+  return [
+    ...document.querySelectorAll<HTMLElement>('[data-popover-sheet]')
+  ].some((el) => el.style.display !== 'none')
+}
+
+/**
+ * On `document` rather than the container, so Escape still works after focus
+ * has wandered out of the sheet. Every open sheet listens; only the one in
+ * front acts, which is what makes each press close one sheet of a stack.
+ */
+function onDocumentKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) {
+    return
+  }
+  if (!props.closeOnEscape || !props.visible || !isActive.value) return
+  if (layerAbove()) return
+  close()
+}
+
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) document.addEventListener('keydown', onDocumentKeydown)
+    else document.removeEventListener('keydown', onDocumentKeydown)
+  },
+  { immediate: true }
+)
+
 if (!document.getElementById('sheetManager')) {
   const container = document.createElement('div')
   container.id = 'sheetManager'
@@ -327,6 +368,7 @@ onBeforeUnmount(() => {
   if (onResize) {
     window.removeEventListener('resize', onResize)
   }
+  document.removeEventListener('keydown', onDocumentKeydown)
   manager.remove(inst)
 })
 </script>

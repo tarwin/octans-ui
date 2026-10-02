@@ -4,7 +4,12 @@ import { Button } from '@/components/Button'
 import { Card, CardSection } from '@/components/Card'
 import { TextField } from '@/components/TextField'
 import { Icon } from '@/components/Icon'
-import { alertModal, genericModal } from '@/components/Modal'
+import {
+  alertModal,
+  confirmModal,
+  genericModal,
+  Modal
+} from '@/components/Modal'
 import { Select } from '@/components/Select'
 import { Stack } from '@/components/Stack'
 import { TextStyle } from '@/components/TextStyle'
@@ -25,6 +30,12 @@ import { toast } from '@/components/ToastManager'
  * The sheet is always three parts: a fixed header (title, close, actions), a
  * scrolling content area, and the backdrop. Only the middle part scrolls, so
  * the actions stay reachable however long the content gets.
+ *
+ * Escape closes the sheet in front, the same way its close button does: it
+ * emits `update` and `close`, so a guard on `close` still runs, and it does
+ * nothing while `loading`. Each press closes one sheet of a stack. A Modal,
+ * Popover or open Select above the sheet gets the key first. Set
+ * `closeOnEscape` to `false` to turn it off.
  */
 const meta = {
   title: 'Components/Overlays/Sheet',
@@ -1022,6 +1033,208 @@ export const Loading: Story = {
             <Button @click="doLoad">Load for 2 seconds</Button>
           </Sheet>
         </div>
+      </div>
+    `
+  })
+}
+
+/**
+**Escape closes the sheet in front**, the same way its close button does. It
+emits `update` and `close`, so whatever you do on `close` still runs, and it
+does nothing while `loading`.
+
+Open the three-step flow and press Escape a few times:
+
+- Each press closes **one** sheet, top first. The sheet underneath becomes the
+  front one and gets the next press.
+- A **modal** opened from a sheet takes the key first, whether it comes from
+  `alertModal()` and friends or is a `<Modal>` in the template. Escape closes
+  the modal; the next press closes the sheet.
+- An open **Select** closes its dropdown and nothing else.
+- Step 2 has an **unsaved-changes guard**: type a name, then press Escape. The
+  sheet asks before it closes, because Escape goes through `close` like the
+  X does. Escape again dismisses the question and keeps the sheet.
+
+Escape still works after a click elsewhere has taken focus out of the sheet.
+
+`:close-on-escape="false"` turns it off for one sheet. The close button and
+the backdrop still work.
+*/
+export const CloseOnEscape: Story = {
+  render: () => ({
+    components: { Sheet, Button, Stack, Select, TextField, TextStyle, Modal },
+    setup() {
+      const step1 = ref(false)
+      const step2 = ref(false)
+      const step3 = ref(false)
+      const noEscape = ref(false)
+      const templateModal = ref(false)
+      const plan = ref('monthly')
+      const plans = [
+        { label: 'Monthly', value: 'monthly' },
+        { label: 'Yearly', value: 'yearly' },
+        { label: 'Lifetime', value: 'lifetime' }
+      ]
+      const name = ref('')
+      const log = ref<string[]>([])
+      const record = (line: string) => {
+        log.value = [line, ...log.value].slice(0, 6)
+      }
+
+      function closeStep1() {
+        record('Step 1 closed')
+        step1.value = false
+      }
+      async function closeStep2() {
+        if (name.value) {
+          record('Step 2 asked before closing')
+          const discard = await confirmModal({
+            title: 'Discard changes?',
+            content: 'The name you typed will be lost.',
+            primaryActionLabel: 'Discard',
+            secondaryActionLabel: 'Keep editing'
+          })
+          if (!discard) {
+            record('Step 2 kept open')
+            return
+          }
+          name.value = ''
+        }
+        record('Step 2 closed')
+        step2.value = false
+      }
+      function closeStep3() {
+        record('Step 3 closed')
+        step3.value = false
+      }
+      function finish() {
+        record('Finished — all three closed')
+        step3.value = false
+        step2.value = false
+        step1.value = false
+        name.value = ''
+      }
+      function showAlert() {
+        alertModal({
+          title: 'An alert over a sheet',
+          content: 'Press Escape: this closes, the sheet stays.'
+        }).then(() => record('Alert closed'))
+      }
+      function closeTemplateModal() {
+        record('Template modal closed')
+        templateModal.value = false
+      }
+      function closeNoEscape() {
+        record('No-Escape sheet closed')
+        noEscape.value = false
+      }
+
+      return {
+        step1,
+        step2,
+        step3,
+        noEscape,
+        templateModal,
+        plan,
+        plans,
+        name,
+        log,
+        closeStep1,
+        closeStep2,
+        closeStep3,
+        finish,
+        showAlert,
+        closeTemplateModal,
+        closeNoEscape
+      }
+    },
+    template: `
+      <div>
+        <Stack vertical spacing="tight">
+          <Stack spacing="tight">
+            <Button type="primary" @click="step1 = true">Open the three-step flow</Button>
+            <Button @click="noEscape = true">Open a sheet with Escape off</Button>
+          </Stack>
+          <TextStyle type="subdued" v-if="!log.length">
+            What each Escape did will show up here.
+          </TextStyle>
+          <div v-for="(line, i) in log" :key="log.length - i">
+            <TextStyle :type="i ? 'subdued' : undefined">{{ line }}</TextStyle>
+          </div>
+        </Stack>
+
+        <Sheet
+          title="Step 1 of 3 — Plan"
+          :visible="step1"
+          :size="640"
+          padded
+          @close="closeStep1"
+          :primary-action="{ label: 'Next', onAction: () => (step2 = true) }"
+        >
+          <Stack vertical spacing="loose">
+            <p>Press Escape to close this sheet.</p>
+            <Select v-model="plan" label="Plan" :options="plans" />
+            <TextStyle type="subdued">
+              Open the dropdown, then press Escape: only the dropdown closes.
+            </TextStyle>
+            <div>
+              <Button @click="showAlert">Show an alert</Button>
+            </div>
+          </Stack>
+        </Sheet>
+
+        <Sheet
+          title="Step 2 of 3 — Details"
+          :visible="step2"
+          :size="540"
+          padded
+          @close="closeStep2"
+          :primary-action="{ label: 'Next', onAction: () => (step3 = true) }"
+        >
+          <Stack vertical spacing="loose">
+            <TextField v-model="name" label="Name" placeholder="Type, then press Escape" />
+            <TextStyle type="subdued">
+              With a name typed, Escape asks before closing. The guard is on
+              <code>@close</code>, so Escape and the X behave the same way.
+            </TextStyle>
+          </Stack>
+        </Sheet>
+
+        <Sheet
+          title="Step 3 of 3 — Confirm"
+          :visible="step3"
+          :size="440"
+          padded
+          @close="closeStep3"
+          :primary-action="{ label: 'Finish', onAction: finish }"
+        >
+          <Stack vertical spacing="loose">
+            <p>Each press of Escape from here closes one step.</p>
+            <div>
+              <Button @click="templateModal = true">Open a template Modal</Button>
+            </div>
+          </Stack>
+        </Sheet>
+
+        <Modal
+          title="A <Modal> in the template"
+          :visible="templateModal"
+          @close="closeTemplateModal"
+        >
+          Press Escape: this modal closes, step 3 stays open.
+        </Modal>
+
+        <Sheet
+          title="Escape is off"
+          :visible="noEscape"
+          :close-on-escape="false"
+          padded
+          @close="closeNoEscape"
+        >
+          <p>
+            Escape does nothing here. Use the X or click the backdrop.
+          </p>
+        </Sheet>
       </div>
     `
   })

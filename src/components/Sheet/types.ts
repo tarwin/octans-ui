@@ -101,6 +101,17 @@ export interface SheetProps {
    */
   loading?: boolean
   /**
+   * Closes the sheet when Escape is pressed, the same way the close button
+   * does — so it emits `update` and `close`, and does nothing while `loading`.
+   *
+   * Only the foreground sheet responds, so each press closes one sheet. A
+   * Modal, Popover, Tooltip or open Select above the sheet takes the key
+   * first.
+   *
+   * @default true
+   */
+  closeOnEscape?: boolean
+  /**
    * The main sheet action, displayed at the upper right corner
    * of the sheet
    */

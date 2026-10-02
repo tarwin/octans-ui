@@ -4,6 +4,23 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.8.2
+
+Added
+
+- **Sheet closes on Escape**, as Modal does (`closeOnEscape`, default
+  `true`). It goes through the close button's path, so it emits `update` and
+  `close` and is ignored while `loading`. Only the sheet in front responds, so
+  each press closes one of a stack. A Modal, Popover, Tooltip or open Select
+  over the sheet takes the key first, so one press never closes both. See
+  the new **Close On Escape** story for stacked steps, modals and the off
+  switch.
+
+Changed
+
+- **Select** and the **Popover** phone sheet mark Escape as handled
+  (`preventDefault`) when they close on it.
+
 ## 1.8.1
 
 Changed

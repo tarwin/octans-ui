@@ -217,6 +217,7 @@ function updateBodyMaxHeight() {
       >
         <div
           ref="dialog"
+          :data-octans-modal="visible ? '' : undefined"
           tabindex="-1"
           role="dialog"
           aria-modal="true"

@@ -97,6 +97,8 @@ watch(
 
 function sheetKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
+    // Handled, so a Sheet this popover opened from stays open.
+    event.preventDefault()
     tryAutoHide()
     return
   }
