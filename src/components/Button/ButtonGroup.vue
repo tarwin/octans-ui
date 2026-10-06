@@ -1,7 +1,7 @@
 <script lang="ts">
 import { cloneVNode, h, useCssModule } from 'vue'
 import ButtonGroupItem from './ButtonGroupItem.vue'
-import { flattenSlotChildren } from '@/utils'
+import { wrapSlotChildren } from '@/utils'
 
 /**
  * Button group displays multiple related actions stacked or in a horizontal row
@@ -29,7 +29,7 @@ export default {
   setup(props, { slots }) {
     const $style = useCssModule()
     return () => {
-      const children = flattenSlotChildren(slots.default?.() ?? [])
+      const children = slots.default?.() ?? []
       return h(
         'div',
         {
@@ -41,7 +41,7 @@ export default {
           ],
           'data-buttongroup-segmented': props.segmented ? true : undefined
         },
-        children.map((node) => {
+        wrapSlotChildren(children, (node) => {
           if (node.type === ButtonGroupItem) {
             return cloneVNode(node, {
               class: $style.item
@@ -50,6 +50,7 @@ export default {
           return h(
             'div',
             {
+              key: node.key ?? undefined,
               class: $style.item
             },
             [node]
