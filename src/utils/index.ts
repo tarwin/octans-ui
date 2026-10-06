@@ -1,4 +1,4 @@
-import { type VNode, type Slot, Fragment, Comment, Text } from 'vue'
+import { type VNode, type Slot, Fragment, Comment, Text, h } from 'vue'
 
 import isEqual from 'lodash-es/isEqual'
 import orderBy from 'lodash-es/orderBy'
@@ -32,6 +32,28 @@ export function flattenSlotChildren(children: VNode[]): VNode[] {
     }
   }
   return result
+}
+
+// wrap each real slot child via `wrap`, keeping the slot's shape intact:
+// Fragments stay Fragments (with their keys) and comments (v-if="false"
+// placeholders) pass through bare. Flattening shifts positions when a v-if
+// toggles, and Vue then reuses a neighbour's vnode, skipping its static props
+// (e.g. a label) because the compiler marked them as never changing.
+export function wrapSlotChildren(
+  children: VNode[],
+  wrap: (child: VNode) => VNode
+): VNode[] {
+  return children.map((child) => {
+    if (child.type === Comment) return child
+    if (child.type === Fragment && Array.isArray(child.children)) {
+      return h(
+        Fragment,
+        { key: child.key ?? undefined },
+        wrapSlotChildren(child.children as VNode[], wrap)
+      )
+    }
+    return wrap(child)
+  })
 }
 
 export function isEmptyValue(value: any) {

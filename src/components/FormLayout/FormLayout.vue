@@ -1,5 +1,5 @@
 <script lang="ts">
-import { flattenSlotChildren } from '@/utils'
+import { wrapSlotChildren } from '@/utils'
 import { defineComponent, h, useCssModule } from 'vue'
 
 export default defineComponent({
@@ -17,10 +17,12 @@ export default defineComponent({
             const children = slots.default?.()
             if (!children) return
 
-            const flattened = flattenSlotChildren(children)
-
-            return flattened.map((child) =>
-              h('div', { class: style.FormLayoutItem }, [child])
+            return wrapSlotChildren(children, (child) =>
+              h(
+                'div',
+                { key: child.key ?? undefined, class: style.FormLayoutItem },
+                [child]
+              )
             )
           }
         }

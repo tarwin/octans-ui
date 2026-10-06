@@ -4,6 +4,20 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.8.3
+
+Fixed
+
+- **Fields in a FormLayout no longer show another field's label when a
+  `v-if` above them toggles.** FormLayout flattened its children and dropped
+  hidden `v-if` placeholders, so showing a field moved every field below it
+  down one place. Vue then reused each field for the one after it and kept its
+  label, so "Last Name" could show the first name. Wrappers now keep the
+  slot's own structure: hidden fields stay as placeholders (still with no
+  empty wrapper or gap), `<template>` and `v-for` groups stay grouped, and
+  keyed children key their wrapper. Forms need no keys of their own for this.
+  The same fix applies to **FormLayoutGroup** and **ButtonGroup**.
+
 ## 1.8.2
 
 Added
