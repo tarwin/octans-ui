@@ -145,7 +145,12 @@ import './octansIcons' // once, at startup
 It finds Iconify names in your source, fetches only those, and generates a file
 that registers them. Re-run it when you add an icon; `npx octans-icons --help`
 lists the options. Names your code builds at runtime (`` `mdi:${name}` ``) can't
-be seen by a source scan and keep resolving through the API.
+be seen by a source scan and keep resolving through the API. To bundle those
+too, list them in an `octans-icons.json` next to where you run it:
+
+```json
+["mdi:star", "mdi:plus", "la:home"]
+```
 
 To bundle a whole collection instead — simpler, but `@iconify-json/lucide` is
 roughly 1.5 MB against a typical app's few kB of actual icons:

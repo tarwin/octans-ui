@@ -288,8 +288,16 @@ writing, and `--help` covers the rest.
 
 Two things it cannot see, both of which simply keep resolving through the API:
 names your code assembles at runtime (`` `mdi:${name}` ``), and names that only
-exist in data you fetch from a server. Put the literal strings in an array if
-you want those bundled too.
+exist in data you fetch from a server. To bundle those too, list them in an
+`octans-icons.json` in the directory you run it from (or pass `--include
+<file>`):
+
+```json
+["mdi:star", "mdi:plus", "la:home"]
+```
+
+Unlike scanned names, these are checked: a typo fails the run instead of
+falling back to the API.
 
 To bundle a whole collection instead — simpler, but `@iconify-json/mdi` is
 roughly 1.5 MB against a typical app's few kB of actual icons:

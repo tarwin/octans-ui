@@ -15,6 +15,9 @@
 //   npx octans-icons app --out app/icons.ts
 //   npx octans-icons --dry-run           # list what it finds, write nothing
 //
+// Names the scan can't see — built at runtime, or only present in data — go in
+// an `octans-icons.json` array, which is read if it exists.
+//
 // Deliberately standalone — no imports from the rest of the package, so it
 // keeps working regardless of what the library's own build is doing.
 
@@ -27,11 +30,13 @@ Usage
   npx octans-icons [dir...] [options]
 
 Options
-  --out <file>   Where to write the bundle. Default: <first dir>/octansIcons.ts
-                 A .js extension emits JavaScript instead of TypeScript.
-  --dry-run      Print the icons found and exit without writing.
-  --quiet        Only print errors.
-  -h, --help     Show this.
+  --out <file>       Where to write the bundle. Default: <first dir>/octansIcons.ts
+                     A .js extension emits JavaScript instead of TypeScript.
+  --include <file>   A JSON array of names to bundle even if the scan doesn't
+                     find them. Default: ./octans-icons.json, when it exists.
+  --dry-run          Print the icons found and exit without writing.
+  --quiet            Only print errors.
+  -h, --help         Show this.
 
 Then import it once, before anything renders:
 
@@ -39,7 +44,9 @@ Then import it once, before anything renders:
 
 Re-run it whenever you add an icon. Names built at runtime (\`\\\`mdi:\${name}\\\`\`)
 can't be seen by a source scan — those keep resolving through the API, which
-still works. Pass them explicitly by putting the literal names in an array.
+still works. To bundle them too, list them in octans-icons.json:
+
+  ["mdi:star", "mdi:plus", "la:home"]
 `
 
 const args = process.argv.slice(2)
@@ -61,6 +68,7 @@ const takeFlag = (name) => {
 }
 
 const outFlag = takeFlag('--out')
+const includeFlag = takeFlag('--include')
 const dryRun = args.includes('--dry-run')
 const quiet = args.includes('--quiet')
 const dirs = args.filter((arg) => !arg.startsWith('-'))
@@ -106,6 +114,45 @@ const isCommentLine = (line) => {
 const CANDIDATE =
   /["'`](?:not:)?([a-z0-9]+(?:-[a-z0-9]+)*):([a-z0-9]+(?:-[a-z0-9]+)*)["'`]/g
 
+const NAME = /^([a-z0-9]+(?:-[a-z0-9]+)*):([a-z0-9]+(?:-[a-z0-9]+)*)$/
+
+// Names asked for by hand. Unlike scanned candidates these are deliberate, so a
+// typo fails the run instead of quietly falling back to the API. Only an array
+// of strings is accepted, which leaves an object form free for later options.
+const readIncludes = async () => {
+  const file = resolve(includeFlag ?? 'octans-icons.json')
+  let text
+  try {
+    text = await readFile(file, 'utf8')
+  } catch {
+    if (!includeFlag) return []
+    console.error(`octans-icons: cannot read ${includeFlag}`)
+    process.exit(1)
+  }
+  const shown = relative(process.cwd(), file)
+  let names
+  try {
+    names = JSON.parse(text)
+  } catch (error) {
+    console.error(`octans-icons: ${shown} is not valid JSON — ${error.message}`)
+    process.exit(1)
+  }
+  if (!Array.isArray(names) || names.some((name) => typeof name !== 'string')) {
+    console.error(
+      `octans-icons: ${shown} must be an array of icon names, like ["mdi:star"]`
+    )
+    process.exit(1)
+  }
+  const bad = names.filter((name) => !NAME.test(name))
+  if (bad.length) {
+    console.error(
+      `octans-icons: ${shown} — not an Iconify name: ${bad.join(', ')}`
+    )
+    process.exit(1)
+  }
+  return names
+}
+
 const fetchJson = async (url) => {
   let response
   try {
@@ -125,8 +172,9 @@ const fetchJson = async (url) => {
   return response.json()
 }
 
+const includes = await readIncludes()
 const files = (await Promise.all(roots.map((dir) => walk(dir)))).flat()
-if (!files.length) {
+if (!files.length && !includes.length) {
   console.error(`octans-icons: no source files under ${roots.join(', ')}`)
   process.exit(1)
 }
@@ -144,10 +192,27 @@ for (const file of files) {
   }
 }
 
+for (const name of includes) {
+  const [, prefix, icon] = name.match(NAME)
+  if (!candidates.has(prefix)) candidates.set(prefix, new Set())
+  candidates.get(prefix).add(icon)
+}
+
 say(`Scanned ${files.length} files in ${roots.join(', ')}`)
+if (includes.length) say(`Included ${includes.length} listed by hand`)
 
 const collectionList = await fetchJson('https://api.iconify.design/collections')
 const known = [...candidates].filter(([prefix]) => prefix in collectionList)
+
+const unknownCollections = includes.filter(
+  (name) => !(name.split(':')[0] in collectionList)
+)
+if (unknownCollections.length) {
+  console.error(
+    `octans-icons: no such Iconify collection — ${unknownCollections.join(', ')}`
+  )
+  process.exit(1)
+}
 
 if (!known.length) {
   console.error('octans-icons: no Iconify names found — nothing to bundle.')
@@ -164,6 +229,7 @@ for (const [prefix, icons] of known.sort()) {
   // A miss is not fatal here: the candidate pattern is greedy by design, so an
   // unknown name is as likely to be a false positive as a typo. Those keep
   // working through the API, so warn and carry on rather than break a build.
+  // Names from octans-icons.json are the exception, checked below.
   for (const name of names) {
     if (!data.icons?.[name]) skipped.push(`${prefix}:${name}`)
   }
@@ -173,10 +239,17 @@ for (const [prefix, icons] of known.sort()) {
   }
 }
 
+const missing = skipped.filter((name) => includes.includes(name))
+if (missing.length) {
+  console.error(`octans-icons: not in Iconify — ${missing.join(', ')}`)
+  process.exit(1)
+}
+const scanMisses = skipped.filter((name) => !includes.includes(name))
+
 const total = collections.reduce((n, c) => n + Object.keys(c.icons).length, 0)
-if (skipped.length) {
+if (scanMisses.length) {
   console.warn(
-    `\noctans-icons: not in Iconify, left to resolve at runtime — ${skipped.join(', ')}`
+    `\noctans-icons: not in Iconify, left to resolve at runtime — ${scanMisses.join(', ')}`
   )
 }
 
@@ -188,7 +261,8 @@ if (dryRun) {
 const isTs = extname(outFile) === '.ts'
 const contents = `// GENERATED by \`npx octans-icons\` — do not edit by hand.
 //
-// Iconify data for every icon name found in this project's source, so they
+// Iconify data for every icon name found in this project's source (plus any
+// listed in octans-icons.json), so they
 // render instantly and offline instead of being fetched from the Iconify API.
 // Import this once at startup, before anything renders.
 //
