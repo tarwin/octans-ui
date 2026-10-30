@@ -4,6 +4,20 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.10.0
+
+Added
+
+- **Padding tokens for cards, tables and navigation**, so an application can
+  offer a denser or roomier layout from `:root` without reaching into
+  component classes: `--octans-card-padding-x` / `-y`,
+  `--octans-datatable-cell-padding-x` / `-y`,
+  `--octans-datatable-compact-cell-padding-y` and
+  `--octans-nav-item-padding-x` / `-y`. The defaults are the old fixed values,
+  so nothing changes unless you set them. `CardSection` still publishes the
+  padding it uses as `--octans-card-section-padding-x` / `-y`; those stay the
+  ones to read, and the new ones are the ones to set.
+
 ## 1.9.0
 
 Added

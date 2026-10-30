@@ -92,8 +92,6 @@ export default defineComponent({
 <style lang="scss" module>
 @import '../../styles/variables';
 
-$padding: $s4;
-
 /**
  * The padding is published as a custom property, not just applied.
  *
@@ -103,10 +101,14 @@ $padding: $s4;
  * `padded={false}` zeroes the horizontal padding and keeps the vertical, and a
  * single value made a table in one of those sections overhang the card by
  * 16px on each side.
+ *
+ * The values come from `--octans-card-padding-x` / `-y` (global.scss), which
+ * an application sets; these are set here, per section, so `flush` and
+ * `padded={false}` can zero them.
  */
 .CardSection {
-  --octans-card-section-padding-x: #{$padding};
-  --octans-card-section-padding-y: #{$padding};
+  --octans-card-section-padding-x: var(--octans-card-padding-x);
+  --octans-card-section-padding-y: var(--octans-card-padding-y);
   padding: var(--octans-card-section-padding-y)
     var(--octans-card-section-padding-x);
 }
@@ -150,7 +152,7 @@ $padding: $s4;
   --octans-card-section-padding-x: 0px;
 
   .header {
-    padding: $padding;
+    padding: var(--octans-card-padding-y) var(--octans-card-padding-x);
     padding-bottom: 0;
   }
 

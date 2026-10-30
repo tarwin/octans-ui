@@ -263,6 +263,17 @@ rather than the theme, since they are geometry, not colour):
 | `--octans-layout-gutter`                                            | 20px              | Gap between `Layout` sections              |
 | `--octans-layout-basis-half` / `-third` / `-primary` / `-secondary` | 450/240/680/300px | Where `LayoutSection` sizes start wrapping |
 | `--octans-stack-gap`                                                | 16px              | Default `Stack` gap                        |
+| `--octans-card-padding-x` / `-y`                                    | 16px              | `CardSection` padding                      |
+| `--octans-datatable-cell-padding-x` / `-y`                          | 16px              | `DataTable` cell padding                   |
+| `--octans-datatable-compact-cell-padding-y`                         | 8px               | Row cells in `<DataTable compact>`         |
+| `--octans-nav-item-padding-x` / `-y`                                | 8px / 7px         | `Navigation` item padding                  |
+
+Set these on `:root` to make a whole application denser or roomier, as a
+"compact / comfortable" setting would. `CardSection` still publishes the
+padding it is actually using as `--octans-card-section-padding-x` / `-y` (0 in a
+`flush` section): read those to cancel it, and set `--octans-card-padding-*` to
+change it. Setting `--octans-card-section-padding-*` on `:root` does nothing,
+since each section sets its own.
 
 `Page` is a CSS container (`octans-page`), and collapses its header actions by
 querying its own width rather than the viewport — so pages inside an `AppFrame`

@@ -122,6 +122,24 @@
   /** The default `Stack` gap — the `spacing` presets override per-instance. */
   --octans-stack-gap: 16px;
 
+  // Component padding, for an application that offers a denser or roomier
+  // layout. Set on `:root` (or any ancestor) and every instance follows.
+  /**
+   * A `CardSection`'s padding. The section republishes what it actually uses
+   * as `--octans-card-section-padding-x` / `-y` (0 when `flush`) — read those,
+   * set these.
+   */
+  --octans-card-padding-x: 16px;
+  --octans-card-padding-y: 16px;
+  /** A `DataTable` cell, header and footer rows included. */
+  --octans-datatable-cell-padding-x: 16px;
+  --octans-datatable-cell-padding-y: 16px;
+  /** A row cell's vertical padding in `<DataTable compact>`. */
+  --octans-datatable-compact-cell-padding-y: 8px;
+  /** A `Navigation` item. Sub-items keep their own deeper left indent. */
+  --octans-nav-item-padding-x: 8px;
+  --octans-nav-item-padding-y: 7px;
+
   // --- app chrome -----------------------------------------------------------
   // The `--ui-*` spellings are the historical names, kept as the source so a
   // consumer who already overrides one keeps working. Everything in the

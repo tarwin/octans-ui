@@ -691,7 +691,6 @@ $focusColor: var(--octans-focus-ring);
 
 $rowHoverColor: var(--octans-surface-hover);
 $bulkActionWidth: 45px;
-$padding: 16px;
 
 .DataTable {
   position: relative;
@@ -719,7 +718,8 @@ $padding: 16px;
 
 .isCompact {
   .RowCell {
-    padding: 8px 16px;
+    padding: var(--octans-datatable-compact-cell-padding-y)
+      var(--octans-datatable-cell-padding-x);
   }
 }
 
@@ -742,7 +742,8 @@ $padding: 16px;
 }
 
 .Cell {
-  padding: $padding;
+  padding: var(--octans-datatable-cell-padding-y)
+    var(--octans-datatable-cell-padding-x);
   text-align: left;
   vertical-align: middle;
   text-overflow: ellipsis;
@@ -969,7 +970,8 @@ th.Cell_bulkActions {
 }
 
 .EmptyText {
-  padding: $padding;
+  padding: var(--octans-datatable-cell-padding-y)
+    var(--octans-datatable-cell-padding-x);
   border-radius: 0 0 var(--octans-radius-box) var(--octans-radius-box);
   color: var(--octans-text-subdued);
   font-style: italic;

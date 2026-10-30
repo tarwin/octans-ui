@@ -233,7 +233,7 @@ $itemXPadding: 12px;
   display: flex;
   align-items: center;
   margin: 0px $itemXPadding;
-  padding: 7px 8px;
+  padding: var(--octans-nav-item-padding-y) var(--octans-nav-item-padding-x);
   background: transparent;
   border-radius: var(--octans-radius-field);
   font-size: 14px;
