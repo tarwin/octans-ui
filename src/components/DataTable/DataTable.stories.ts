@@ -1021,3 +1021,284 @@ export const NoDataManyColumns: Story = {
     `
   })
 }
+
+// 80 artworks repeated out to however many rows a story wants, each with its
+// own id so selection and keys still work.
+const manyArtworks = (count: number, from = 0) =>
+  Array.from({ length: count }, (_, i) => {
+    const n = from + i
+    const art = artworksData[n % artworksData.length]
+    return { ...art, id: n + 1, catalogNumber: `${art.catalogNumber}-${n + 1}` }
+  })
+
+const scrollColumns = [
+  { key: 'id', label: '#', format: 'integer', width: 80, fixed: true },
+  { key: 'catalogNumber', label: 'Catalogue no.' },
+  { key: 'title', label: 'Title' },
+  { key: 'artist', label: 'Artist' },
+  { key: 'year', label: 'Year' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'valuation', label: 'Valuation', format: 'currency' }
+]
+
+/**
+`virtual` draws only the rows in view, so every row can be loaded at once and
+the table still scrolls smoothly. It needs `maxHeight`: the rows scroll inside
+that height and the header stays pinned.
+
+Column widths are measured from the first rows drawn and then held, so they do
+not shift as different rows scroll past.
+*/
+export const VirtualRows: Story = {
+  render: () => ({
+    components: { DataTable, Card, Button, Stack, Caption },
+    setup() {
+      const rows = manyArtworks(10000)
+      const selectedIds = ref<number[]>([])
+      const table = ref<{ scrollToIndex(i: number): void } | null>(null)
+      return { rows, columns: scrollColumns, selectedIds, table }
+    },
+    template: `
+      <Stack vertical>
+        <Stack alignment="center">
+          <Button size="small" @click="table.scrollToIndex(0)">Top</Button>
+          <Button size="small" @click="table.scrollToIndex(4999)">Row 5,000</Button>
+          <Button size="small" @click="table.scrollToIndex(9999)">Last row</Button>
+          <Caption>{{ rows.length.toLocaleString() }} rows, {{ selectedIds.length }} selected</Caption>
+        </Stack>
+        <Card>
+          <DataTable
+            ref="table"
+            virtual
+            :max-height="480"
+            :columns="columns"
+            :rows="rows"
+            v-model:selected-ids="selectedIds"
+          />
+        </Card>
+      </Stack>
+    `
+  })
+}
+
+/**
+With `hasMore` the table puts a spinner after the last row and emits
+`load-more` as it comes into reach. Append the next batch to `rows`; set
+`hasMore` to `false` when there is nothing left.
+
+`loadingMore` stops it asking twice while a fetch is in flight, and setting it
+back to `false` after a failed fetch lets it ask again.
+
+This one fetches 50 rows at a time, up to 1,000, and combines with `virtual`
+so the DOM stays small however far you scroll.
+*/
+export const InfiniteScroll: Story = {
+  render: () => ({
+    components: { DataTable, Card, Caption, Checkbox, Stack },
+    setup() {
+      const TOTAL = 1000
+      const rows = ref<Record<string, any>[]>([])
+      const loadingMore = ref(false)
+      const virtual = ref(true)
+      const hasMore = computed(() => rows.value.length < TOTAL)
+
+      const loadMore = () => {
+        loadingMore.value = true
+        // Pretend to be a server.
+        setTimeout(() => {
+          const next = manyArtworks(50, rows.value.length)
+          rows.value = [...rows.value, ...next]
+          loadingMore.value = false
+        }, 600)
+      }
+      return {
+        rows,
+        columns: scrollColumns,
+        loadingMore,
+        hasMore,
+        loadMore,
+        virtual
+      }
+    },
+    template: `
+      <Stack vertical>
+        <Stack alignment="center">
+          <Checkbox v-model="virtual" label="virtual" />
+          <Caption>{{ rows.length }} of 1000 loaded{{ loadingMore ? ' — loading…' : '' }}</Caption>
+        </Stack>
+        <Card>
+          <DataTable
+            :virtual="virtual"
+            :max-height="420"
+            :columns="columns"
+            :rows="rows"
+            :has-more="hasMore"
+            :loading-more="loadingMore"
+            @load-more="loadMore"
+          />
+        </Card>
+      </Stack>
+    `
+  })
+}
+
+/**
+Without `maxHeight` the table grows with its rows and `load-more` fires as the
+spinner nears the bottom of the page (or of whatever scrolls the page).
+*/
+export const InfiniteScrollInPage: Story = {
+  render: () => ({
+    components: { DataTable, Card },
+    setup() {
+      const rows = ref<Record<string, any>[]>([])
+      const loadingMore = ref(false)
+      const hasMore = computed(() => rows.value.length < 300)
+      const loadMore = () => {
+        loadingMore.value = true
+        setTimeout(() => {
+          rows.value = [...rows.value, ...manyArtworks(30, rows.value.length)]
+          loadingMore.value = false
+        }, 600)
+      }
+      return { rows, columns: scrollColumns, loadingMore, hasMore, loadMore }
+    },
+    template: `
+      <Card>
+        <DataTable
+          :columns="columns"
+          :rows="rows"
+          :has-more="hasMore"
+          :loading-more="loadingMore"
+          @load-more="loadMore"
+        />
+      </Card>
+    `
+  })
+}
+
+// A pretend server for the fill and resize stories: `batch` rows per fetch,
+// `total` in all, after a short delay.
+const useArtworkFeed = (batch = 40, total = 2000) => {
+  const rows = ref<Record<string, any>[]>([])
+  const loadingMore = ref(false)
+  const hasMore = computed(() => rows.value.length < total)
+  const loadMore = () => {
+    loadingMore.value = true
+    setTimeout(() => {
+      rows.value = [...rows.value, ...manyArtworks(batch, rows.value.length)]
+      loadingMore.value = false
+    }, 500)
+  }
+  return { rows, loadingMore, hasMore, loadMore, total }
+}
+
+/**
+To fill a card, give the card a height and make it a flex column, then set
+`max-height="100%"` on the table. The table takes the space left under the
+card's title, scrolls inside it, and draws and fetches only what fits.
+*/
+export const FillsACard: Story = {
+  render: () => ({
+    components: { DataTable, Card },
+    setup() {
+      return { ...useArtworkFeed(), columns: scrollColumns }
+    },
+    template: `
+      <Card
+        :title="'Artworks — ' + rows.length + ' of ' + total + ' loaded'"
+        style="display: flex; flex-direction: column; height: 520px;"
+      >
+        <DataTable
+          virtual
+          max-height="100%"
+          style="margin-top: 12px;"
+          :columns="columns"
+          :rows="rows"
+          :has-more="hasMore"
+          :loading-more="loadingMore"
+          @load-more="loadMore"
+        />
+      </Card>
+    `
+  })
+}
+
+/**
+The table follows its container's height. Drag the bar under the card (or
+focus it and use the arrow keys). Making it taller draws more rows, and fetches
+more if the end of the loaded rows comes into view.
+*/
+export const ResizableContainer: Story = {
+  render: () => ({
+    components: { DataTable, Card, Caption },
+    setup() {
+      const feed = useArtworkFeed()
+      const height = ref(360)
+      const MIN = 160
+      const MAX = 1200
+      const clamp = (h: number) => Math.min(MAX, Math.max(MIN, h))
+
+      let startY = 0
+      let startHeight = 0
+      const onPointerDown = (event: PointerEvent) => {
+        startY = event.clientY
+        startHeight = height.value
+        ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+      }
+      const onPointerMove = (event: PointerEvent) => {
+        const target = event.currentTarget as HTMLElement
+        if (!target.hasPointerCapture(event.pointerId)) return
+        height.value = clamp(startHeight + event.clientY - startY)
+      }
+      const onKeydown = (event: KeyboardEvent) => {
+        const step = event.shiftKey ? 100 : 20
+        if (event.key === 'ArrowDown') height.value = clamp(height.value + step)
+        else if (event.key === 'ArrowUp')
+          height.value = clamp(height.value - step)
+        else return
+        event.preventDefault()
+      }
+      return {
+        ...feed,
+        columns: scrollColumns,
+        height,
+        MIN,
+        MAX,
+        onPointerDown,
+        onPointerMove,
+        onKeydown
+      }
+    },
+    template: `
+      <div>
+        <Card :style="{ height: height + 'px', display: 'flex', flexDirection: 'column' }">
+          <DataTable
+            virtual
+            max-height="100%"
+            :columns="columns"
+            :rows="rows"
+            :has-more="hasMore"
+            :loading-more="loadingMore"
+            @load-more="loadMore"
+          />
+        </Card>
+        <div
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize table"
+          :aria-valuenow="height"
+          :aria-valuemin="MIN"
+          :aria-valuemax="MAX"
+          tabindex="0"
+          style="display: flex; justify-content: center; align-items: center; height: 16px; cursor: ns-resize; touch-action: none;"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @keydown="onKeydown"
+        >
+          <span style="width: 48px; height: 4px; border-radius: 2px; background: var(--octans-border-input);" />
+        </div>
+        <Caption>{{ height }}px tall — {{ rows.length }} of {{ total }} loaded</Caption>
+      </div>
+    `
+  })
+}

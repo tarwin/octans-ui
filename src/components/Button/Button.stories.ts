@@ -142,6 +142,18 @@ export const FullWidth: Story = {
   })
 }
 
+export const NoWrap: Story = {
+  render: () => ({
+    components: { Button },
+    template: `
+      <div style="display: flex; gap: 8px; width: 220px; padding: 8px; border: 1px dashed var(--octans-border);">
+        <Button>Export selected rows</Button>
+        <Button nowrap>Export selected rows</Button>
+      </div>
+    `
+  })
+}
+
 export const ButtonAsALink: Story = {
   render: () => ({
     components: { Button, Stack },

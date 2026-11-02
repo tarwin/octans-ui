@@ -144,3 +144,10 @@ describe('Button nativeType', () => {
     ).toBeUndefined()
   })
 })
+
+describe('Button nowrap', () => {
+  it('adds the nowrap class only when asked', () => {
+    expect(classesOf({ nowrap: true })).toContain('nowrap')
+    expect(classesOf({})).not.toContain('nowrap')
+  })
+})

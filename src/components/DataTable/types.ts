@@ -270,4 +270,48 @@ export type InterPropsType<
    * Disables the scroll bounce effect.
    */
   disableScrollBounce?: boolean
+  /**
+   * Caps the table's height. The rows scroll inside it and the header (and
+   * totals row) stays pinned to the top. A number is pixels; a string is any
+   * CSS length — `'60vh'`, or `'100%'` to fill a parent with a set height.
+   * Inside a flex column (a card with a title above the table, say) the
+   * table also shrinks to the space left, so `'100%'` fills the rest of it.
+   * Pagination, if any, stays inside the cap.
+   *
+   * `virtual` needs it, because a virtual table has to know how tall its
+   * window is.
+   */
+  maxHeight?: number | string
+  /**
+   * Only renders the rows that are in view (plus a few either side), so a
+   * table can hold tens of thousands of rows and still scroll smoothly.
+   * Needs `maxHeight`.
+   *
+   * Rows are assumed to all be one height, which is true unless a column
+   * uses `wrap`. Column widths are measured from the first rows drawn and
+   * then held, so they do not jump as you scroll; they are measured again
+   * when the table is resized or `columns` changes.
+   */
+  virtual?: boolean
+  /**
+   * The height of one row in pixels, for `virtual`. Measured from the first
+   * rows drawn when not given — set it only if that measurement is wrong.
+   */
+  rowHeight?: number
+  /**
+   * There are more rows to fetch. The table shows a spinner after the last
+   * row and emits `load-more` as it comes into reach, either inside the
+   * `maxHeight` scroll area or, without one, in the page.
+   *
+   * It asks once, then waits for `rows` to grow or for `loadingMore` to go
+   * back to `false` before it asks again. Set it to `false` when the data
+   * runs out.
+   */
+  hasMore?: boolean
+  /**
+   * A `load-more` fetch is in flight. While it is `true` the table will not
+   * ask again. If the fetch fails, setting it back to `false` lets the table
+   * ask again once the spinner is still in reach.
+   */
+  loadingMore?: boolean
 }

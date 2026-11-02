@@ -125,6 +125,17 @@ export default {
 </template>
 ```
 
+### No wrapping
+
+In a narrow space a label wraps onto two lines. `nowrap` keeps it on one and
+lets the button grow wider instead.
+
+```vue
+<template>
+  <Button nowrap>Export selected rows</Button>
+</template>
+```
+
 ### Button as a link
 
 ```vue

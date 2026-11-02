@@ -114,6 +114,16 @@ export default defineComponent({
       default: false
     },
     /**
+     * Keeps the label on one line. Without it a button in a narrow space —
+     * a table cell, a toolbar, a phone — wraps its label onto two lines and
+     * grows taller than the buttons beside it. With it the button grows wider
+     * instead, so give it room.
+     */
+    nowrap: {
+      type: Boolean,
+      default: false
+    },
+    /**
      * Changes the size of the button, giving it more or less paadding.
      *
      * Sizes:
@@ -339,6 +349,7 @@ export default defineComponent({
             color && [style['color-' + color], style.hasColor],
             style['size' + capitalize(props.size)],
             props.fullWidth && style.fullWidth,
+            props.nowrap && style.nowrap,
             props.loading && style.loading,
             props.pressed && style.pressed
           ],
@@ -843,6 +854,10 @@ $shadowHover: var(--octans-shadow-sm);
   .content {
     font-size: 16px;
   }
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .fullWidth {

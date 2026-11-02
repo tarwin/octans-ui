@@ -30,6 +30,15 @@ import DataTableFooter from './DataTableFooter.vue'
 import { $t } from '@/utils/translate'
 
 const MAX_PERSIST_ACTIONS = 3
+// Rows drawn above and below the visible window in `virtual` mode, so a quick
+// flick does not show empty space before the next render lands.
+const VIRTUAL_OVERSCAN = 8
+// A first guess at a row's height (16px padding twice, a 16px line, a 1px
+// border) — replaced by a measurement as soon as a row has been drawn.
+const DEFAULT_ROW_HEIGHT = 49
+// How far below the visible area the load-more spinner may be and still count
+// as in reach, so the next batch is usually there before anyone sees it.
+const LOAD_MORE_MARGIN = 300
 
 const props = withDefaults(defineProps<InterPropsType<Row>>(), {
   totals: false,
@@ -40,7 +49,12 @@ const props = withDefaults(defineProps<InterPropsType<Row>>(), {
   fixedColumnDisableThreshold: 600
 })
 
-const emit = defineEmits(['click-row', 'update:sort', 'update:selectedIds'])
+const emit = defineEmits([
+  'click-row',
+  'update:sort',
+  'update:selectedIds',
+  'load-more'
+])
 
 /**
  * Declares the component's scoped slots for consumers. As well as the static
@@ -83,6 +97,7 @@ const $style = useCssModule()
 
 const rootEl = ref<HTMLElement | null>(null)
 const scrollEl = ref<HTMLElement | null>(null)
+const sentinelEl = ref<HTMLElement | null>(null)
 
 const fixedColumnAllowed = computed(() => {
   return width.value && width.value < props.fixedColumnDisableThreshold
@@ -200,6 +215,207 @@ const filteredRows = computed(() => {
   return props.rows
 })
 
+// --- scrolling, virtual rows and load-more ----------------------------------
+
+const hasMaxHeight = computed(
+  () =>
+    props.maxHeight !== undefined &&
+    props.maxHeight !== null &&
+    props.maxHeight !== ''
+)
+
+const isVirtual = computed(() => !!props.virtual && hasMaxHeight.value)
+
+const scrollTop = ref(0)
+const viewportHeight = ref(0)
+// The scroll area's inner width — its box less any vertical scrollbar.
+const viewportWidth = ref(0)
+const headerHeight = ref(0)
+const measuredRowHeight = ref<number | null>(null)
+// Header cell widths, measured once from a natural layout and then held, so
+// the columns do not resize as different rows scroll through.
+const frozenWidths = ref<number[] | null>(null)
+
+const rowHeight = computed(
+  () => props.rowHeight || measuredRowHeight.value || DEFAULT_ROW_HEIGHT
+)
+
+// Two number computeds rather than one `{ start, end }` object: a computed
+// only notifies when its value changes, and a fresh object always does — that
+// would re-render the table on every pixel of scroll.
+const scrolledRows = computed(() =>
+  Math.max(0, scrollTop.value - headerHeight.value)
+)
+const virtualStart = computed(() => {
+  const total = filteredRows.value.length
+  if (!isVirtual.value) return 0
+  const start = Math.floor(scrolledRows.value / rowHeight.value)
+  return Math.min(total, Math.max(0, start - VIRTUAL_OVERSCAN))
+})
+const virtualEnd = computed(() => {
+  const total = filteredRows.value.length
+  if (!isVirtual.value) return total
+  // Before the first measurement there is no viewport height; draw a
+  // generous screenful so the table is not empty for that one frame.
+  const height = viewportHeight.value || 800
+  const end = Math.ceil((scrolledRows.value + height) / rowHeight.value)
+  return Math.min(total, Math.max(virtualStart.value, end + VIRTUAL_OVERSCAN))
+})
+
+const resetMeasurements = () => {
+  measuredRowHeight.value = null
+  frozenWidths.value = null
+}
+
+const measureLayout = () => {
+  const el = scrollEl.value
+  if (!el) return
+  viewportHeight.value = el.clientHeight
+  // A vertical scrollbar appearing or going away changes the inner width
+  // without changing the table's own. Anything measured against the old
+  // width is stale: let one render land at the new width, then measure.
+  if (viewportWidth.value !== el.clientWidth) {
+    viewportWidth.value = el.clientWidth
+    resetMeasurements()
+    nextTick(measureLayout)
+    return
+  }
+  const thead = el.querySelector('thead')
+  headerHeight.value = thead ? thead.offsetHeight : 0
+  if (!isVirtual.value) return
+  const drawn = el.querySelectorAll<HTMLElement>('tbody > tr[data-row-index]')
+  if (!drawn.length) return
+  if (!props.rowHeight && measuredRowHeight.value === null) {
+    let sum = 0
+    drawn.forEach((tr) => (sum += tr.getBoundingClientRect().height))
+    const average = sum / drawn.length
+    if (average > 0) measuredRowHeight.value = average
+  }
+  if (frozenWidths.value === null) {
+    const ths = el.querySelectorAll<HTMLElement>('thead > tr:first-child > th')
+    const widths = Array.from(ths, (th) => th.getBoundingClientRect().width)
+    if (widths.length && widths.every((w) => w > 0)) {
+      frozenWidths.value = widths
+    }
+  }
+}
+
+watch(
+  () => [virtualStart.value, virtualEnd.value, filteredRows.value],
+  () => nextTick(measureLayout)
+)
+watch(
+  () => props.columns,
+  () => {
+    resetMeasurements()
+    nextTick(measureLayout)
+  }
+)
+watch(
+  () => props.rowHeight,
+  () => nextTick(measureLayout)
+)
+
+const onVerticalScroll = () => {
+  const el = scrollEl.value
+  if (el) scrollTop.value = el.scrollTop
+}
+
+let loadMorePending = false
+
+// Whether the spinner after the last row is within reach of the scroll area —
+// or of the window when the table has no `maxHeight`. Checked against the
+// live layout rather than the IntersectionObserver's last report, which is
+// stale for a moment after new rows push the spinner down.
+const sentinelInReach = () => {
+  const target = sentinelEl.value
+  if (!target) return false
+  const rect = target.getBoundingClientRect()
+  const root =
+    hasMaxHeight.value && scrollEl.value
+      ? scrollEl.value.getBoundingClientRect()
+      : { top: 0, bottom: window.innerHeight }
+  return rect.top <= root.bottom + LOAD_MORE_MARGIN && rect.bottom >= root.top
+}
+
+const maybeLoadMore = () => {
+  if (!props.hasMore || props.loadingMore || loadMorePending) return
+  if (!sentinelInReach()) return
+  loadMorePending = true
+  /**
+   * Emitted when `hasMore` is set and the end of the loaded rows comes into
+   * reach. Append the next batch to `rows`, or set `hasMore` to `false`.
+   */
+  emit('load-more')
+}
+
+watch(
+  () => filteredRows.value.length,
+  () => {
+    loadMorePending = false
+    nextTick(maybeLoadMore)
+  }
+)
+watch(
+  () => props.loadingMore,
+  (loadingMore) => {
+    if (!loadingMore) {
+      loadMorePending = false
+      nextTick(maybeLoadMore)
+    }
+  }
+)
+watch(
+  () => props.hasMore,
+  (hasMore) => hasMore && nextTick(maybeLoadMore)
+)
+
+let loadMoreObserver: IntersectionObserver | null = null
+const connectLoadMoreObserver = () => {
+  loadMoreObserver?.disconnect()
+  loadMoreObserver = null
+  const target = sentinelEl.value
+  if (!target || typeof IntersectionObserver === 'undefined') return
+  loadMoreObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) maybeLoadMore()
+    },
+    {
+      root: hasMaxHeight.value ? scrollEl.value : null,
+      rootMargin: `0px 0px ${LOAD_MORE_MARGIN}px 0px`
+    }
+  )
+  loadMoreObserver.observe(target)
+}
+watch([sentinelEl, hasMaxHeight], connectLoadMoreObserver, { flush: 'post' })
+
+/**
+ * Scrolls the row at `index` (in `rows`) to the top of the scroll area — for
+ * example back to 0 after a sort replaces the rows.
+ */
+const scrollToIndex = (index: number) => {
+  const el = scrollEl.value
+  if (!el) return
+  if (isVirtual.value) {
+    el.scrollTop = Math.max(0, index) * rowHeight.value
+    return
+  }
+  const row = el.querySelector<HTMLElement>(
+    `tbody > tr[data-row-index="${index}"]`
+  )
+  if (!row) return
+  if (hasMaxHeight.value) {
+    el.scrollTop +=
+      row.getBoundingClientRect().top -
+      el.getBoundingClientRect().top -
+      headerHeight.value
+  } else {
+    row.scrollIntoView({ block: 'start' })
+  }
+}
+
+defineExpose({ scrollToIndex })
+
 // TODO: check that we are using this
 const wrappedBulkActions = computed(() => {
   if (props.bulkActions) {
@@ -279,16 +495,52 @@ const updateScroll = debounce(updateScrollImmediate, 100, {
   trailing: true
 })
 
+let resizeObserver: ResizeObserver | null = null
+let observedWidth = 0
+
 onMounted(() => {
   window.addEventListener('resize', updateScroll)
 
   updateScroll()
   scrollEl.value?.addEventListener('scroll', updateScroll)
+  scrollEl.value?.addEventListener('scroll', onVerticalScroll, {
+    passive: true
+  })
+
+  if (props.virtual && !hasMaxHeight.value) {
+    console.warn(
+      'DataTable: `virtual` needs `maxHeight` — rendering every row instead.'
+    )
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      // A new width means the held column widths and row height may no
+      // longer be right: let the table lay out naturally once and measure
+      // again. A height change only moves the window.
+      const width = rootEl.value?.clientWidth || 0
+      if (width !== observedWidth) {
+        observedWidth = width
+        resetMeasurements()
+      }
+      nextTick(measureLayout)
+    })
+    if (rootEl.value) resizeObserver.observe(rootEl.value)
+    if (scrollEl.value) resizeObserver.observe(scrollEl.value)
+  }
+
+  nextTick(() => {
+    measureLayout()
+    maybeLoadMore()
+  })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScroll)
   scrollEl.value?.removeEventListener('scroll', updateScroll)
+  scrollEl.value?.removeEventListener('scroll', onVerticalScroll)
+  resizeObserver?.disconnect()
+  loadMoreObserver?.disconnect()
 })
 
 const renderRow = (row: any, rowIndex: number) => {
@@ -408,6 +660,12 @@ const renderRow = (row: any, rowIndex: number) => {
     'tr',
     {
       class: [$style.Row, isSelected && $style.Row_isSelected],
+      'data-row-index': rowIndex,
+      // A virtual table only has some of its rows in the DOM; these tell a
+      // screen reader where in the whole set each one sits.
+      'aria-rowindex': isVirtual.value
+        ? headerRowCount.value + rowIndex + 1
+        : undefined,
       onClick: () => {
         if (hasSelection.value) {
           toggleRowSelection(row.id)
@@ -426,6 +684,8 @@ const renderRow = (row: any, rowIndex: number) => {
     cells
   )
 }
+
+const headerRowCount = computed(() => (totalValues.value ? 2 : 1))
 
 const updateOffset = (offset: number) => {
   if (!props.pagination) return
@@ -472,7 +732,7 @@ const render = () => {
     return h('span', { class: $style.HeaderContent }, col.label)
   }
 
-  const headerColsMarkup = cols.value.map((col) => {
+  const headerColsMarkup = cols.value.map((col, colIndex) => {
     const content = headerContent(col)
 
     const isSorted = props.sort && props.sort.column === col.key
@@ -502,6 +762,7 @@ const render = () => {
     // cells to carry the width at all.
     const headMinWidth = col.minWidth || col.width
     const headMaxWidth = col.maxWidth || col.width
+    const frozenWidth = isVirtual.value && frozenWidths.value?.[colIndex]
     return h(
       'th',
       {
@@ -513,7 +774,8 @@ const render = () => {
         ],
         style: {
           minWidth: headMinWidth && headMinWidth + 'px',
-          maxWidth: headMaxWidth && headMaxWidth + 'px'
+          maxWidth: headMaxWidth && headMaxWidth + 'px',
+          width: frozenWidth && frozenWidth + 'px'
         },
         onClick() {
           if (!hasSelection.value && col.sortable) {
@@ -559,20 +821,67 @@ const render = () => {
         [content]
       )
     })
+  const virtual = isVirtual.value
   const headerMarkup = h('thead', [
-    h('tr', headerColsMarkup),
-    totalsColsMarkup && h('tr', totalsColsMarkup)
+    h('tr', { 'aria-rowindex': virtual ? 1 : undefined }, headerColsMarkup),
+    totalsColsMarkup &&
+      h('tr', { 'aria-rowindex': virtual ? 2 : undefined }, totalsColsMarkup)
   ])
 
-  const rowsMarkup = filteredRows.value.map((row, rowIndex) => {
-    return renderRow(row, rowIndex)
-  })
+  const start = virtualStart.value
+  const end = virtualEnd.value
+  const rowsMarkup = filteredRows.value
+    .slice(start, end)
+    .map((row, i) => renderRow(row, start + i))
+
+  // Empty rows standing in for the ones not drawn, so the scrollbar is the
+  // size of the whole set. The top one is always present (at 0px when
+  // scrolled to the top) so the drawn rows keep their positions among the
+  // children and Vue patches them in place.
+  const spacerRow = (height: number) =>
+    h('tr', { class: $style.SpacerRow, 'aria-hidden': 'true' }, [
+      h('td', { colspan: cols.value.length, style: { height: height + 'px' } })
+    ])
+  const below = (filteredRows.value.length - end) * rowHeight.value
+  const bodyRows: any[] = virtual
+    ? [
+        spacerRow(start * rowHeight.value),
+        ...rowsMarkup,
+        below > 0 && spacerRow(below)
+      ]
+    : rowsMarkup
+
+  const loadMoreMarkup =
+    props.hasMore &&
+    h('tr', { class: $style.LoadMoreRow }, [
+      h('td', { ref: sentinelEl, colspan: cols.value.length }, [
+        // Held to the visible width so the spinner sits in the middle of
+        // what can be seen, not of a table scrolled off to the side. The
+        // scroll area's INNER width, not the table's outer one: a classic
+        // scrollbar makes the outer width 15px too wide, and this row would
+        // then push the whole table into a horizontal scroll.
+        h(
+          'div',
+          {
+            class: $style.LoadMoreInner,
+            style: {
+              width: viewportWidth.value
+                ? viewportWidth.value + 'px'
+                : undefined
+            }
+          },
+          [h(Spinner, { size: 'small' })]
+        )
+      ])
+    ])
+
   const emptyText =
     props.emptyText !== null
       ? props.emptyText || $t('ui.dataTable.noData')
       : null
   const emptyMarkup =
     !rowsMarkup.length &&
+    !props.hasMore &&
     emptyText &&
     h('tr', [
       h(
@@ -585,13 +894,25 @@ const render = () => {
       )
     ])
 
-  // const bodyMarkup = h('tbody', [rowsMarkup || emptyMarkup])
-  const bodyMarkup = h('tbody', rowsMarkup.length ? rowsMarkup : [emptyMarkup])
+  const bodyMarkup = h('tbody', [
+    ...(rowsMarkup.length ? bodyRows : [emptyMarkup]),
+    loadMoreMarkup
+  ])
 
+  // Once the widths are held, a set table width is what switches
+  // `table-layout: fixed` on — the header row then decides every column and
+  // the rows drawn later cannot push them about.
+  const frozen = virtual && frozenWidths.value
   const tableMarkup = h(
     'table',
     {
-      class: $style.Table
+      class: $style.Table,
+      style: frozen
+        ? { width: frozen.reduce((a, b) => a + b, 0) + 'px' }
+        : undefined,
+      'aria-rowcount': virtual
+        ? filteredRows.value.length + headerRowCount.value
+        : undefined
     },
     [headerMarkup, bodyMarkup]
   )
@@ -617,10 +938,7 @@ const render = () => {
       class: [
         $style.ScrollContainerInner,
         props.disableScrollBounce && $style.sDisableBounce
-      ],
-      on: {
-        scroll: updateScroll
-      }
+      ]
     },
     [tableMarkup]
   )
@@ -666,8 +984,19 @@ const render = () => {
         props.bulkActions && $style.hasBulkActions,
         props.selectedIds && props.selectedIds.length && $style.hasSelection,
         attrs['click-row'] && $style.hasClickableRows,
-        props.compact && $style.isCompact
-      ]
+        props.compact && $style.isCompact,
+        hasMaxHeight.value && $style.hasMaxHeight
+      ],
+      // On the root rather than the scroll area, so that `'100%'` resolves
+      // against the table's own parent and the footer stays inside the cap.
+      style: hasMaxHeight.value
+        ? {
+            maxHeight:
+              typeof props.maxHeight === 'number'
+                ? props.maxHeight + 'px'
+                : props.maxHeight
+          }
+        : undefined
     },
     [loaderMarkup, scrollContainerOuterMarkup, footerMarkup]
   )
@@ -967,6 +1296,68 @@ th.Cell_bulkActions {
   justify-content: center;
   background: var(--octans-scrim);
   border-radius: var(--octans-radius-field);
+}
+
+// --- max height, virtual rows, load-more ------------------------------------
+
+.hasMaxHeight {
+  // A column that hands whatever height it is given to the scroll area: the
+  // cap above, or — with `min-height: 0` letting it shrink — whatever a flex
+  // column parent has left for it, such as a card body under its title.
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  .ScrollContainerOuter {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .ScrollContainerInner {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    // Scroll anchoring "corrects" scrollTop whenever the top spacer resizes,
+    // which for a virtual table means every render — and the corrections
+    // compound until the table races to the bottom.
+    overflow-anchor: none;
+  }
+
+  // The whole head sticks, so a totals row comes along with the labels. It
+  // needs its own surface or the rows show through as they pass under it.
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  th {
+    background: var(--octans-surface);
+  }
+}
+
+// Written in full so it outranks the row hover and divider rules above.
+.DataTable tbody tr.SpacerRow td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.DataTable tbody tr.LoadMoreRow td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.LoadMoreInner {
+  position: sticky;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: var(--octans-datatable-cell-padding-y) 0;
+  box-sizing: border-box;
 }
 
 .EmptyText {

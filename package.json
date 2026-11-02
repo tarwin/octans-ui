@@ -1,6 +1,6 @@
 {
   "name": "@octans/ui",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "A Vue 3 component library — accessible, themeable UI primitives and application shell components.",
   "keywords": [
     "vue",

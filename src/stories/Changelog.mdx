@@ -4,6 +4,30 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.11.0
+
+Added
+
+- **DataTable can scroll inside a set height.** `max-height` caps the table
+  (`480`, `'60vh'`, or `'100%'` to fill a parent with a set height); the rows
+  scroll inside it and the header and totals row stay pinned. Inside a flex
+  column — a card with a title, say — the table shrinks to the space left, so
+  `'100%'` fills the rest of the card. Pagination stays inside the cap.
+- **DataTable `virtual`** draws only the rows in view, so tens of thousands of
+  rows scroll smoothly. It needs `max-height`. Rows are assumed to be one
+  height (true unless a column uses `wrap`); `row-height` overrides the
+  measured one. Column widths are measured from the first rows drawn and held,
+  so they don't jump as you scroll.
+- **DataTable infinite scroll.** With `has-more` the table shows a spinner
+  after the last row and emits `load-more` as it comes into reach, inside the
+  `max-height` area or, without one, in the page. It asks once and waits for
+  `rows` to grow; set `loading-more` while fetching, and back to `false` after
+  a failed fetch to let it ask again. Works with or without `virtual`.
+- **`scrollToIndex(index)`** on a DataTable ref scrolls a row to the top —
+  for example back to `0` after a sort replaces the rows.
+- **Button `nowrap`** keeps the label on one line; the button grows wider
+  instead of taller.
+
 ## 1.10.0
 
 Added
