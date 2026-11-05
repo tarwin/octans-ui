@@ -3,7 +3,7 @@ import { Calendar } from '@/components/Calendar'
 import { Icon } from '@/components/Icon'
 import { Labelled } from '@/components/Labelled'
 import { Popover } from '@/components/Popover'
-import { dayjs } from '@/utils'
+import { dayjs, getDateFormat } from '@/utils'
 import { computed, ref, watch } from 'vue'
 import type { DatePickerProps } from './types'
 
@@ -27,10 +27,11 @@ const inputValue = ref<string | null>()
 
 const displayFormat = computed(() => {
   const type = props.type
+  const date = props.dateFormat || getDateFormat() || 'L'
   if (type === 'datetime') {
-    return 'L LT'
+    return `${date} LT`
   } else if (type === 'date') {
-    return 'L'
+    return date
   } else if (type === 'month') {
     return 'YYYY-MM'
   }
@@ -98,8 +99,8 @@ function attemptShow(showFn: () => void, force = false) {
 }
 
 watch(
-  () => props.modelValue,
-  (value) => {
+  [() => props.modelValue, displayFormat],
+  ([value]) => {
     if (value) {
       const formatted = dayjs(value, props.modelFormat, true).format(
         displayFormat.value

@@ -324,6 +324,38 @@ createApp(App).use(UI, {
 Dates are formatted with DayJS, which carries its own locale data —
 `setLocale('fr')` switches both.
 
+## Date format
+
+`DatePicker` and the `dateNumeral` formatter show numeric dates in the locale's
+format, which in English is `MM/DD/YYYY`. To change that without changing the
+language, give a dayjs format:
+
+```ts
+createApp(App).use(UI, { dateFormat: 'DD/MM/YYYY' })
+```
+
+Or set it later, for example when the user changes a setting. Fields on screen
+redraw:
+
+```ts
+import { setDateFormat } from '@octans/ui'
+
+setDateFormat('YYYY-MM-DD')
+setDateFormat(null) // back to the locale's
+```
+
+It changes what a field shows and accepts, not its `v-model`, which stays in
+`model-format`. A format that can't be read back as a date, such as lowercase
+`dd/mm/yyyy`, warns and falls back rather than throwing. Worded formats like
+`dateLong` still come from the locale.
+
+A `DatePicker` or `Formatter` takes `date-format` to override it for one date,
+and `$ui.format` takes `dateFormat` through its context argument:
+
+```html
+<DatePicker v-model="date" model-format="YYYY-MM-DD" date-format="YYYY-MM-DD" />
+```
+
 ## Time zone
 
 There are two questions here, and they have separate answers: which clock a

@@ -8,14 +8,23 @@ export default defineComponent({
     const style = useCssModule()
 
     return () => {
-      const { type, value, locale, currency, timezone, inputTimezone } = props
+      const {
+        type,
+        value,
+        locale,
+        currency,
+        timezone,
+        inputTimezone,
+        dateFormat
+      } = props
       const context = {
         locale: locale,
         currency: currency,
         // `undefined`, not `''`, so an unset prop falls through to the
         // library-wide zone rather than pinning this one to UTC-nothing.
         timezone: timezone || undefined,
-        inputTimezone: inputTimezone || undefined
+        inputTimezone: inputTimezone || undefined,
+        dateFormat: dateFormat || undefined
       }
       let title
       if (type && type.indexOf('date') >= 0) {
@@ -73,6 +82,15 @@ export default defineComponent({
      * per-instance override, for the one feed that disagrees.
      */
     inputTimezone: {
+      type: String
+    },
+    /**
+     * dayjs format for the `dateNumeral` type, e.g. `DD/MM/YYYY`.
+     *
+     * Usually you want `setDateFormat` instead. This is the per-instance
+     * override.
+     */
+    dateFormat: {
       type: String
     }
   }

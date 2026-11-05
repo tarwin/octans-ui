@@ -94,6 +94,13 @@ export interface DatePickerProps {
    */
   timezone?: string
   /**
+   * dayjs format for the date this field shows and accepts, e.g. `DD/MM/YYYY`.
+   * A `datetime` field adds the time after it; `month` and `year` fields ignore
+   * it. Defaults to the library-wide format, see `setDateFormat`, and failing
+   * that the locale's own. It does not change `modelValue`, see `modelFormat`.
+   */
+  dateFormat?: string
+  /**
    * Marks the field as required: an asterisk after the label, and
    * `aria-required` on the control.
    *

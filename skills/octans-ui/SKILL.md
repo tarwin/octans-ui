@@ -242,13 +242,19 @@ later:
 import { addTranslations, setTranslationLocale } from '@octans/ui'
 ```
 
-Dates have three knobs, all global, all settable at install
-(`app.use(UI, { locale, timezone, inputTimezone })`) or later:
+Dates have four knobs, all global, all settable at install
+(`app.use(UI, { locale, dateFormat, timezone, inputTimezone })`) or later:
 
 ```ts
-import { setLocale, setTimezone, setInputTimezone } from '@octans/ui'
+import {
+  setLocale,
+  setDateFormat,
+  setTimezone,
+  setInputTimezone
+} from '@octans/ui'
 
 setLocale('fr') // formats, month names, and the day the week starts on
+setDateFormat('DD/MM/YYYY') // numeric dates, without changing the language
 setInputTimezone('UTC') // what a string with NO zone of its own means
 setTimezone('America/Los_Angeles') // what "now" is, and what zone dates render in
 ```
@@ -273,6 +279,13 @@ otherwise render as the 14th west of the display zone.
 
 `Formatter` takes `timezone` and `input-timezone` props to override either for
 one instance; `Calendar` and `DatePicker` take `timezone`.
+
+`setDateFormat` sets what `DatePicker` shows and accepts and what `dateNumeral`
+shows. It never changes a `v-model`, which stays in `model-format`, or worded
+formats like `dateLong`. Unlike the zones it is reactive, so fields on screen
+redraw. Use a dayjs format: lowercase `dd/mm/yyyy` can't be read back as a date,
+so it warns and falls back to the locale's. `DatePicker` and `Formatter` take
+`date-format` to override it for one instance.
 
 ## Components
 

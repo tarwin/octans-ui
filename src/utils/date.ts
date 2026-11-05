@@ -10,6 +10,7 @@ import LocalizedFormat from 'dayjs/plugin/localizedFormat'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import updateLocale from 'dayjs/plugin/updateLocale'
+import { shallowRef } from 'vue'
 import objectSupport from 'dayjs/plugin/objectSupport'
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -122,6 +123,46 @@ function setLocale(locale: string) {
     locale = 'en-US'
   }
   dayjs.locale(locale)
+}
+
+/**
+ * The library-wide numeric date format, as a dayjs format: `'DD/MM/YYYY'`.
+ * Unset by default, which means the active locale's `L`, and `en` makes that
+ * `MM/DD/YYYY`.
+ *
+ * A locale decides this as well, but a locale also changes the language of
+ * every month and weekday, and an English app for British users has no way to
+ * ask for one without the other.
+ *
+ * `DatePicker` reads and writes in this format, and the `dateNumeral` formatter
+ * shows it. It is held in a ref, unlike the zones, because a picker on screen
+ * holds typed text that has to redraw when the format changes.
+ */
+const displayDateFormat = shallowRef<string | undefined>()
+
+function setDateFormat(format?: string | null) {
+  if (!format) {
+    displayDateFormat.value = undefined
+    return
+  }
+  // A format that can't be read back would let a picker show a date and then
+  // reject it, or worse, read it as another date: lowercase `dd/mm/yyyy` means
+  // weekday and minutes to dayjs. So it is caught here, where the format is.
+  const probe = '2024-03-15'
+  const read = dayjs(dayjs(probe).format(format), format, true)
+  if (read.isValid() && read.format('YYYY-MM-DD') === probe) {
+    displayDateFormat.value = format
+    return
+  }
+  console.warn(
+    `[octans] setDateFormat: "${format}" can't be read back as a date. ` +
+      "Falling back to the locale's own format."
+  )
+  displayDateFormat.value = undefined
+}
+
+function getDateFormat(): string | undefined {
+  return displayDateFormat.value
 }
 
 /**
@@ -271,6 +312,8 @@ const mysqlFormat = 'YYYY-MM-DD HH:mm:ss'
 export {
   dayjs,
   setLocale,
+  setDateFormat,
+  getDateFormat,
   setTimezone,
   getTimezone,
   setInputTimezone,

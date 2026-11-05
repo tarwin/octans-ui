@@ -4,6 +4,18 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Changelog
 
+## 1.12.0
+
+Added
+
+- **`setDateFormat` sets the numeric date format across the library**, without
+  changing the language: `setDateFormat('DD/MM/YYYY')`, or the `dateFormat`
+  install option. `DatePicker` shows and reads typed dates in it, and
+  `dateNumeral` shows it. Fields on screen redraw. A format that can't be read
+  back warns and falls back, as `setTimezone` does.
+- **`date-format` overrides it for one date**, on `DatePicker` and `Formatter`,
+  and `dateFormat` does through the `format` context.
+
 ## 1.11.0
 
 Added

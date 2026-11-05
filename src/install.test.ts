@@ -2,8 +2,10 @@ import { createApp } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Octans from './lib'
 import {
+  getDateFormat,
   getInputTimezone,
   getTimezone,
+  setDateFormat,
   setInputTimezone,
   setTimezone
 } from './utils/date'
@@ -22,10 +24,23 @@ function install(options?: Record<string, unknown>) {
 afterEach(() => {
   setTimezone(undefined)
   setInputTimezone(undefined)
+  setDateFormat(undefined)
   vi.restoreAllMocks()
 })
 
 describe('plugin install options', () => {
+  it('sets the date format', () => {
+    install({ dateFormat: 'DD/MM/YYYY' })
+    expect(getDateFormat()).toBe('DD/MM/YYYY')
+  })
+
+  it('warns and falls back on a date format that cannot be read back', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    setDateFormat('dd/mm/yyyy')
+    expect(getDateFormat()).toBeUndefined()
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
   it('sets the display time zone', () => {
     install({ timezone: 'Australia/Sydney' })
     expect(getTimezone()).toBe('Australia/Sydney')

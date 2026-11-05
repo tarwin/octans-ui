@@ -8,6 +8,8 @@ import { toast } from './components/ToastManager'
 import { format } from './utils/format'
 import {
   setLocale,
+  setDateFormat,
+  getDateFormat,
   setTimezone,
   getTimezone,
   setInputTimezone,
@@ -65,6 +67,14 @@ interface PluginOptions {
    * in Sydney than to one in London, whatever `timezone` says.
    */
   inputTimezone?: string
+  /**
+   * Library-wide numeric date format to activate at install time, as a dayjs
+   * format (`'DD/MM/YYYY'`). Equivalent to calling `setDateFormat` yourself.
+   *
+   * Left unset, the locale decides. A format that can't be read back as a date
+   * warns and falls back rather than throwing.
+   */
+  dateFormat?: string
 }
 
 // for some reason, referring to Vue type breaks things when used outside
@@ -91,6 +101,9 @@ const install = (app: any, options?: PluginOptions) => {
   }
   if (options?.inputTimezone) {
     setInputTimezone(options.inputTimezone)
+  }
+  if (options?.dateFormat) {
+    setDateFormat(options.dateFormat)
   }
   // Register every component globally. This mainly exists for the UMD/CDN
   // build, where a plain HTML page has no way to import components. It costs
@@ -129,6 +142,8 @@ export * from './components/all'
 // letting them resolve through api.iconify.design at runtime.
 export { addCollection, addIcon } from '@iconify/vue'
 export {
+  setDateFormat,
+  getDateFormat,
   setTimezone,
   getTimezone,
   setInputTimezone,
@@ -255,6 +270,8 @@ const UI = {
   setLocale,
   translate,
   t: translate,
+  setDateFormat,
+  getDateFormat,
   setTimezone,
   getTimezone,
   setInputTimezone,

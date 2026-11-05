@@ -358,10 +358,11 @@ $ui.format(10485760, 'filesize') // "10.49 MB"
 `dateNumeral`, `dateShort`, `dateTimeShort`, `dateLong`, `dateTimeLong`,
 `dateMonthShort`, `dateMonthLong`, `dateMonthYearShort`, `dateMonthYearLong`.
 
-The `context` object accepts `{ locale, currency, timezone, inputTimezone }`.
+The `context` object accepts `{ locale, currency, timezone, inputTimezone, dateFormat }`.
 When omitted, the locale falls back to the active translation locale (see
 `$ui.setTranslationLocale`) or `en-US`, currency to `USD`, and the two zones to
-whatever `$ui.setTimezone` / `$ui.setInputTimezone` are set to.
+whatever `$ui.setTimezone` / `$ui.setInputTimezone` are set to. `dateFormat` is
+for `dateNumeral`, and falls back to `$ui.setDateFormat`, then the locale.
 
 ---
 
@@ -373,6 +374,31 @@ date components.
 ```ts
 $ui.setLocale('fr')
 ```
+
+---
+
+## `$ui.setDateFormat(format)`
+
+The numeric date format across the library, as a dayjs format, without changing
+the language. `DatePicker` shows and reads typed dates in it, and the
+`dateNumeral` format shows it.
+
+```ts
+$ui.setDateFormat('DD/MM/YYYY')
+$ui.setDateFormat(null) // back to the locale's
+```
+
+It can be set at install instead, as `app.use(UI, { dateFormat })`. Read it back
+with `$ui.getDateFormat()`.
+
+Unlike the zones below it is reactive, so fields and formatters on screen redraw.
+It does not change a `DatePicker`'s `v-model`, which stays in `model-format`, or
+worded formats like `dateLong`, which come from the locale.
+
+A format that can't be read back as a date, such as lowercase `dd/mm/yyyy`, warns
+and falls back to the locale's rather than throwing. The `date-format` prop on
+`DatePicker` and `Formatter`, and `dateFormat` in the `$ui.format` context,
+override it for one date.
 
 ---
 

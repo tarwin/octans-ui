@@ -1,6 +1,7 @@
 import memoize from 'lodash-es/memoize'
 import {
   dayjs,
+  getDateFormat,
   getInputTimezone,
   getTimezone,
   inTimezone,
@@ -33,6 +34,13 @@ export interface FormatContextInterface {
    * Defaults to the library-wide input zone set with `setInputTimezone`.
    */
   inputTimezone?: string
+  /**
+   * dayjs format for `dateNumeral` (`'DD/MM/YYYY'`).
+   *
+   * Defaults to the library-wide format set with `setDateFormat`, and failing
+   * that the locale's own.
+   */
+  dateFormat?: string
 }
 
 export const emptyValuePlaceholder = '—'
@@ -71,12 +79,17 @@ const getPercentFormatter = memoize(({ locale }) => {
   })
 })
 
-function createDateFormatter(fn: (d: dayjs.Dayjs) => string) {
+function createDateFormatter(
+  fn: (d: dayjs.Dayjs, context?: FormatContextInterface) => string
+) {
   // `format()` hands every formatter the context; the date ones used to
   // ignore it and read the viewer's clock, which is fine until the app has to
   // show one fixed zone to everybody.
   return function (value: string, context?: FormatContextInterface) {
-    return fn(inTimezone(value, context?.timezone, context?.inputTimezone))
+    return fn(
+      inTimezone(value, context?.timezone, context?.inputTimezone),
+      context
+    )
   }
 }
 
@@ -203,7 +216,9 @@ export const formatters: Record<string, any> = {
       context?.inputTimezone
     ).toISOString()
   },
-  dateNumeral: createDateFormatter((m) => m.format('L')),
+  dateNumeral: createDateFormatter((m, context) =>
+    m.format(context?.dateFormat || getDateFormat() || 'L')
+  ),
   dateShort: createDateFormatter((m) => m.format('ll')),
   dateTimeShort: createDateFormatter((m) => m.format('lll')),
   dateLong: createDateFormatter((m) => m.format('LL')),

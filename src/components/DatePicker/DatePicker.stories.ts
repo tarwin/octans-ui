@@ -1,8 +1,16 @@
+import { Button, ButtonGroup } from '@/components/Button'
 import { FormLayout } from '@/components/FormLayout'
-import { dayjs } from '@/utils'
+import { Formatter } from '@/components/Formatter'
+import {
+  dayjs,
+  getDateFormat,
+  getTimezone,
+  setDateFormat,
+  setTimezone
+} from '@/utils'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import type { Dayjs } from 'dayjs'
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import DatePicker from './DatePicker.vue'
 
 const meta = {
@@ -100,6 +108,182 @@ export const TypeProp: Story = {
         </FormLayout>
         <pre>Value: {{date}}</pre>
       </div>
+    `
+  })
+}
+
+/**
+  `date-format` sets the format one field shows and accepts, as a dayjs format.
+  Try typing a date into one of them: it has to match that field's format. Text
+  that doesn't match shows an error, and clears the value when you leave the
+  field.
+
+  All four share one `v-model`, so that clears all four. The value printed below
+  stays in `model-format` whichever field changes it. A `datetime` field adds
+  the time after the format. `month` and `year` fields ignore it.
+ */
+export const DateFormat: Story = {
+  render: () => ({
+    components: { DatePicker, FormLayout },
+    setup() {
+      const date = ref('2019-09-29 14:30:00')
+      return { date }
+    },
+    template: `
+      <div>
+        <FormLayout>
+          <DatePicker
+            v-model="date"
+            label="DD/MM/YYYY"
+            date-format="DD/MM/YYYY"
+          />
+          <DatePicker
+            v-model="date"
+            label="YYYY-MM-DD"
+            date-format="YYYY-MM-DD"
+          />
+          <DatePicker
+            v-model="date"
+            label="D MMM YYYY"
+            date-format="D MMM YYYY"
+          />
+          <DatePicker
+            v-model="date"
+            type="datetime"
+            label="DD/MM/YYYY, with type datetime"
+            date-format="DD/MM/YYYY"
+          />
+        </FormLayout>
+        <pre>Value: {{date}}</pre>
+      </div>
+    `
+  })
+}
+
+/**
+  Set the format once for the whole library, at install or at any time after:
+
+  ```ts
+  app.use(UI, { dateFormat: 'DD/MM/YYYY' })
+
+  import { setDateFormat } from '@octans/ui'
+  setDateFormat('DD/MM/YYYY')
+  setDateFormat(null) // back to the locale's
+  ```
+
+  Fields on screen redraw, and so does a `Formatter` showing `dateNumeral`. A
+  `date-format` prop still wins for its own field. The buttons call the real
+  setter, so on the docs page every `DatePicker` follows them until you leave.
+ */
+export const GlobalDateFormat: Story = {
+  render: () => ({
+    components: { Button, ButtonGroup, DatePicker, FormLayout, Formatter },
+    setup() {
+      const date = ref('2019-09-29 14:30:00')
+      const initial = getDateFormat()
+      const formats = ['DD/MM/YYYY', 'YYYY-MM-DD', 'D MMM YYYY']
+      onUnmounted(() => setDateFormat(initial))
+      return { date, formats, getDateFormat, setDateFormat }
+    },
+    template: `
+      <FormLayout>
+        <ButtonGroup segmented>
+          <Button :pressed="!getDateFormat()" @click="setDateFormat(null)">
+            Locale
+          </Button>
+          <Button
+            v-for="format in formats"
+            :key="format"
+            :pressed="getDateFormat() === format"
+            @click="setDateFormat(format)"
+          >
+            {{format}}
+          </Button>
+        </ButtonGroup>
+        <DatePicker v-model="date" label="date" />
+        <DatePicker v-model="date" type="datetime" label="datetime" />
+        <DatePicker
+          v-model="date"
+          label="date-format=&quot;YYYY-MM-DD&quot; keeps its own"
+          date-format="YYYY-MM-DD"
+        />
+        <div>Formatter: <Formatter type="dateNumeral" :value="date" /></div>
+        <pre>Value: {{date}}</pre>
+      </FormLayout>
+    `
+  })
+}
+
+/**
+  Set the display zone once for the whole library, at install or later:
+
+  ```ts
+  app.use(UI, { timezone: 'Australia/Sydney' })
+
+  import { setTimezone } from '@octans/ui'
+  setTimezone('Australia/Sydney')
+  setTimezone(null) // back to the viewer's clock
+  ```
+
+  In a `DatePicker` the zone decides what today is. Open the first field to see
+  today's mark move: the two zones here are always on different dates. It does
+  not convert the value, so the second field stays the same under every zone.
+  A `timezone` prop overrides the zone for one field.
+
+  `setTimezone` is not reactive, so this story remounts the fields with a `key`
+  after each call. Normally you would set it before mounting. The buttons call
+  the real setter, so anything else that renders on this page uses the zone too.
+ */
+export const GlobalTimezone: Story = {
+  render: () => ({
+    components: { Button, ButtonGroup, DatePicker, FormLayout, Formatter },
+    setup() {
+      const initial = getTimezone()
+      const zones = ['Pacific/Kiritimati', 'Pacific/Pago_Pago']
+      const zone = ref(initial ?? null)
+      const empty = ref()
+      const stored = ref('2019-09-29 14:30:00')
+      const now = new Date()
+      function choose(next: string | null) {
+        setTimezone(next)
+        zone.value = next
+      }
+      onUnmounted(() => setTimezone(initial))
+      return { choose, empty, now, stored, zone, zones }
+    },
+    template: `
+      <FormLayout>
+        <ButtonGroup segmented>
+          <Button :pressed="!zone" @click="choose(null)">Viewer's clock</Button>
+          <Button
+            v-for="option in zones"
+            :key="option"
+            :pressed="zone === option"
+            @click="choose(option)"
+          >
+            {{option}}
+          </Button>
+        </ButtonGroup>
+        <FormLayout :key="zone">
+          <div>Now, on this clock: <Formatter type="dateTimeShort" :value="now" /></div>
+          <DatePicker
+            v-model="empty"
+            label="Open to see today"
+            placeholder="Choose a date"
+          />
+          <DatePicker
+            v-model="stored"
+            type="datetime"
+            label="A stored value is not converted"
+          />
+          <DatePicker
+            v-model="empty"
+            label="timezone=&quot;UTC&quot; keeps its own today"
+            placeholder="Choose a date"
+            timezone="UTC"
+          />
+        </FormLayout>
+      </FormLayout>
     `
   })
 }
