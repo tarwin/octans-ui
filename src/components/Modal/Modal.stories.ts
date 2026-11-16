@@ -793,3 +793,67 @@ export const Sections: Story = {
     `
   })
 }
+
+/**
+  When the content is taller than the window, the body scrolls between the
+  header and footer, and fades its top and bottom edges while there is more to
+  see that way — the same indicators as `ScrollPane` and `Sheet`.
+
+  They are on by default. Turn them off with `:indicators="false"`.
+  `overflowVisible` turns them off too, because the body no longer scrolls.
+
+  Sectioned modals scroll the same way; the fade sits over the sections.
+ */
+export const LongContent: Story = {
+  render: () => ({
+    components: { Button, Modal, ModalSection, Stack },
+    setup() {
+      const plain = ref(false)
+      const sectioned = ref(false)
+      const noIndicators = ref(false)
+      return { plain, sectioned, noIndicators }
+    },
+    template: `
+      <Stack spacing="tight">
+        <Button @click="plain = true">Long content</Button>
+        <Button @click="sectioned = true">Long sectioned content</Button>
+        <Button @click="noIndicators = true">Without indicators</Button>
+
+        <Modal
+          :visible="plain"
+          title="Terms"
+          :primary-action="{ label: 'Accept', onAction: () => (plain = false) }"
+          @close="plain = false"
+        >
+          <p v-for="i in 40" :key="i">Paragraph {{ i }} of the terms.</p>
+        </Modal>
+
+        <Modal
+          :visible="sectioned"
+          title="Settings"
+          :primary-action="{ label: 'Save', onAction: () => (sectioned = false) }"
+          @close="sectioned = false"
+        >
+          <ModalSection
+            v-for="i in 8"
+            :key="i"
+            :title="'Section ' + i"
+            :subdued="i === 8"
+          >
+            <p v-for="j in 4" :key="j">Setting {{ j }} in section {{ i }}.</p>
+          </ModalSection>
+        </Modal>
+
+        <Modal
+          :visible="noIndicators"
+          title="Terms"
+          :indicators="false"
+          :primary-action="{ label: 'Accept', onAction: () => (noIndicators = false) }"
+          @close="noIndicators = false"
+        >
+          <p v-for="i in 40" :key="i">Paragraph {{ i }} of the terms.</p>
+        </Modal>
+      </Stack>
+    `
+  })
+}

@@ -41,6 +41,13 @@ export interface ModalProps {
    */
   overflowVisible?: boolean
   /**
+   * Fades the top and bottom of the body when there is more content to scroll
+   * to, as `ScrollPane` and `Sheet` do. On by default; turn it off where the
+   * fade fights the content. Never shown with `overflowVisible`, because the
+   * body does not scroll then.
+   */
+  indicators?: boolean
+  /**
    * Invoked when the modal's "X" button is clicked or ESC is pressed. The "X"
    * button and the ESC handler are only rendered when this is defined.
    * NOTE: `@close` compiles down to this same prop, which is why there is no

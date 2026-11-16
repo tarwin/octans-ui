@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { Button, ButtonGroup } from '@/components/Button'
+import { ScrollPane } from '@/components/ScrollPane'
 import { Spinner } from '@/components/Spinner'
 import {
   computed,
@@ -21,7 +22,8 @@ import { $t } from '@/utils/translate'
 const props = withDefaults(defineProps<ModalProps>(), {
   loading: false,
   noHeader: false,
-  overflowVisible: false
+  overflowVisible: false,
+  indicators: true
 })
 
 // NOTE: `close` is deliberately NOT declared here. It collides with the
@@ -37,6 +39,21 @@ const emit = defineEmits<{
 }>()
 
 const bodyMaxHeight = ref<string | null>(null)
+
+// The body is the ScrollPane's own scroll container — `containerClass` gives
+// it the `.body` class — so `bodyStyle` lands on the same element it always
+// did. It is spread last so a consumer can still override anything here.
+//
+// `overflowVisible` has to beat the pane's inline `overflow-y: auto`, which a
+// class cannot do, so it goes in inline as well. `disabled` is no use for
+// this: it sets `hidden`, which clips the very menus the flag exists for.
+const bodyContainerStyle = computed<Record<string, string>>(() => ({
+  ...(bodyMaxHeight.value ? { maxHeight: bodyMaxHeight.value } : {}),
+  ...(props.overflowVisible
+    ? { overflowX: 'visible', overflowY: 'visible' }
+    : {}),
+  ...(props.bodyStyle || {})
+}))
 const header = ref<HTMLElement>()
 const preBody = ref<HTMLElement>()
 const footer = ref<HTMLElement>()
@@ -267,13 +284,17 @@ function updateBodyMaxHeight() {
             <!-- @slot Pre-body content, appears between header and body. -->
             <slot name="preBody"></slot>
           </div>
-          <div
-            :class="$style.body"
-            :style="[{ maxHeight: bodyMaxHeight }, bodyStyle]"
+          <ScrollPane
+            :class="$style.bodyPane"
+            :container-class="$style.body"
+            :container-style="bodyContainerStyle"
+            :indicators="indicators && !overflowVisible"
+            :watch="bodyMaxHeight"
+            contain
           >
             <!-- @slot Body content, appears between header and footer. -->
             <slot></slot>
-          </div>
+          </ScrollPane>
           <div
             v-if="actions.length || $slots.footer"
             :class="$style.footer"
@@ -399,9 +420,15 @@ function updateBodyMaxHeight() {
   padding-bottom: 0;
 }
 
+// The ScrollPane's root. `isolation` keeps its fades (z-index 10) inside the
+// pane, so they never paint over the loader or anything else in the dialog.
+.bodyPane {
+  isolation: isolate;
+  min-height: 0;
+}
+
 .body {
   padding: 20px;
-  overflow: auto;
 
   // A sectioned modal is padded by its SECTIONS, so the body stops padding —
   // otherwise every band is inset twice and the dividers stop short of the
@@ -410,12 +437,10 @@ function updateBodyMaxHeight() {
   // `:has()` rather than a `sectioned` prop on Modal: the sections are already
   // in the slot, so the markup already says it. A prop would be a second
   // source of truth to keep in sync with the children.
-  &:has(> [data-modal-section]) {
+  //
+  // `> * >` because the ScrollPane wraps the slot in one element of its own.
+  &:has(> * > [data-modal-section]) {
     padding: 0;
-  }
-
-  .overflowVisible & {
-    overflow: visible;
   }
 }
 

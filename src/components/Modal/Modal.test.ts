@@ -319,3 +319,105 @@ describe('Modal accessibility', () => {
     expect(document.body.style.overflow).toBe('')
   })
 })
+
+describe('Modal body scrolling', () => {
+  const wrappers: Array<{ unmount: () => void }> = []
+  afterEach(() => {
+    for (const wrapper of wrappers) wrapper.unmount()
+    wrappers.length = 0
+  })
+
+  const open = async (
+    props: Record<string, unknown> = {},
+    slot = '<p>Content</p>'
+  ) => {
+    const wrapper = mount(Modal, {
+      props: { visible: true, title: 'Long', ...props },
+      slots: { default: slot },
+      attachTo: document.body
+    })
+    wrappers.push(wrapper)
+    await settle()
+    return wrapper
+  }
+
+  // The scroll container: the element carrying the `.body` class.
+  const body = () =>
+    [...document.querySelectorAll<HTMLElement>('div')].find((el) =>
+      [...el.classList].some((name) => /^_?body_/.test(name))
+    ) as HTMLElement
+
+  // jsdom has no layout, so give the body a scroll extent by hand.
+  const fakeOverflow = (el: HTMLElement, scrollTop = 0) => {
+    Object.defineProperty(el, 'clientHeight', { value: 100, configurable: true })
+    Object.defineProperty(el, 'scrollHeight', { value: 400, configurable: true })
+    Object.defineProperty(el, 'scrollTop', {
+      value: scrollTop,
+      writable: true,
+      configurable: true
+    })
+  }
+
+  const visibleFades = () =>
+    [...document.querySelectorAll<HTMLElement>('div')].filter(
+      (el) =>
+        [...el.classList].some((name) => /^_?indicator(Top|Bottom)_/.test(name)) &&
+        el.style.display !== 'none'
+    ).length
+
+  it('scrolls the body, contained, and keeps bodyStyle on it', async () => {
+    await open({ bodyStyle: { padding: '4px' } })
+    const el = body()
+    expect(el.style.overflowY).toBe('auto')
+    expect(el.style.overscrollBehavior).toBe('contain')
+    expect(el.style.padding).toBe('4px')
+    expect(el.textContent).toContain('Content')
+  })
+
+  it('fades the edges where there is more to scroll to', async () => {
+    await open()
+    const el = body()
+    fakeOverflow(el, 0)
+    el.dispatchEvent(new Event('scroll'))
+    await settle()
+    expect(visibleFades()).toBe(1) // bottom only, at the top
+
+    // The scroll handler is debounced; wait past it.
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    fakeOverflow(el, 150)
+    el.dispatchEvent(new Event('scroll'))
+    await settle()
+    expect(visibleFades()).toBe(2) // both, in the middle
+  })
+
+  it('draws no fades with indicators off', async () => {
+    await open({ indicators: false })
+    const el = body()
+    fakeOverflow(el, 150)
+    el.dispatchEvent(new Event('scroll'))
+    await settle()
+    expect(visibleFades()).toBe(0)
+  })
+
+  it('lets content overflow, with no fades, under overflowVisible', async () => {
+    await open({ overflowVisible: true })
+    const el = body()
+    expect(el.style.overflowY).toBe('visible')
+    expect(el.style.overflowX).toBe('visible')
+    fakeOverflow(el, 150)
+    el.dispatchEvent(new Event('scroll'))
+    await settle()
+    expect(visibleFades()).toBe(0)
+  })
+
+  it('still sees its sections through the pane, so it is not padded twice', async () => {
+    // The stylesheet drops the body's padding with
+    // `:has(> * > [data-modal-section])`. This pins the structure that
+    // selector relies on: exactly one wrapper between body and section.
+    await open({}, '<div data-modal-section>One</div>')
+    const el = body()
+    const section = el.querySelector('[data-modal-section]') as HTMLElement
+    expect(section.parentElement?.parentElement).toBe(el)
+    expect(el.matches(':has(> * > [data-modal-section])')).toBe(true)
+  })
+})
