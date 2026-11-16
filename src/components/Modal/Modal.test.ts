@@ -349,8 +349,14 @@ describe('Modal body scrolling', () => {
 
   // jsdom has no layout, so give the body a scroll extent by hand.
   const fakeOverflow = (el: HTMLElement, scrollTop = 0) => {
-    Object.defineProperty(el, 'clientHeight', { value: 100, configurable: true })
-    Object.defineProperty(el, 'scrollHeight', { value: 400, configurable: true })
+    Object.defineProperty(el, 'clientHeight', {
+      value: 100,
+      configurable: true
+    })
+    Object.defineProperty(el, 'scrollHeight', {
+      value: 400,
+      configurable: true
+    })
     Object.defineProperty(el, 'scrollTop', {
       value: scrollTop,
       writable: true,
@@ -361,8 +367,9 @@ describe('Modal body scrolling', () => {
   const visibleFades = () =>
     [...document.querySelectorAll<HTMLElement>('div')].filter(
       (el) =>
-        [...el.classList].some((name) => /^_?indicator(Top|Bottom)_/.test(name)) &&
-        el.style.display !== 'none'
+        [...el.classList].some((name) =>
+          /^_?indicator(Top|Bottom)_/.test(name)
+        ) && el.style.display !== 'none'
     ).length
 
   it('scrolls the body, contained, and keeps bodyStyle on it', async () => {
