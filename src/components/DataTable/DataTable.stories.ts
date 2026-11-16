@@ -572,6 +572,110 @@ export const RowActions: Story = {
 }
 
 /**
+Listen for `click-row` to act on a click anywhere in a row. The handler gets
+the row's data, and rows show the pointer cursor on hover.
+
+- Clicks inside the row actions cell are not row clicks.
+- While rows are being selected, a click toggles the row's selection instead
+  of emitting `click-row`.
+*/
+export const ClickRows: Story = {
+  render: () => ({
+    components: { DataTable, Card, CardSection, Caption },
+    setup() {
+      const clicked = ref<any>(null)
+      return {
+        clicked,
+        onClickRow: (row: any) => (clicked.value = row)
+      }
+    },
+    template: `
+      <Card>
+        <DataTable
+          :columns="[
+            {key: 'artist', label: 'Artist'},
+            {key: 'works', label: 'Works', format: 'integer'}
+          ]"
+          :rows="[
+            {id: 1, artist: 'Claude Monet', works: 2500},
+            {id: 2, artist: 'Katsushika Hokusai', works: 3000},
+            {id: 3, artist: 'Mary Cassatt', works: 950}
+          ]"
+          @click-row="onClickRow"
+        />
+        <CardSection>
+          <Caption>
+            Clicked: {{ clicked ? clicked.artist : 'none' }}
+          </Caption>
+        </CardSection>
+      </Card>
+    `
+  })
+}
+
+/**
+Listen for `dblclick-row` to act on a double-click, for example to open the
+row's record. Here a single click picks the row and a double-click opens it.
+
+Nothing on screen can say "double-click me", so treat it as a shortcut for
+people who know the convention, and always offer another way to do the same
+thing. Here that is the **Open** row action.
+
+- As with the native `dblclick`, the two clicks that make up a double-click
+  still fire first, so `click-row` arrives twice before `dblclick-row`. Keep
+  the single-click action harmless to repeat.
+- A double-click does not select the word under the pointer, but pressing and
+  dragging still selects text so cell contents can be copied.
+- Rows show the pointer cursor only because `click-row` is listened for. With
+  `dblclick-row` alone they keep the normal cursor, since the pointer promises
+  that a single click does something. Set `rowCursor` to `'pointer'` or
+  `'default'` to choose the cursor yourself.
+- Double-clicking inside the row actions cell, or on a selection checkbox, is
+  not a row double-click.
+- While rows are being selected, a double-click does nothing, the same as
+  `click-row`.
+*/
+export const DoubleClickRows: Story = {
+  render: () => ({
+    components: { DataTable, Card, CardSection, Caption },
+    setup() {
+      const picked = ref<any>(null)
+      const opened = ref<any>(null)
+      return {
+        picked,
+        opened,
+        onClickRow: (row: any) => (picked.value = row),
+        onOpen: (row: any) => (opened.value = row)
+      }
+    },
+    template: `
+      <Card>
+        <DataTable
+          :columns="[
+            {key: 'artist', label: 'Artist'},
+            {key: 'works', label: 'Works', format: 'integer'}
+          ]"
+          :row-actions="[{label: 'Open', onAction: onOpen}]"
+          :rows="[
+            {id: 1, artist: 'Claude Monet', works: 2500},
+            {id: 2, artist: 'Katsushika Hokusai', works: 3000},
+            {id: 3, artist: 'Mary Cassatt', works: 950}
+          ]"
+          @click-row="onClickRow"
+          @dblclick-row="onOpen"
+        />
+        <CardSection>
+          <Caption>
+            Picked: {{ picked ? picked.artist : 'none' }} ·
+            Opened: {{ opened ? opened.artist : 'none' }}
+          </Caption>
+        </CardSection>
+      </Card>
+    `
+  })
+}
+
+/**
 Instead of the prop-driven `rowActions`, you can take full control of the
 row-actions cell with the `actions` scoped slot. This lets you mix custom
 controls — for example a couple of always-visible icon buttons next to the

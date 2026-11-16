@@ -161,3 +161,90 @@ describe('DataTable load-more', () => {
     expect(wrapper.find('tbody td[colspan]').exists()).toBe(true)
   })
 })
+
+describe('DataTable row events', () => {
+  const rowAt = (wrapper: ReturnType<typeof mount>, index: number) =>
+    wrapper.find(`tbody tr[data-row-index="${index}"]`)
+
+  it('emits dblclick-row with the row that was double-clicked', async () => {
+    const wrapper = mount(DataTable, {
+      props: { columns: COLUMNS, rows: ROWS }
+    })
+    await rowAt(wrapper, 1).trigger('dblclick')
+    expect(wrapper.emitted('dblclick-row')).toEqual([[ROWS[1]]])
+  })
+
+  it('does not emit dblclick-row from the row actions cell', async () => {
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: COLUMNS,
+        rows: ROWS,
+        rowActions: [{ label: 'Edit', onAction: () => {} }]
+      }
+    })
+    const edit = wrapper.findAll('button').find((b) => b.text() === 'Edit')!
+    await edit.trigger('dblclick')
+    expect(wrapper.emitted('dblclick-row')).toBeUndefined()
+  })
+
+  it('does not emit dblclick-row while rows are being selected', async () => {
+    const wrapper = mount(DataTable, {
+      props: { columns: COLUMNS, rows: ROWS, selectedIds: [1] }
+    })
+    await rowAt(wrapper, 1).trigger('dblclick')
+    expect(wrapper.emitted('dblclick-row')).toBeUndefined()
+  })
+
+  // Declared events never reach `useAttrs()`, which is where the pointer
+  // cursor used to look for them — so it never showed.
+  const pointerFor = (props: Record<string, unknown>) =>
+    mount(DataTable, {
+      props: { columns: COLUMNS, rows: ROWS, ...props } as any
+    })
+      .find('.UIElement')
+      .classes()
+      .join(' ')
+      .includes('hasClickableRows')
+
+  it('shows the pointer for click-row, not for dblclick-row alone', () => {
+    expect(pointerFor({ onClickRow: () => {} })).toBe(true)
+    expect(pointerFor({ onDblclickRow: () => {} })).toBe(false)
+    expect(pointerFor({})).toBe(false)
+  })
+
+  it('lets rowCursor override the pointer either way', () => {
+    expect(pointerFor({ onDblclickRow: () => {}, rowCursor: 'pointer' })).toBe(
+      true
+    )
+    expect(pointerFor({ onClickRow: () => {}, rowCursor: 'default' })).toBe(
+      false
+    )
+  })
+})
+
+describe('DataTable double-click text selection', () => {
+  const press = (wrapper: ReturnType<typeof mount>, detail: number) => {
+    const event = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      detail
+    })
+    wrapper.find('tbody tr td').element.dispatchEvent(event)
+    return event
+  }
+
+  it('cancels the second press so the word is not selected', () => {
+    const wrapper = mount(DataTable, {
+      props: { columns: COLUMNS, rows: ROWS, onDblclickRow: () => {} } as any
+    })
+    expect(press(wrapper, 1).defaultPrevented).toBe(false)
+    expect(press(wrapper, 2).defaultPrevented).toBe(true)
+  })
+
+  it('leaves selection alone without a dblclick-row listener', () => {
+    const wrapper = mount(DataTable, {
+      props: { columns: COLUMNS, rows: ROWS, onClickRow: () => {} } as any
+    })
+    expect(press(wrapper, 2).defaultPrevented).toBe(false)
+  })
+})

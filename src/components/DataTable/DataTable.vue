@@ -15,12 +15,12 @@ import debounce from '@/utils/debounce'
 import { format, isNumericType, isSummableNumericType } from '@/utils/format'
 import {
   computed,
+  getCurrentInstance,
   h,
   nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
-  useAttrs,
   useCssModule,
   useSlots,
   watch
@@ -51,6 +51,7 @@ const props = withDefaults(defineProps<InterPropsType<Row>>(), {
 
 const emit = defineEmits([
   'click-row',
+  'dblclick-row',
   'update:sort',
   'update:selectedIds',
   'load-more'
@@ -91,7 +92,34 @@ const hasScrollRight = ref(false)
 const width = ref<null | number>(null)
 
 const slots = useSlots()
-const attrs = useAttrs()
+const instance = getCurrentInstance()
+
+/**
+ * Whether rows show the pointer cursor. By default only a `click-row` listener
+ * earns it: the pointer promises that one click does something, which a
+ * double-click alone does not keep.
+ *
+ * Declared events never appear in `useAttrs()`, so the listener has to be read
+ * off the vnode — and read at render time, since a parent can add or drop it
+ * between renders.
+ */
+const hasPointerRows = () => {
+  if (props.rowCursor) return props.rowCursor === 'pointer'
+  return !!instance?.vnode.props?.onClickRow
+}
+
+/**
+ * A double-click selects the word under the pointer, which is just noise when
+ * the double-click means "open this row". Cancelling the second press stops
+ * that, while a single press-and-drag still selects text, so cell contents
+ * can be copied. Form fields keep their own double-click behaviour.
+ */
+const preventDoubleClickSelection = (event: MouseEvent) => {
+  if (event.detail < 2 || !instance?.vnode.props?.onDblclickRow) return
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input, textarea, select, [contenteditable]')) return
+  event.preventDefault()
+}
 
 const $style = useCssModule()
 
@@ -569,6 +597,8 @@ const renderRow = (row: any, rowIndex: number) => {
         // Prevent the click on the checkbox from toggling it a second
         // time as it will occur after the change event.
         onClick: (event: MouseEvent) => event.stopPropagation(),
+        // Nor is a quick double toggle of the checkbox a row double-click.
+        onDblclick: (event: MouseEvent) => event.stopPropagation(),
         // Toggle the row selection on change (could be from a click or
         // using the keyboard).
         onChange: () => toggleRowSelection(row.id)
@@ -650,6 +680,11 @@ const renderRow = (row: any, rowIndex: number) => {
           if (col.type === 'actions') {
             event.stopPropagation()
           }
+        },
+        onDblclick(event: MouseEvent) {
+          if (col.type === 'actions') {
+            event.stopPropagation()
+          }
         }
       },
       [content]
@@ -679,6 +714,23 @@ const renderRow = (row: any, rowIndex: number) => {
            */
           emit('click-row', row)
         }
+      },
+      onMousedown: preventDoubleClickSelection,
+      onDblclick: () => {
+        // While rows are being selected, a click toggles selection rather than
+        // emitting `click-row`, and a double-click follows the same rule.
+        if (hasSelection.value) return
+        /**
+         * Emitted when a row is double-clicked. As with the native `dblclick`,
+         * the two clicks that make it up still fire first, so a table that
+         * also listens for `click-row` gets that event twice before this one.
+         * Rows keep the normal cursor unless `click-row` is also listened
+         * for, or `rowCursor` says otherwise.
+         *
+         * @event dblclick-row
+         * @type {RowData}
+         */
+        emit('dblclick-row', row)
       }
     },
     cells
@@ -983,7 +1035,7 @@ const render = () => {
         hasScrollRight.value && $style.hasScrollRight,
         props.bulkActions && $style.hasBulkActions,
         props.selectedIds && props.selectedIds.length && $style.hasSelection,
-        attrs['click-row'] && $style.hasClickableRows,
+        hasPointerRows() && $style.hasClickableRows,
         props.compact && $style.isCompact,
         hasMaxHeight.value && $style.hasMaxHeight
       ],
@@ -1215,7 +1267,7 @@ th.Cell_bulkActions {
   text-align: right;
   cursor: default;
   // For tables with few columns, Cell_actions takes up more width than it needs.
-  // When combined with the @click-row listener it prevents a usable area of the
+  // When combined with a @click-row or @dblclick-row listener it prevents a usable area of the
   // row from being clicked. This forces Cell_actions to take as little width
   // as possible.
   width: 1%;

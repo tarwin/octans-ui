@@ -249,6 +249,17 @@ export type InterPropsType<
    */
   compact?: boolean
   /**
+   * The cursor shown over rows. Only the display: what a click or
+   * double-click does is set by the `click-row` and `dblclick-row` listeners.
+   *
+   * - unset: the pointer while there is a `click-row` listener, otherwise the
+   *   normal arrow. A double-click alone keeps the arrow, since the pointer
+   *   promises that one click does something.
+   * - `'pointer'`: always the pointer.
+   * - `'default'`: always the normal arrow.
+   */
+  rowCursor?: 'pointer' | 'default'
+  /**
    * The minimum width in pixels which the DataTable must be for row actions
    * to be displayed inline. When the DataTable is smaller than this width the
    * actions are collapsed into a dropdown menu.

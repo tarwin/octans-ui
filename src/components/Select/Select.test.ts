@@ -275,6 +275,19 @@ describe('Select — press and drag', () => {
     wrapper.unmount()
   })
 
+  it('clears without opening when the clear button is pressed', async () => {
+    const wrapper = mountSelect({ clearable: true, modelValue: 'apple' })
+    const clear = wrapper.find('[class*="ClearButton"]')
+    clear.element.dispatchEvent(mouse('mousedown', ORIGIN.x, ORIGIN.y))
+    await nextTick()
+    clear.element.dispatchEvent(mouse('click', ORIGIN.x, ORIGIN.y))
+    await nextTick()
+
+    expect(selection(wrapper)).toBe(null)
+    expect(dropdown(wrapper).exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('stops tracking the pointer once the component is gone', async () => {
     // A live mousemove listener on `document` outlasting the component is a
     // leak that only shows up as an error much later.

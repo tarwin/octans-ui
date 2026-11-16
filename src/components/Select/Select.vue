@@ -1127,6 +1127,7 @@ function isSearchableKey(char: string) {
           v-if="canClear"
           :class="$style.ClearButton"
           icon="mdi:close-circle"
+          @mousedown.stop
           @click.stop="clearSelected"
         />
         <Icon
